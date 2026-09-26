@@ -1,0 +1,19 @@
+{
+  "maxReactRounds": 5,
+  "alwaysOnTools": [
+    "agent_get_map_info",
+    "agent_list_layers",
+    "agent_describe_layer",
+    "agent_get_selection",
+    "agent_get_project_info",
+    "cc_read_rows"
+  ],
+  "maxTier2Tools": 20,
+  "largeBatchThreshold": 1000,
+  "toolIndex": {
+    "geomMatchScore": 10,
+    "opMatchScore": 5,
+    "toolboxBoostScore": 2,
+    "topN": 20
+  }
+}

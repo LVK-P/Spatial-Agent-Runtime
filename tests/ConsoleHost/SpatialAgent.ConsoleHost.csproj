@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\runtime\SpatialAgent.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\contracts\SpatialAgent.Runtime.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\core\SpatialAgent.Core.csproj" />
+    <ProjectReference Include="..\..\src\adapters\LLM\SpatialAgent.Adapters.LLM.csproj" />
+    <ProjectReference Include="..\..\src\tools\SpatialAgent.Tools.Core.csproj" />
+    <ProjectReference Include="..\..\src\services\SpatialAgent.Services.csproj" />
+    <ProjectReference Include="..\..\src\knowledge\SpatialAgent.Knowledge.csproj" />
+    <ProjectReference Include="..\..\src\adapters\ArcGIS\SpatialAgent.Adapters.ArcGIS.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "arcgis_pro_version": "3.4",
+  "fixture": {
+    "project": "SpatialRuntimeV3Integration.aprx",
+    "geodatabase": "SpatialRuntimeV3Fixture.gdb",
+    "reset_policy": "Clone the pristine fixture before every scenario."
+  },
+  "scenarios": [
+    {
+      "id": "PRO-READ-001",
+      "risk": "ReadOnly",
+      "operation": "GetCount and Describe",
+      "assertions": [
+        "No dataset, schema, selection, or map state changes.",
+        "Transcript and plan ledger record the canonical tool identity."
+      ]
+    },
+    {
+      "id": "PRO-INC-001",
+      "risk": "Increment",
+      "operation": "Buffer into agentworkspace.gdb",
+      "assertions": [
+        "A new output exists in the routed workspace.",
+        "The source feature class is unchanged.",
+        "A duplicate output name is rejected before GP execution."
+      ]
+    },
+    {
+      "id": "PRO-MOD-SEL-001",
+      "risk": "Modify",
+      "operation": "CalculateField over the current selection",
+      "assertions": [
+        "Influence evidence contains the selected OID digest and selected count.",
+        "Only selected rows change.",
+        "Changing selected OIDs without changing the count invalidates approval."
+      ]
+    },
+    {
+      "id": "PRO-MOD-WHERE-001",
+      "risk": "Modify",
+      "operation": "CalculateField with a WHERE clause",
+      "assertions": [
+        "Influence evidence is filter-scoped.",
+        "Rows outside the filter remain unchanged.",
+        "Changing the WHERE clause invalidates the exact-call signature."
+      ]
+    },
+    {
+      "id": "PRO-MOD-ALL-001",
+      "risk": "Modify",
+      "operation": "CalculateField over an entire populated table",
+      "assertions": [
+        "The approval card states entire-dataset scope and overwrite count.",
+        "The postcondition verifies the affected scope."
+      ]
+    },
+    {
+      "id": "PRO-DEL-BACKUP-001",
+      "risk": "Destructive",
+      "operation": "DeleteField with a successful Copy_management backup",
+      "assertions": [
+        "The approval covers the exact call and target fingerprint.",
+        "Backup evidence identifies the mutation target.",
+        "Deletion begins only after backup success."
+      ]
+    },
+    {
+      "id": "PRO-DEL-FAIL-001",
+      "risk": "Destructive",
+      "operation": "DeleteRows while backup creation is forced to fail",
+      "assertions": [
+        "Execution is fail-closed.",
+        "No row is deleted.",
+        "UI, transcript, audit, and ledger all report the backup failure."
+      ]
+    },
+    {
+      "id": "PRO-BATCH-001",
+      "risk": "Mixed",
+      "operation": "Three layers with Increment, Modify, and Destructive calls",
+      "assertions": [
+        "The batch ticket lists every covered call and target.",
+        "Rejecting one step does not authorize another step.",
+        "Changing any covered layer, schema, selection, or argument invalidates the batch."
+      ]
+    },
+    {
+      "id": "PRO-CANCEL-001",
+      "risk": "Operational",
+      "operation": "Cancel and timeout a long-running GP task",
+      "assertions": [
+        "The UI returns to a non-running state.",
+        "No orphan GP task continues writing.",
+        "Partial output is absent or explicitly marked incomplete."
+      ]
+    },
+    {
+      "id": "PRO-RECOVER-001",
+      "risk": "Operational",
+      "operation": "Restart ArcGIS Pro from an awaiting-approval checkpoint",
+      "assertions": [
+        "Checkpoint schema migration succeeds.",
+        "Unchanged data can resume with the exact ticket.",
+        "Changed data invalidates the ticket with a user-visible reason."
+      ]
+    }
+  ]
+}

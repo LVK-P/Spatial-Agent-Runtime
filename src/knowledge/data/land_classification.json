@@ -1,0 +1,45 @@
+{
+  "_description": "Land classification data from MNR 2023-11 Land-Sea Use Classification Guide and GB/T 21010-2017 Third National Land Survey",
+  "sd_code_to_name": {},
+  "yh_code_to_name": {},
+  "sd_to_yh": {},
+  "ysdm_codes": {
+    "市级行政区": "1000640100",
+    "县级行政区": "1000650100",
+    "乡镇级行政区": "1000660100",
+    "村级调查区": "1000600400",
+    "村级调查区界线": "1000600500",
+    "规划地类图斑": "2003020210",
+    "规划用地": "2003010100",
+    "现状用地": "2003010800",
+    "生态保护红线": "2090020211",
+    "永久基本农田": "2090020212",
+    "城镇开发边界": "2090020213",
+    "历史文化保护区": "2003020910",
+    "管控边界": "2003020710",
+    "自然保护地": "2090020300",
+    "规划分区": "2090020200",
+    "生态保护重要性评价结果": "2080050100",
+    "农业生产适宜性评价结果": "2080050200",
+    "城镇建设适宜性评价结果": "2080050300",
+    "现状用地用海": "2080040201"
+  },
+  "category_sql": {
+    "GDMJ": "DLBM LIKE '01%' OR DLBM LIKE '02%' OR DLBM LIKE '03%'",
+    "CDMJ": "DLBM LIKE '04%'",
+    "JSYD": "DLBM LIKE '05%' OR DLBM LIKE '07%' OR DLBM LIKE '08%' OR DLBM LIKE '09%' OR DLBM LIKE '10%'",
+    "NYDMJ": "DLBM LIKE '01%' OR DLBM LIKE '02%' OR DLBM LIKE '03%' OR DLBM LIKE '04%' OR DLBM LIKE '06%'",
+    "WLDMJ": "DLBM LIKE '11%' OR DLBM LIKE '12%'",
+    "JBNT": "DLBM IN ('0101','0102','0103')"
+  },
+  "heritage_level_codes": {
+    "10": "国家级",
+    "20": "省级",
+    "30": "市级",
+    "40": "县级",
+    "10A": "国家级文物保护单位",
+    "20A": "省级文物保护单位",
+    "30A": "市级文物保护单位",
+    "40A": "县级文物保护单位"
+  }
+}

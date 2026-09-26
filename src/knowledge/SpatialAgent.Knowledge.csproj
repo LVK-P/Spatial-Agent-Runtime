@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\contracts\SpatialAgent.Runtime.Contracts.csproj" />
+    <ProjectReference Include="..\core\SpatialAgent.Core.csproj" />
+    <ProjectReference Include="..\adapters\LLM\SpatialAgent.Adapters.LLM.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="jieba.NET" Version="0.42.2" />
+    <!-- Override jieba.NET's vulnerable 4.7.0 transitive dependency. -->
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="gis_dict.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- 领域对照表外部覆盖文件：缺席则 LandClassificationData 走内置 fallback。
+         必须部署，否则插件环境的"标准更新免重编译"机制静默失效（审查发现 F3） -->
+    <None Update="data\land_classification.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

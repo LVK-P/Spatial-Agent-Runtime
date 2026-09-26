@@ -1,0 +1,133 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>ArcGISProAIAgent</RootNamespace>
+    <AssemblyName>ArcGISProAIAgent</AssemblyName>
+    <UseWPF>true</UseWPF>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <NoWarn>CA1416;CS8632;CS8602;CS8600;CS8604;CS8618;CS0067</NoWarn>
+    <Nullable>enable</Nullable>
+    <!-- Debug: launch ArcGIS Pro as external program (required for .slnx — Esri targets only handle packaging) -->
+    <StartAction>Program</StartAction>
+    <StartProgram>$(ArcGISProInstallDir)bin\ArcGISPro.exe</StartProgram>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="Config.daml" />
+    <Content Include="Images\AddInDesktop16.png" />
+    <Content Include="Images\AddInDesktop32.png" />
+    <Content Include="DarkImages\AddInDesktop16.png" />
+    <Content Include="DarkImages\AddInDesktop32.png" />
+    <Content Include="..\..\..\skills\**\*.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Skills\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+    <Content Include="..\..\..\knowledge\documents\**\*.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Knowledge\Documents\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+    <Content Include="$(SpatialAgentLocalAssetsDir)tools_manifest.json" Condition="Exists('$(SpatialAgentLocalAssetsDir)tools_manifest.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>tools_manifest.json</Link>
+    </Content>
+    <Content Include="$(SpatialAgentLocalAssetsDir)tools_index.json" Condition="Exists('$(SpatialAgentLocalAssetsDir)tools_index.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>tools_index.json</Link>
+    </Content>
+    <Content Include="$(SpatialAgentLocalAssetsDir)tool_risk_catalog.json" Condition="Exists('$(SpatialAgentLocalAssetsDir)tool_risk_catalog.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>tool_risk_catalog.json</Link>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="ArcGIS.Desktop.Framework">
+      <HintPath>$(ArcGISProInstallDir)bin\ArcGIS.Desktop.Framework.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Core">
+      <HintPath>$(ArcGISProInstallDir)bin\ArcGIS.Core.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Core">
+      <HintPath>$(ArcGISProInstallDir)bin\Extensions\Core\ArcGIS.Desktop.Core.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Mapping">
+      <HintPath>$(ArcGISProInstallDir)bin\Extensions\Mapping\ArcGIS.Desktop.Mapping.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Catalog">
+      <HintPath>$(ArcGISProInstallDir)bin\Extensions\Catalog\ArcGIS.Desktop.Catalog.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Editing">
+      <HintPath>$(ArcGISProInstallDir)bin\Extensions\Editing\ArcGIS.Desktop.Editing.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Extensions">
+      <HintPath>$(ArcGISProInstallDir)bin\Extensions\DesktopExtensions\ArcGIS.Desktop.Extensions.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.GeoProcessing">
+      <HintPath>$(ArcGISProInstallDir)bin\Extensions\GeoProcessing\ArcGIS.Desktop.GeoProcessing.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Layouts">
+      <HintPath>$(ArcGISProInstallDir)bin\Extensions\Layout\ArcGIS.Desktop.Layouts.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Shared.Wpf">
+      <HintPath>$(ArcGISProInstallDir)bin\ArcGIS.Desktop.Shared.Wpf.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Ribbon.Wpf">
+      <HintPath>$(ArcGISProInstallDir)bin\ArcGIS.Desktop.Ribbon.Wpf.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.DataGrid.Contrib.Wpf">
+      <HintPath>$(ArcGISProInstallDir)bin\ArcGIS.Desktop.DataGrid.Contrib.Wpf.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Resources">
+      <HintPath>$(ArcGISProInstallDir)bin\ArcGIS.Desktop.Resources.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ESRI.ArcGIS.ItemIndex">
+      <HintPath>$(ArcGISProInstallDir)bin\ESRI.ArcGIS.ItemIndex.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\contracts\SpatialAgent.Runtime.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\src\runtime\SpatialAgent.Runtime.csproj" />
+    <ProjectReference Include="..\..\..\src\adapters\LLM\SpatialAgent.Adapters.LLM.csproj" />
+    <ProjectReference Include="..\..\..\src\adapters\ArcGIS\SpatialAgent.Adapters.ArcGIS.csproj" />
+    <ProjectReference Include="..\..\..\src\tools\SpatialAgent.Tools.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\services\SpatialAgent.Services.csproj" />
+    <ProjectReference Include="..\..\..\src\knowledge\SpatialAgent.Knowledge.csproj" />
+    <ProjectReference Include="..\..\..\src\adapters\Mcp\SpatialAgent.Adapters.Mcp.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- ASP.NET Core shared framework required by Mcp adapter (Kestrel) — does not flow transitively from Sdk.Web -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+   <Import Project="$(ArcGISProInstallDir)bin\Esri.ProApp.SDK.Desktop.targets" Condition="Exists('$(ArcGISProInstallDir)bin\Esri.ProApp.SDK.Desktop.targets') AND !Exists('Esri.ArcGISPro.Extensions.targets')" />
+</Project>

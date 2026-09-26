@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Spatial Runtime v3 ArcGIS Pro integration result",
+  "type": "object",
+  "required": [
+    "run_id",
+    "arcgis_pro_version",
+    "runtime_commit",
+    "started_at_utc",
+    "results"
+  ],
+  "properties": {
+    "run_id": { "type": "string", "minLength": 1 },
+    "arcgis_pro_version": { "type": "string", "const": "3.4" },
+    "runtime_commit": { "type": "string", "minLength": 7 },
+    "started_at_utc": { "type": "string", "format": "date-time" },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "scenario_id",
+          "status",
+          "evidence"
+        ],
+        "properties": {
+          "scenario_id": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["passed", "failed", "blocked"]
+          },
+          "notes": { "type": "string" },
+          "evidence": {
+            "type": "object",
+            "required": ["transcript", "audit", "ledger", "data_snapshot"],
+            "properties": {
+              "transcript": { "type": "string", "minLength": 1 },
+              "audit": { "type": "string", "minLength": 1 },
+              "ledger": { "type": "string", "minLength": 1 },
+              "data_snapshot": { "type": "string", "minLength": 1 },
+              "ui_screenshot": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

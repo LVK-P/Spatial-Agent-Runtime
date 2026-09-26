@@ -1,0 +1,539 @@
+<Window
+    x:Class="ArcGISProAIAgent.Views.AgentWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:ArcGISProAIAgent.Views"
+    Title="Spatial Agent"
+    Height="860"
+    Width="920"
+    MinHeight="520"
+    MinWidth="720"
+    WindowStartupLocation="CenterScreen"
+    Background="#F5F7FA">
+
+    <Window.Resources>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#1F1F1F" />
+            <Setter Property="CaretBrush" Value="#1F1F1F" />
+            <Setter Property="SelectionBrush" Value="#B3D7FF" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#E8ECF0" />
+            <Setter Property="Foreground" Value="#1F1F1F" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#1F1F1F" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="#1F1F1F" />
+            <Setter Property="Background" Value="#E8ECF0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="6,3" />
+        </Style>
+        <Style TargetType="Expander">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#333333" />
+        </Style>
+        <Style x:Key="CardBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D8E1EB" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="14" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Visibility="{Binding ShowApiKeyInput, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}"
+                Background="#FFF8E1"
+                BorderBrush="#FFC107"
+                BorderThickness="0,0,0,1"
+                Padding="8,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Key" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <PasswordBox Grid.Column="1" x:Name="ApiKeyPasswordBox" PasswordChanged="ApiKeyPasswordBox_PasswordChanged"
+                             FontSize="11" Height="24" Padding="6,2" ToolTip="输入 API Key，默认遮罩显示" />
+                <TextBox Grid.Column="1" x:Name="ApiKeyTextBoxVisible"
+                         Text="{Binding ApiKeyInput, UpdateSourceTrigger=PropertyChanged}"
+                         FontSize="11" Height="24" Padding="6,2" ToolTip="输入 API Key，明文仅用于核对" Visibility="Collapsed" />
+                <Button Grid.Column="2" x:Name="ToggleKeyVisibility" Content="👁" Width="40" Height="24" Margin="4,0,0,0"
+                        FontSize="10" Background="Transparent" ToolTip="显示或隐藏 API Key" Click="ToggleKeyVisibility_Click" />
+                <Button Grid.Column="3" Content="保存" Width="48" Height="24" Margin="8,0,0,0" FontSize="11"
+                        Background="#0E639C" Foreground="White" Command="{Binding CmdSaveApiKey}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Background="#FAFAFA" Padding="6,3">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <WrapPanel Grid.Column="0">
+                    <Button Content="日志" Width="44" Height="22" FontSize="10"
+                            ToolTip="打开当前 transcript 日志" Command="{Binding CmdOpenTranscript}" />
+                    <Rectangle Width="1" Height="16" Fill="#D0D0D0" VerticalAlignment="Center" Margin="10,0,6,0" />
+                    <Button Content="新对话" Width="52" Height="22" FontSize="10"
+                            ToolTip="开始新对话，保留项目上下文和长期记忆" Command="{Binding CmdNewSession}" />
+                    <Button Content="记忆" Width="44" Height="22" FontSize="10" Margin="4,0,0,0"
+                            ToolTip="重新载入项目长期记忆" Command="{Binding CmdReloadMemory}" />
+                    <ComboBox ItemsSource="{Binding SessionInfos}" SelectedItem="{Binding SelectedSessionInfo}"
+                              DisplayMemberPath="DisplayLabel" Width="164" Height="22" FontSize="10" Margin="4,0,0,0"
+                              ToolTip="{Binding SessionPickerLabel}"
+                              Visibility="{Binding HasSessionHistory, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}"
+                              IsEditable="False" MaxDropDownHeight="180" />
+                </WrapPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding BackupSizeText}" ToolTip="当前项目备份文件占用空间"
+                               Foreground="#666666" FontSize="10" VerticalAlignment="Center" Margin="0,0,6,0"
+                               Visibility="{Binding BackupSizeText, Converter={x:Static local:AgentWindow.StringToVisibilityConverter}}" />
+                    <Button Content="备份位置" Width="60" Height="22" FontSize="10"
+                            ToolTip="打开 agent 备份工作区" Command="{Binding CmdOpenBackupLocation}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ★ Task panel: always collapsed until Phase 2 -->
+        <Grid Grid.Row="2" Margin="10,10,10,0" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2.2*" />
+                <ColumnDefinition Width="0" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0">
+                <StackPanel>
+                    <TextBlock Text="当前任务" FontSize="11" Foreground="#5C6B7A" />
+                    <DockPanel Margin="0,6,0,0">
+                        <Border Background="#E8EEF6" CornerRadius="10" Padding="8,3" DockPanel.Dock="Right">
+                            <TextBlock Text="{Binding TaskStage}" FontSize="10" FontWeight="SemiBold" Foreground="{Binding TaskStageBrush}" />
+                        </Border>
+                        <TextBlock Text="{Binding TaskTitle}" FontSize="18" FontWeight="SemiBold" Foreground="#15324B"
+                                   TextTrimming="CharacterEllipsis" Margin="0,0,10,0" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding TaskSubtitle}" FontSize="12" Foreground="#51606F" TextWrapping="Wrap" Margin="0,8,0,0" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ★ Old approval banner: kept as reference, now replaced by the one inside Row 4 -->
+        <Border Grid.Row="3" Margin="10,10,10,0" Visibility="Collapsed"
+                Background="#FFF7E6" BorderBrush="#F0C36D" BorderThickness="1" CornerRadius="12" Padding="10,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock FontSize="12" FontWeight="Bold" Foreground="#8A5A00" Text="{Binding PendingApprovalText}" />
+                    <TextBlock FontSize="11" Foreground="#6B4A00" TextWrapping="Wrap" Margin="0,4,0,0" Text="{Binding PendingApprovalReason}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="确认继续" Width="80" Height="28" Margin="0,0,8,0"
+                            Background="#0E639C" Foreground="White" Command="{Binding CmdApprovePending}" />
+                    <Button Content="取消此步" Width="68" Height="28" Command="{Binding CmdRejectPending}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="4" Margin="10,10,10,0" Style="{StaticResource CardBorderStyle}" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="#F7F9FC" BorderBrush="#EEF2F6" BorderThickness="0,0,0,1"
+                        CornerRadius="12,12,0,0" Padding="14,8">
+                    <DockPanel>
+                        <Border Background="#EDF3F8" BorderBrush="#D8E1EB" BorderThickness="1"
+                                CornerRadius="9" Padding="8,2" DockPanel.Dock="Right">
+                            <TextBlock Text="{Binding TaskMetrics}" FontSize="10" Foreground="#4B6484" />
+                        </Border>
+                        <TextBlock Text="对话" FontSize="14" FontWeight="SemiBold" Foreground="#15324B" VerticalAlignment="Center" />
+                    </DockPanel>
+                </Border>
+
+                <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto" Padding="14,12" Background="White">
+                    <StackPanel>
+                        <!-- ★ Welcome / empty state -->
+                        <Border Background="#F7FAFE" BorderBrush="#D7E3F4" BorderThickness="1" CornerRadius="12"
+                                Padding="18,16" Margin="0,0,0,12">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasTimelineItems}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel>
+                                <TextBlock Text="准备开始一个 GIS 任务" FontSize="18" FontWeight="SemiBold" Foreground="#15324B" />
+                                <TextBlock Text="可以直接描述目标、粘贴字段映射或说明质量约束。Agent 会先生成计划，再执行工具并持续验证。"
+                                           FontSize="12" Foreground="#51606F" TextWrapping="Wrap" Margin="0,8,0,0" />
+                                <TextBlock Text="快捷指令：/project /layers /search 关键词 /memory"
+                                           FontSize="10" Foreground="#6B7886" Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ★ Chronological timeline: messages + trace groups (with plan info embedded) -->
+                        <ItemsControl ItemsSource="{Binding ExecutionTimelineItems}">
+                            <ItemsControl.Style>
+                                <Style TargetType="ItemsControl">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasTimelineItems}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ItemsControl.Style>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,6">
+                                            <!-- ── Message bubble ── -->
+                                            <Grid Visibility="{Binding IsMessage, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,2,0,6"
+                                                            Visibility="{Binding Chat.Role, Converter={x:Static local:AgentWindow.RoleLabelVisibilityConverter}}">
+                                                    <Border Width="20" Height="20" CornerRadius="10" Margin="0,0,6,0">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="#E7F5F2" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Chat.Role}" Value="user">
+                                                                        <Setter Property="Background" Value="#EAF4FB" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock FontSize="9" FontWeight="Bold"
+                                                                   Foreground="{Binding Chat.Role, Converter={x:Static local:AgentWindow.RoleToColorConverter}}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Text" Value="SA" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Chat.Role}" Value="user">
+                                                                            <Setter Property="Text" Value="U" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
+                                                    <Border Padding="7,2" CornerRadius="8" BorderThickness="1">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="#F3FBF9" />
+                                                                <Setter Property="BorderBrush" Value="#D5ECE7" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Chat.Role}" Value="user">
+                                                                        <Setter Property="Background" Value="#F2F8FD" />
+                                                                        <Setter Property="BorderBrush" Value="#D6E7F3" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock FontSize="10" FontWeight="SemiBold"
+                                                                   Foreground="{Binding Chat.Role, Converter={x:Static local:AgentWindow.RoleToColorConverter}}"
+                                                                   Text="{Binding Chat.Role, Converter={x:Static local:AgentWindow.RoleToDisplayNameConverter}}" />
+                                                    </Border>
+                                                    <TextBlock FontSize="9" Foreground="#95A1AE"
+                                                               Text="{Binding Chat.Timestamp, StringFormat='{}{0:HH:mm}'}" Margin="8,3,0,0" />
+                                                </StackPanel>
+                                                <Border Grid.Row="1" CornerRadius="12" Padding="12,10" MaxWidth="640"
+                                                        HorizontalAlignment="{Binding Chat.Role, Converter={x:Static local:AgentWindow.RoleToAlignmentConverter}}">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#FBFCFD" />
+                                                            <Setter Property="BorderBrush" Value="#E3EAF0" />
+                                                            <Setter Property="BorderThickness" Value="1" />
+                                                            <Setter Property="Effect">
+                                                                <Setter.Value>
+                                                                    <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.05" Color="#000000" />
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Chat.Role}" Value="user">
+                                                                    <Setter Property="Background" Value="#F4F9FD" />
+                                                                    <Setter Property="BorderBrush" Value="#CFE0EE" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Chat.Role}" Value="assistant">
+                                                                    <Setter Property="Background" Value="#FFFFFF" />
+                                                                    <Setter Property="BorderBrush" Value="#E2E8EF" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBox FontSize="13" Foreground="#1F1F1F" Text="{Binding Chat.Content, Mode=OneWay}"
+                                                             TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False"
+                                                             BorderThickness="0" Background="Transparent" Padding="0" />
+                                                </Border>
+                                                <TextBlock Grid.Row="2" FontSize="9" Foreground="#9BA6B2" Margin="6,4,0,0"
+                                                           HorizontalAlignment="Left" Text="{Binding TokenInfo, Mode=OneWay}"
+                                                           Visibility="{Binding HasTokenInfo, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
+                                            </Grid>
+
+                                            <!-- ── Trace group Expander (plan + traces, collapsed by default) ── -->
+                                            <Border Visibility="{Binding IsTraceGroup, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}"
+                                                    Background="#FCFDFE" BorderBrush="#E0E6ED" BorderThickness="1"
+                                                    CornerRadius="10" Padding="8,8" Margin="0,2,0,0">
+                                                <Expander IsExpanded="{Binding IsExpanded}" HorizontalContentAlignment="Stretch">
+                                                    <Expander.Header>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Border Width="14" Height="14" Margin="0,0,6,0"
+                                                                    Visibility="{Binding HasRunningItem, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}"
+                                                                    RenderTransformOrigin="0.5,0.5">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding HasRunningItem}" Value="True">
+                                                                                <DataTrigger.EnterActions>
+                                                                                    <BeginStoryboard>
+                                                                                        <Storyboard RepeatBehavior="Forever">
+                                                                                            <DoubleAnimation
+                                                                                                Storyboard.TargetProperty="(FrameworkElement.RenderTransform).(RotateTransform.Angle)"
+                                                                                                From="0" To="360" Duration="0:0:1.2" />
+                                                                                        </Storyboard>
+                                                                                    </BeginStoryboard>
+                                                                                </DataTrigger.EnterActions>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <Path Data="M 7,1 A 6,6 0 1,1 1,7" Stroke="#0E639C" StrokeThickness="1.8"
+                                                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" Fill="Transparent" />
+                                                            </Border>
+                                                            <TextBlock Text="{Binding TraceHeader}" FontSize="11" Foreground="#445566"
+                                                                       FontWeight="SemiBold" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </Expander.Header>
+                                                    <StackPanel>
+                                                        <!-- ★ 计划步骤（如果本轮生成了计划） -->
+                                                    <StackPanel Margin="0,4,0,8"
+                                                                Visibility="{Binding HasCardBadge, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}">
+                                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                            <Border Background="#EBF2F9" BorderBrush="#D7E3F0" BorderThickness="1"
+                                                                    CornerRadius="8" Padding="6,2">
+                                                                <TextBlock Text="PLAN" FontSize="9" FontWeight="Bold" Foreground="#48617E" />
+                                                            </Border>
+                                                            <Border Background="#F5F8FB" BorderBrush="#E4EAF1" BorderThickness="1"
+                                                                    CornerRadius="8" Padding="6,2" Margin="6,0,0,0">
+                                                                <TextBlock Text="{Binding CardBadge}" FontSize="9" Foreground="#637588" />
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <ItemsControl ItemsSource="{Binding CardLines}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border Background="#FFFFFF" BorderBrush="#E6ECF2" BorderThickness="1"
+                                                                            CornerRadius="10" Padding="8,6" Margin="0,0,0,4">
+                                                                        <DockPanel LastChildFill="True">
+                                                                            <Border Width="20" Height="20" CornerRadius="10" Background="#EEF3F8"
+                                                                                    BorderBrush="#D7E2EC" BorderThickness="1" DockPanel.Dock="Left" Margin="0,0,8,0">
+                                                                                <TextBlock Text="·" FontSize="12" Foreground="#5A7086"
+                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                            </Border>
+                                                                            <TextBlock Text="{Binding}" FontSize="11" Foreground="#334E68"
+                                                                                       TextWrapping="Wrap" LineHeight="18" VerticalAlignment="Center" />
+                                                                        </DockPanel>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                <ItemsControl ItemsSource="{Binding TraceItems}" Margin="0,4,0,0">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Background="{Binding StatusBackground}" BorderBrush="{Binding StatusBorderBrush}"
+                                                                        BorderThickness="1" CornerRadius="10" Padding="8,8" Margin="0,0,0,8">
+                                                                    <Expander IsExpanded="{Binding IsExpanded}" HorizontalContentAlignment="Stretch">
+                                                                        <Expander.Header>
+                                                                            <Grid MinWidth="320">
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="40" />
+                                                                                    <ColumnDefinition Width="*" />
+                                                                                    <ColumnDefinition Width="Auto" />
+                                                                                    <ColumnDefinition Width="Auto" />
+                                                                                    <ColumnDefinition Width="Auto" />
+                                                                                </Grid.ColumnDefinitions>
+                                                                                <Border Grid.Column="0" Width="32" Height="20" CornerRadius="10"
+                                                                                        Background="{Binding StatusBadgeBackground}"
+                                                                                        BorderBrush="{Binding StatusBorderBrush}" BorderThickness="1"
+                                                                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                                    <TextBlock FontSize="8" FontWeight="Bold" Foreground="{Binding StatusBrush}"
+                                                                                               Text="{Binding StatusIcon}" HorizontalAlignment="Center"
+                                                                                               VerticalAlignment="Center" />
+                                                                                </Border>
+                                                                                <TextBlock Grid.Column="1" FontSize="11" Foreground="#23384D"
+                                                                                           Text="{Binding OperationDesc}" TextTrimming="CharacterEllipsis"
+                                                                                           Margin="4,0,0,0" />
+                                                                                <Border Grid.Column="2" Background="#FFFFFF" BorderBrush="#D9E0E7"
+                                                                                        BorderThickness="1" CornerRadius="8" Padding="5,1" Margin="6,0,0,0"
+                                                                                        Visibility="{Binding HasRisk, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}">
+                                                                                    <TextBlock FontSize="9" Foreground="#6A717A" Text="{Binding RiskLevel}" />
+                                                                                </Border>
+                                                                                <TextBlock Grid.Column="3" FontSize="10" FontWeight="SemiBold"
+                                                                                           Foreground="{Binding StatusBrush}" Text="{Binding StatusText}" Margin="6,0,0,0" />
+                                                                                <TextBlock Grid.Column="4" FontSize="10" Foreground="#999"
+                                                                                           Text="{Binding ElapsedText}" Margin="6,0,0,0" />
+                                                                            </Grid>
+                                                                        </Expander.Header>
+                                                                        <StackPanel Margin="16,8,0,2"
+                                                                                    Visibility="{Binding HasDetails, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}">
+                                                                            <TextBlock FontSize="9" Foreground="#738191"
+                                                                                       Text="{Binding ToolName, StringFormat='工具：{0}'}" Margin="0,0,0,2" />
+                                                                            <TextBlock FontSize="10" Foreground="#9A6700" Text="{Binding RiskText}"
+                                                                                       Visibility="{Binding HasRisk, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
+                                                                            <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="#777" Text="参数"
+                                                                                       Margin="0,4,0,2"
+                                                                                       Visibility="{Binding HasArgs, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
+                                                                            <TextBlock FontSize="11" FontFamily="Consolas" Foreground="#555555"
+                                                                                       Text="{Binding ArgsPreview, Mode=OneWay}" TextWrapping="Wrap" MaxHeight="80"
+                                                                                       Visibility="{Binding HasArgs, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
+                                                                            <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="#777" Text="进度"
+                                                                                       Margin="0,4,0,2"
+                                                                                       Visibility="{Binding HasProgress, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
+                                                                            <TextBlock FontSize="11" Foreground="#006CBE" Text="{Binding ProgressText}"
+                                                                                       TextWrapping="Wrap"
+                                                                                       Visibility="{Binding HasProgress, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
+                                                                            <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="#777" Text="输出"
+                                                                                       Margin="0,4,0,2"
+                                                                                       Visibility="{Binding HasOutput, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
+                                                                            <TextBlock FontSize="11" FontFamily="Consolas" Foreground="#555555"
+                                                                                       Text="{Binding OutputPreview, Mode=OneWay}" TextWrapping="Wrap" MaxHeight="80"
+                                                                                       Visibility="{Binding HasOutput, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
+                                                                            <TextBlock FontSize="11" Foreground="#C62828" Text="{Binding Error}"
+                                                                                       TextWrapping="Wrap" Margin="0,4,0,0"
+                                                                                       Visibility="{Binding HasError, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
+                                                                            <TextBlock FontSize="11" Foreground="#9A6700" Text="{Binding ValidationSummary}"
+                                                                                       TextWrapping="Wrap" Margin="0,4,0,0"
+                                                                                       Visibility="{Binding HasValidation, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
+                                                                        </StackPanel>
+                                                                    </Expander>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    </StackPanel>
+                                                </Expander>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- ★ Approval banner: fixed at bottom of chat area, always visible when pending -->
+                <Border Grid.Row="2" Margin="10,6,10,6"
+                        Visibility="{Binding HasPendingApproval, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}"
+                        Background="#FFF7E6" BorderBrush="#F0C36D" BorderThickness="1" CornerRadius="12" Padding="12,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock FontSize="12" FontWeight="Bold" Foreground="#8A5A00"
+                                       Text="{Binding PendingApprovalText}" />
+                            <TextBlock FontSize="11" Foreground="#6B4A00" TextWrapping="Wrap" Margin="0,4,0,0"
+                                       Text="{Binding PendingApprovalReason}" />
+                            <TextBlock FontSize="10" Foreground="#8A6A1D" Margin="0,2,0,0"
+                                       Text="确认后只继续当前这一步，不会自动放大到整轮任务。" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="确认继续" Width="80" Height="28" Margin="0,0,8,0"
+                                    Background="#0E639C" Foreground="White" Command="{Binding CmdApprovePending}" />
+                            <Button Content="取消此步" Width="68" Height="28" Command="{Binding CmdRejectPending}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="5" Background="#F8F8F8" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="8,3">
+            <TextBlock FontSize="10" Foreground="#888" Text="{Binding StatusBarText}" />
+        </Border>
+
+        <Border Grid.Row="6" Background="#F5F7FA" Padding="10,8">
+            <Border BorderBrush="#D0D8E2" BorderThickness="1" CornerRadius="14" Background="White" Padding="10,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" x:Name="InputTextBox"
+                             Text="{Binding UserInput, UpdateSourceTrigger=PropertyChanged}"
+                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" MaxHeight="220"
+                             VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto"
+                             BorderThickness="0" Background="Transparent" Padding="0" Margin="0,0,64,0"
+                             ToolTip="Ctrl+Enter 发送，Enter 换行">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Modifiers="Control" Command="{Binding CmdSendMessage}"
+                                        CommandParameter="{Binding UserInput}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Margin="0,8,0,0">
+                        <TextBlock Text="Enter 换行，Ctrl+Enter 发送。适合直接粘贴字段映射、SQL 条件和批处理约束。"
+                                   FontSize="10" Foreground="#6B7886" Margin="0,0,0,6" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="模型" FontSize="10" Foreground="#666" VerticalAlignment="Center" Margin="0,0,3,0" />
+                            <ComboBox ItemsSource="{Binding AvailableModels}" SelectedItem="{Binding SelectedModel}"
+                                      Width="124" Height="22" FontSize="10" />
+                            <TextBlock Text="思考" FontSize="10" Foreground="#666" VerticalAlignment="Center" Margin="10,0,3,0" />
+                            <ComboBox ItemsSource="{Binding AvailableThinkingLevels}" SelectedItem="{Binding SelectedThinkingLevel}"
+                                      Width="54" Height="22" FontSize="10" />
+                            <TextBlock Text="权限" FontSize="10" Foreground="#666" VerticalAlignment="Center" Margin="10,0,3,0" />
+                            <ComboBox ItemsSource="{Binding AvailablePermissionLevels}" SelectedItem="{Binding SelectedPermissionLevel}"
+                                      Width="80" Height="22" FontSize="10" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" VerticalAlignment="Bottom" Margin="8,0,0,0">
+                        <Button Content="停止" Width="56" Height="28" FontSize="11"
+                                Background="#F2E8E8" Foreground="#B03A2E" BorderThickness="0"
+                                ToolTip="停止当前任务" Command="{Binding CmdStopRun}" />
+                        <Button Content="发送" Width="56" Height="28" Margin="0,4,0,0"
+                                Background="#0E639C" Foreground="White" BorderThickness="0"
+                                Command="{Binding CmdSendMessage}" IsDefault="True" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Border>
+    </Grid>
+</Window>

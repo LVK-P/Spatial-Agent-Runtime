@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "dynamic_tool_load": {
+    "minimum_registered_tools": 1900,
+    "maximum_elapsed_ms": 15000,
+    "maximum_managed_memory_delta_mb": 768
+  },
+  "compile_50_step_plan": {
+    "iterations": 20,
+    "maximum_elapsed_ms": 5000,
+    "maximum_managed_memory_delta_mb": 256
+  },
+  "checkpoint_serialization": {
+    "turn_count": 100,
+    "maximum_elapsed_ms": 5000,
+    "maximum_json_bytes": 5242880
+  }
+}

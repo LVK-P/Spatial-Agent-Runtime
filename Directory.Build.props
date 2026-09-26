@@ -1,0 +1,9 @@
+<Project>
+  <!-- ArcGIS Pro install path — read from env var if not set via /p: -->
+  <PropertyGroup>
+    <ArcGISProInstallDir Condition="'$(ArcGISProInstallDir)'==''">$(ARCGISPRO_INSTALL_DIR)</ArcGISProInstallDir>
+    <ArcGISProInstallDir Condition="'$(ArcGISProInstallDir)'=='' And Exists('C:\Program Files\ArcGIS\Pro\bin\ArcGIS.Desktop.Framework.dll')">C:\Program Files\ArcGIS\Pro\</ArcGISProInstallDir>
+    <SpatialAgentLocalAssetsDir Condition="'$(SpatialAgentLocalAssetsDir)'==''">$(SPATIAL_AGENT_LOCAL_ASSETS_DIR)</SpatialAgentLocalAssetsDir>
+    <SpatialAgentLocalAssetsDir Condition="'$(SpatialAgentLocalAssetsDir)'==''">$(MSBuildThisFileDirectory)local-assets\</SpatialAgentLocalAssetsDir>
+  </PropertyGroup>
+</Project>

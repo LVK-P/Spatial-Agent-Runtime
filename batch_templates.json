@@ -1,0 +1,58 @@
+[
+  {
+    "name": "add_calc_field",
+    "description": "给所有图层添加字段并计算值（国土规划高频场景：椭球面积、地类编码等）",
+    "tools": ["management_AddField", "management_CalculateField"],
+    "detects_keywords": ["加字段", "计算面积", "计算长度", "字段计算", "椭球面积", "添加字段", "计算字段"],
+    "layer_param_name": "in_table",
+    "is_per_layer_pair": true
+  },
+  {
+    "name": "project_all",
+    "description": "统一所有图层的坐标系",
+    "tools": ["management_Project"],
+    "detects_keywords": ["投影转换", "统一坐标系", "投影", "转换坐标系"],
+    "layer_param_name": "in_dataset",
+    "is_per_layer_pair": false
+  },
+  {
+    "name": "buffer_all",
+    "description": "给所有图层生成缓冲区",
+    "tools": ["analysis_Buffer"],
+    "detects_keywords": ["缓冲区", "缓冲", "buffer"],
+    "layer_param_name": "in_features",
+    "is_per_layer_pair": false
+  },
+  {
+    "name": "clip_all",
+    "description": "用同一裁剪边界裁剪所有图层",
+    "tools": ["analysis_Clip"],
+    "detects_keywords": ["裁剪", "clip"],
+    "layer_param_name": "in_features",
+    "is_per_layer_pair": false
+  },
+  {
+    "name": "intersect_all",
+    "description": "所有图层与同一图层做相交分析",
+    "tools": ["analysis_Intersect"],
+    "detects_keywords": ["相交", "intersect", "叠加"],
+    "layer_param_name": "in_features",
+    "is_per_layer_pair": false
+  },
+  {
+    "name": "dissolve_all",
+    "description": "按相同字段融合所有图层",
+    "tools": ["management_Dissolve"],
+    "detects_keywords": ["融合", "dissolve", "合并相邻"],
+    "layer_param_name": "in_features",
+    "is_per_layer_pair": false
+  },
+  {
+    "name": "copy_all",
+    "description": "批量复制所有图层",
+    "tools": ["management_CopyFeatures"],
+    "detects_keywords": ["复制", "导出", "copy", "export"],
+    "layer_param_name": "in_features",
+    "is_per_layer_pair": false
+  }
+]

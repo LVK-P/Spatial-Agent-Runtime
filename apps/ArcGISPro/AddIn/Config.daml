@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ArcGIS defaultAssembly="ArcGISProAIAgent.dll"
+        defaultNamespace="ArcGISProAIAgent"
+        xmlns="http://schemas.esri.com/DADF/Registry"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <AddInInfo id="{6e0d040f-bbdb-49bd-aa28-4559545800c7}" version="1.0" desktopVersion="3.4.55405">
+    <Name>Spatial Agent</Name>
+    <Description>Trustworthy GIS Agent — natural language spatial data operations with post-condition verification</Description>
+    <Image>Images\AddinDesktop32.png</Image>
+    <Author>Spatial Agent Runtime Contributors</Author>
+    <Company>Spatial Agent Runtime</Company>
+    <Date>2026/7/17</Date>
+    <Subject>Spatial</Subject>
+  </AddInInfo>
+
+  <modules>
+    <insertModule id="ArcGISProAIAgent_Module" className="Module1" autoLoad="false" caption="AI Agent">
+
+      <tabs>
+        <tab id="ArcGISProAIAgent_Tab" caption="AI Agent" keytip="AI">
+          <group refID="ArcGISProAIAgent_Group" />
+        </tab>
+      </tabs>
+
+      <groups>
+        <group id="ArcGISProAIAgent_Group" caption="AI 对话" appearsOnAddInTab="false" keytip="AG">
+          <button refID="ArcGISProAIAgent_ShowAgentButton" size="large" />
+        </group>
+      </groups>
+
+      <controls>
+        <button
+          id="ArcGISProAIAgent_ShowAgentButton"
+          caption="打开 AI Agent"
+          keytip="AA"
+          className="ArcGISProAIAgent.Buttons.ShowAgentButton"
+          loadOnClick="true"
+          smallImage="Images\AddinDesktop16.png"
+          largeImage="Images\AddinDesktop32.png">
+          <tooltip heading="Spatial Agent">
+            Trustworthy GIS agent with verified tool execution — plain text, no markdown, no hallucination.
+          </tooltip>
+        </button>
+      </controls>
+
+    </insertModule>
+  </modules>
+</ArcGIS>

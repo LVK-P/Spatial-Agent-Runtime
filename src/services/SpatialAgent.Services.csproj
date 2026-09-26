@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
+    <ProjectReference Include="..\contracts\SpatialAgent.Runtime.Contracts.csproj" />
+    <ProjectReference Include="..\core\SpatialAgent.Core.csproj" />
+    <ProjectReference Include="..\adapters\ArcGIS\SpatialAgent.Adapters.ArcGIS.csproj" />
+    <!-- Runtime 引用（Phase 2 后保留）：SafetyGate→ToolRegistry, TranscriptWriter→EventBus,
+         DynamicToolLoader→ToolRegistry, McpServer→ToolRegistry, PostConditionValidationRule→Observation。
+         纯 helper（AgentDiagnostics/CorrelationContext/ParameterNameClassifier）已全部切到 Core。 -->
+    <ProjectReference Include="..\runtime\SpatialAgent.Runtime.csproj" />
+    <ProjectReference Include="..\knowledge\SpatialAgent.Knowledge.csproj" />
+    <ProjectReference Include="..\tools\SpatialAgent.Tools.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <NoWarn>CA1416</NoWarn>
+    <!-- ArcGIS Pro install path: set ARCGISPRO_INSTALL_DIR env var, or pass /p:ArcGISProInstallDir=... to msbuild -->
+    <!-- Fallback order: msbuild property → env var → known default path -->
+    <ArcGISProInstallDir Condition="'$(ArcGISProInstallDir)'==''">$(ARCGISPRO_INSTALL_DIR)</ArcGISProInstallDir>
+    <ArcGISProInstallDir Condition="'$(ArcGISProInstallDir)'=='' And Exists('C:\Program Files\ArcGIS\Pro\bin\ArcGIS.Desktop.Framework.dll')">C:\Program Files\ArcGIS\Pro\</ArcGISProInstallDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="ArcGIS.Desktop.Framework">
+      <HintPath>$(ArcGISProInstallDir)bin\ArcGIS.Desktop.Framework.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Core">
+      <HintPath>$(ArcGISProInstallDir)bin\ArcGIS.Core.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Core">
+      <HintPath>$(ArcGISProInstallDir)bin\Extensions\Core\ArcGIS.Desktop.Core.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.Mapping">
+      <HintPath>$(ArcGISProInstallDir)bin\Extensions\Mapping\ArcGIS.Desktop.Mapping.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ArcGIS.Desktop.GeoProcessing">
+      <HintPath>$(ArcGISProInstallDir)bin\Extensions\GeoProcessing\ArcGIS.Desktop.GeoProcessing.dll</HintPath>
+      <CopyLocal>False</CopyLocal>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

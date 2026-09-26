@@ -1,0 +1,38 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/adapters/" />
+  <Folder Name="/src/adapters/ArcGIS/">
+    <Project Path="src/adapters/ArcGIS/SpatialAgent.Adapters.ArcGIS.csproj" />
+  </Folder>
+  <Folder Name="/src/adapters/LLM/">
+    <Project Path="src/adapters/LLM/SpatialAgent.Adapters.LLM.csproj" />
+  </Folder>
+  <Folder Name="/src/adapters/Mcp/">
+    <Project Path="src/adapters/Mcp/SpatialAgent.Adapters.Mcp.csproj" />
+  </Folder>
+  <Folder Name="/src/contracts/">
+    <Project Path="src/contracts/SpatialAgent.Runtime.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/core/">
+    <Project Path="src/core/SpatialAgent.Core.csproj" />
+  </Folder>
+  <Folder Name="/src/knowledge/">
+    <Project Path="src/knowledge/SpatialAgent.Knowledge.csproj" />
+  </Folder>
+  <Folder Name="/src/runtime/">
+    <Project Path="src/runtime/SpatialAgent.Runtime.csproj" />
+  </Folder>
+  <Folder Name="/src/services/">
+    <Project Path="src/services/SpatialAgent.Services.csproj" />
+  </Folder>
+  <Folder Name="/src/tools/">
+    <Project Path="src/tools/SpatialAgent.Tools.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/ConsoleHost/">
+    <Project Path="tests/ConsoleHost/SpatialAgent.ConsoleHost.csproj" />
+  </Folder>
+  <Folder Name="/tests/Runtime.Tests/">
+    <Project Path="tests/SpatialAgent.Runtime.Tests/SpatialAgent.Runtime.Tests.csproj" />
+  </Folder>
+</Solution>

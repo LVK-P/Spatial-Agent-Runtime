@@ -1,0 +1,46 @@
+# Build and IDE output
+**/bin/
+**/obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.pdb
+*.cache
+*.trx
+TestResults/
+__pycache__/
+*.py[cod]
+
+# ArcGIS packaging and local projects
+*.esriAddinX
+*.aprx
+*.ppkx
+*.gdb/
+*.sde
+*.lyrx
+testing_in_arcgispro/
+
+# Runtime state and logs
+.agent/
+agent_logs/
+*.log
+*.jsonl
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+secrets.json
+appsettings.Local.json
+
+# Generated local knowledge index
+knowledge/**/index.json
+
+# Locally generated ArcGIS interoperability metadata
+local-assets/*.json
+!local-assets/*.example.json
+
+# OS files
+.DS_Store
+Thumbs.db
