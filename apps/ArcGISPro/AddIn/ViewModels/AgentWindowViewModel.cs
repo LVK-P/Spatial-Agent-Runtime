@@ -785,7 +785,7 @@ namespace ArcGISProAIAgent.ViewModels
         }
 
         // ================================================================
-        // 鍛戒护
+        // 命令 / Commands
         // ================================================================
         public ICommand CmdSaveApiKey => new RelayCommand(async () =>
         {
@@ -865,6 +865,8 @@ namespace ArcGISProAIAgent.ViewModels
 
             // The just-ended session's checkpoints are on disk; rescan so it
             // appears in the history dropdown immediately (not only after restart).
+            // 刚结束会话的检查点已经落盘；重新扫描后，它会立即出现在历史下拉列表中，
+            // 而不必等到重启后才显示。
             RefreshSessionList();
 
             UpdateStatusBar();
@@ -891,15 +893,19 @@ namespace ArcGISProAIAgent.ViewModels
             await Task.CompletedTask;
         }, () => !IsLoading);
 
-        // ── 备份位置与空间指示器 ──
+        // ── 备份位置与空间指示器 / Backup location and size indicator ──
 
         private string _backupSizeText = "";
-        /// <summary>当前项目备份占用空间，例如“12.5 MB”。</summary>
+        /// <summary>
+        /// 当前项目备份占用空间，例如“12.5 MB”。
+        /// Disk space used by the current project's backups, for example, "12.5 MB".
+        /// </summary>
         public string BackupSizeText { get => _backupSizeText; set => Set(ref _backupSizeText, value); }
 
         /// <summary>
         /// 刷新备份 GDB 的磁盘占用；项目初始化后调用。
         /// 遍历 agentbackup.gdb 下的文件并计算总大小。
+        /// Refreshes backup GDB disk usage after project initialization by summing files under agentbackup.gdb.
         /// </summary>
         private void RefreshBackupSize()
         {
@@ -947,6 +953,8 @@ namespace ArcGISProAIAgent.ViewModels
 
                 // 当前先在资源管理器中打开 GDB 的父目录。
                 // 后续确认 Pro SDK API 后，可改为在 Catalog 窗格直接定位 GDB。
+                // For now, open the GDB's parent directory in File Explorer.
+                // After confirming the Pro SDK API, this can navigate directly to the GDB in the Catalog pane.
                 string? parentDir = Path.GetDirectoryName(gdbPath);
                 if (!string.IsNullOrEmpty(parentDir) && Directory.Exists(parentDir))
                 {
@@ -960,7 +968,7 @@ namespace ArcGISProAIAgent.ViewModels
             await Task.CompletedTask;
         }, () => !string.IsNullOrEmpty(_workspace?.BackupGdb));
 
-        // ── Session history browser ──
+        // ── 会话历史浏览器 / Session history browser ──
 
         private void RefreshSessionList()
         {
@@ -973,6 +981,7 @@ namespace ArcGISProAIAgent.ViewModels
             {
                 // The active thread is not history; listing it would offer
                 // restoring into the conversation the user is already in.
+                // 活动线程不属于历史记录；列出它会让用户把当前对话恢复到其自身。
                 if (s.ThreadId.Equals(currentThreadId, StringComparison.OrdinalIgnoreCase))
                     continue;
                 SessionInfos.Add(s);
@@ -987,7 +996,8 @@ namespace ArcGISProAIAgent.ViewModels
         private async Task ContinueFromSessionAsync(SessionInfo session)
         {
             if (session == null) return;
-            // Stale dropdown entry pointing at the conversation we're already in
+            // Stale dropdown entry pointing at the conversation we're already in.
+            // 过期的下拉列表项指向当前已经打开的对话。
             if (session.ThreadId.Equals(_runtime.Session.ThreadId, StringComparison.OrdinalIgnoreCase))
                 return;
 
@@ -997,14 +1007,18 @@ namespace ArcGISProAIAgent.ViewModels
             try
             {
                 // 0. Flush the session we're leaving without blocking on optional LLM summarization.
+                // 0. 刷新即将离开的会话，但不等待可选的 LLM 摘要。
                 FinalizeCurrentSessionForSwitch("ResumeAnotherSession");
 
                 // 1. Capture current map info before invalidating the cache.
                 //    the reconciler needs it, and after invalidation it's empty.
+                // 1. 缓存失效前捕获当前地图信息；协调器需要该信息，而失效后缓存将为空。
                 string currentMapInfo = _contextManager.GetCachedContext().MapInfo ?? "";
 
                 // 2. Restore the checkpoint: messages, plan, permission, turn count.
                 //    This resumes the same thread; new checkpoints continue under it.
+                // 2. 恢复检查点中的消息、计划、权限和轮次计数；继续同一线程，
+                //    新检查点仍归入该线程。
                 var restored = await _runtime.RestoreCheckpointAsync(session.ThreadId);
                 if (restored == null)
                 {
@@ -1015,7 +1029,8 @@ namespace ArcGISProAIAgent.ViewModels
 
                 _contextManager.InvalidateCache();
 
-                // 3. Rebuild the chat timeline from the restored messages
+                // 3. Rebuild the chat timeline from the restored messages.
+                // 3. 根据恢复的消息重建聊天时间线。
                 RestoreConversationFromCheckpoint(restored);
 
                 _transcript.WriteSessionResume(restored.ThreadId, _selectedModel, _selectedThinking,
@@ -1027,6 +1042,8 @@ namespace ArcGISProAIAgent.ViewModels
                 // 4. State reconciliation: past layers/tools vs current project.
                 //    Tools come from the checkpoint (exact); layers from the
                 //    transcript slice of this thread, if the file can be located.
+                // 4. 状态协调：比较历史图层/工具与当前项目。工具精确取自检查点；
+                //    若能找到文件，图层取自该线程对应的 transcript 片段。
                 var pastTools = restored.Messages
                     .Where(m => m.ToolCalls != null)
                     .SelectMany(m => m.ToolCalls!)
@@ -1045,6 +1062,8 @@ namespace ArcGISProAIAgent.ViewModels
                 // Only surface + inject the delta when the project actually changed.
                 // Project memory is not injected here; ContextManager already puts
                 // it into the system prompt every turn.
+                // 仅在项目实际变化时显示并注入差异。此处不注入项目记忆，
+                // 因为 ContextManager 每轮都会把它加入系统提示词。
                 if (reconciliation.NeedsAttention)
                 {
                     string delta = reconciliation.ToPromptInjection();
@@ -1064,7 +1083,8 @@ namespace ArcGISProAIAgent.ViewModels
             {
                 IsLoading = false;
                 CommandManager.InvalidateRequerySuggested();
-                // Reset dropdown selection so user can re-select
+                // Reset dropdown selection so the user can select it again.
+                // 重置下拉列表选择，以便用户再次选择。
                 SelectedSessionInfo = null;
             }
         }
@@ -1110,6 +1130,8 @@ namespace ArcGISProAIAgent.ViewModels
             {
                 // Skip tool results and tool-call-only assistant turns.
                 // they have no displayable text and would render empty bubbles.
+                // 跳过工具结果和仅含工具调用的助手轮次；它们没有可显示文本，
+                // 否则会渲染为空气泡。
                 if (message.Role == "tool" || string.IsNullOrWhiteSpace(message.Content))
                     continue;
 
