@@ -211,6 +211,8 @@ namespace ArcGISProAIAgent.ViewModels
 
             // Extract action part after the category prefix (first underscore).
             // For cc_calculate_area, this gives "calculate_area" not just "area".
+            // 提取类别前缀（第一个下划线）之后的操作部分；对于 cc_calculate_area，
+            // 结果应为 "calculate_area"，而不只是 "area"。
             string shortName = tool;
             int firstUnderscore = tool.IndexOf('_');
             if (firstUnderscore >= 0 && firstUnderscore < tool.Length - 1)
@@ -218,6 +220,8 @@ namespace ArcGISProAIAgent.ViewModels
 
             // Normalize snake_case → PascalCase for switch matching.
             // E.g. "calculate_area" → "CalculateArea".
+            // 将 snake_case 规范化为 PascalCase，以便进行 switch 匹配，
+            // 例如 "calculate_area" → "CalculateArea"。
             string normalized = shortName.Contains('_')
                 ? string.Concat(shortName.Split('_').Select(seg =>
                     seg.Length > 0 ? char.ToUpperInvariant(seg[0]) + seg[1..].ToLowerInvariant() : ""))

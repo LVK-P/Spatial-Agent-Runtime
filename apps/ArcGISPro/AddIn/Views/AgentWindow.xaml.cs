@@ -35,6 +35,8 @@ namespace ArcGISProAIAgent.Views
             {
                 // 直接关闭，不做异步保存。会话持久化由用户显式操作或定时检查点负责。
                 // 仅执行同步 flush 防止缓冲日志丢失。
+                // Close directly without an asynchronous save; explicit user actions or periodic checkpoints persist the session.
+                // Perform only a synchronous flush to prevent buffered log loss.
                 try { _vm.FlushPendingWrites(); }
                 catch { /* 关闭时日志 flush 失败不影响窗口关闭 */ }
             };
@@ -47,19 +49,20 @@ namespace ArcGISProAIAgent.Views
             };
         }
 
-        // ── API Key PasswordBox → ViewModel sync ──
+        // ── API Key PasswordBox → ViewModel 同步 / synchronization ──
         private void ApiKeyPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
             if (sender is PasswordBox pb)
                 _vm.ApiKeyInput = pb.Password;
         }
 
-        // ── API Key 显示/隐藏切换 ──
+        // ── API Key 显示/隐藏切换 / visibility toggle ──
         private void ToggleKeyVisibility_Click(object sender, RoutedEventArgs e)
         {
             if (ApiKeyPasswordBox.Visibility == Visibility.Visible)
             {
-                // 切换到明文显示
+                // 切换到明文显示。
+                // Switch to plain-text display.
                 ApiKeyTextBoxVisible.Visibility = Visibility.Visible;
                 ApiKeyPasswordBox.Visibility = Visibility.Collapsed;
                 ToggleKeyVisibility.Content = "🔒";
@@ -67,7 +70,8 @@ namespace ArcGISProAIAgent.Views
             }
             else
             {
-                // 切换回遮罩输入
+                // 切换回遮罩输入。
+                // Switch back to masked input.
                 ApiKeyPasswordBox.Password = _vm.ApiKeyInput ?? "";
                 ApiKeyPasswordBox.Visibility = Visibility.Visible;
                 ApiKeyTextBoxVisible.Visibility = Visibility.Collapsed;
@@ -76,7 +80,7 @@ namespace ArcGISProAIAgent.Views
             }
         }
 
-        // ── Converters ──
+        // ── 转换器 / Converters ──
         public static readonly IValueConverter RoleToDisplayNameConverter =
             new RoleConverter(r => r switch
             {
@@ -85,7 +89,8 @@ namespace ArcGISProAIAgent.Views
                 _ => ""
             });
 
-        // 用户气泡与助手气泡统一左对齐（2026-07-19 用户裁定）
+        // 用户气泡与助手气泡统一左对齐（2026-07-19 用户裁定）。
+        // Align user and assistant bubbles to the left (user decision on 2026-07-19).
         public static readonly IValueConverter RoleToAlignmentConverter =
             new RoleConverter(_ => HorizontalAlignment.Left);
 
@@ -96,6 +101,7 @@ namespace ArcGISProAIAgent.Views
             new RoleConverter(r => r switch
             {
                 // Light-theme label colors (dark variants of the VS blue/teal pair)
+                // 浅色主题标签颜色（VS 蓝色/青色配色的深色变体）。
                 "user" => "#0B69A3",
                 "assistant" => "#0F7B6C",
                 _ => "#888888"
@@ -103,7 +109,10 @@ namespace ArcGISProAIAgent.Views
 
         public static readonly IValueConverter BoolToVisibilityConverter =
             new BoolToVisConverter();
-        /// <summary>字符串非空 → Visible，空/null → Collapsed。用于条件显示标签文本。</summary>
+        /// <summary>
+        /// 字符串非空 → Visible，空/null → Collapsed。用于条件显示标签文本。
+        /// Maps a non-empty string to Visible and an empty/null string to Collapsed for conditional label display.
+        /// </summary>
         public static readonly IValueConverter StringToVisibilityConverter =
             new StringToVisConverter();
     }

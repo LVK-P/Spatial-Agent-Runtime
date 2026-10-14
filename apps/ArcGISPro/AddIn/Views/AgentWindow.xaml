@@ -113,7 +113,7 @@
             </Grid>
         </Border>
 
-        <!-- ★ Task panel: always collapsed until Phase 2 -->
+        <!-- ★ 任务面板：在第二阶段前始终折叠。 / Task panel: always collapsed until Phase 2. -->
         <Grid Grid.Row="2" Margin="10,10,10,0" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2.2*" />
@@ -134,7 +134,7 @@
             </Border>
         </Grid>
 
-        <!-- ★ Old approval banner: kept as reference, now replaced by the one inside Row 4 -->
+        <!-- ★ 旧审批横幅：保留作为参考，现已由第 4 行内的横幅替代。 / Old approval banner: kept as reference, now replaced by the one inside Row 4. -->
         <Border Grid.Row="3" Margin="10,10,10,0" Visibility="Collapsed"
                 Background="#FFF7E6" BorderBrush="#F0C36D" BorderThickness="1" CornerRadius="12" Padding="10,8">
             <Grid>
@@ -176,7 +176,7 @@
                 <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1"
                               VerticalScrollBarVisibility="Auto" Padding="14,12" Background="White">
                     <StackPanel>
-                        <!-- ★ Welcome / empty state -->
+                        <!-- ★ 欢迎/空状态。 / Welcome / empty state. -->
                         <Border Background="#F7FAFE" BorderBrush="#D7E3F4" BorderThickness="1" CornerRadius="12"
                                 Padding="18,16" Margin="0,0,0,12">
                             <Border.Style>
@@ -198,7 +198,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- ★ Chronological timeline: messages + trace groups (with plan info embedded) -->
+                        <!-- ★ 按时间排序的时间线：消息 + 轨迹组（内嵌计划信息）。 / Chronological timeline: messages + trace groups (with plan info embedded). -->
                         <ItemsControl ItemsSource="{Binding ExecutionTimelineItems}">
                             <ItemsControl.Style>
                                 <Style TargetType="ItemsControl">
@@ -218,7 +218,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Grid Margin="0,0,0,6">
-                                            <!-- ── Message bubble ── -->
+                                            <!-- ── 消息气泡 / Message bubble ── -->
                                             <Grid Visibility="{Binding IsMessage, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}">
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto" />
@@ -306,7 +306,7 @@
                                                            Visibility="{Binding HasTokenInfo, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}" />
                                             </Grid>
 
-                                            <!-- ── Trace group Expander (plan + traces, collapsed by default) ── -->
+                                            <!-- ── 轨迹组展开器（计划 + 轨迹，默认折叠） / Trace group Expander (plan + traces, collapsed by default) ── -->
                                             <Border Visibility="{Binding IsTraceGroup, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}"
                                                     Background="#FCFDFE" BorderBrush="#E0E6ED" BorderThickness="1"
                                                     CornerRadius="10" Padding="8,8" Margin="0,2,0,0">
@@ -341,7 +341,7 @@
                                                         </StackPanel>
                                                     </Expander.Header>
                                                     <StackPanel>
-                                                        <!-- ★ 计划步骤（如果本轮生成了计划） -->
+                                                        <!-- ★ 计划步骤（如果本轮生成了计划）。 / Plan steps (when this turn generated a plan). -->
                                                     <StackPanel Margin="0,4,0,8"
                                                                 Visibility="{Binding HasCardBadge, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}">
                                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
@@ -456,7 +456,7 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- ★ Approval banner: fixed at bottom of chat area, always visible when pending -->
+                <!-- ★ 审批横幅：固定在聊天区域底部，有待处理审批时始终可见。 / Approval banner: fixed at the bottom of the chat area and always visible while pending. -->
                 <Border Grid.Row="2" Margin="10,6,10,6"
                         Visibility="{Binding HasPendingApproval, Converter={x:Static local:AgentWindow.BoolToVisibilityConverter}}"
                         Background="#FFF7E6" BorderBrush="#F0C36D" BorderThickness="1" CornerRadius="12" Padding="12,10">
