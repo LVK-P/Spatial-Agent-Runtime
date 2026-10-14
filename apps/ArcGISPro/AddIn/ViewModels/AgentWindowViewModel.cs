@@ -292,7 +292,7 @@ namespace ArcGISProAIAgent.ViewModels
             {
                 var mcpServer = new McpStreamableHttpServer(_tools, knowledge, port: 8765);
                 _runtime.SetMcpService(mcpServer);
-                mcpServer.Start();  // Start immediately at host init so MCP clients can connect before first user message
+                mcpServer.Start();  // 宿主初始化时立即启动，使 MCP 客户端能在首条用户消息前连接。 / Start at host initialization so MCP clients can connect before the first user message.
                 Debug.WriteLine($"[ViewModel] MCP server started: {mcpServer.Url}");
             }
             catch (Exception ex)
@@ -434,7 +434,7 @@ namespace ArcGISProAIAgent.ViewModels
                         var mapInfo = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(mapInfoJson);
                         wkid = (int?)mapInfo?.wkid ?? 0;
                     }
-                    catch { /* WKID optional for workspace init */ }
+                    catch { /* 工作区初始化可不提供 WKID。 / WKID is optional for workspace initialization. */ }
 
                     _workspace = new WorkspaceTool();
                     await _workspace.InitializeAsync(_projFolder, wkid);
@@ -577,7 +577,7 @@ namespace ArcGISProAIAgent.ViewModels
             _tools.Register(new DescribeLayerTool());
             _tools.Register(new GetSelectionTool());
             _tools.Register(new GetProjectInfoTool());
-            _tools.Register(new ReadRowsTool());   // 小样本读行，受行数与字段数硬门槛约束。
+            _tools.Register(new ReadRowsTool());   // 小样本读行，受行数与字段数硬门槛约束。 / Small-sample row reads with hard row and field limits.
 
             // 核心模式 GP 工具（用于契约/验证）/ Core schema GP tools (for contracts/verification)
             var schemaReg = new ToolSchemaRegistry();
@@ -936,7 +936,7 @@ namespace ArcGISProAIAgent.ViewModels
             }
             catch
             {
-                BackupSizeText = "--";  // 无法访问时显示占位符
+                BackupSizeText = "--";  // 无法访问时显示占位符。 / Show a placeholder when inaccessible.
             }
         }
 
@@ -1826,7 +1826,10 @@ namespace ArcGISProAIAgent.ViewModels
             return int.TryParse(rawValue, out var parsed) ? parsed : null;
         }
 
-        /// <summary>工具名到领域操作描述的 UI 层映射；不修改 Runtime。</summary>
+        /// <summary>
+        /// 工具名到领域操作描述的 UI 层映射；不修改 Runtime。
+        /// UI-layer mapping from tool names to domain operation descriptions; does not modify Runtime.
+        /// </summary>
         private static string DescribeOperation(string toolName, object? argsObj)
         {
             var args = argsObj as Dictionary<string, object?>
@@ -1952,7 +1955,8 @@ namespace ArcGISProAIAgent.ViewModels
             if (lines.Count == 0)
                 return;
 
-            // ★ 计划合并到轨迹组：找到或创建 trace group，把计划行写入 CardLines
+            // ★ 计划合并到轨迹组：找到或创建 trace group，把计划行写入 CardLines。
+            // ★ Merge the plan into a trace group: find or create the group, then write plan lines to CardLines.
             var group = EnsureTraceGroup(turn);
             group.CardTitle = $"执行计划 · 第 {turn} 轮";
             group.CardBadge = badge;
@@ -1990,6 +1994,7 @@ namespace ArcGISProAIAgent.ViewModels
             catch
             {
                 // Ignore malformed plan payloads — the rest of the timeline remains usable.
+                // 忽略格式错误的计划负载，时间线的其余部分仍可使用。
             }
 
             return lines;
@@ -2032,6 +2037,7 @@ namespace ArcGISProAIAgent.ViewModels
             group.RefreshHasRunningItem();
 
             // 轨迹组默认由用户手动展开；审批总面板会单独自动展开。
+            // Trace groups are expanded manually by default; the approval summary panel expands independently.
         }
 
         private void AddMessage(string role, string content, string? tokenInfo = null)
@@ -2112,7 +2118,7 @@ namespace ArcGISProAIAgent.ViewModels
         }
 
         // ================================================================
-        // 快速指令
+        // 快速指令 / Quick commands
         // ================================================================
         private async Task<bool> HandleQuickCommand(string text)
         {
@@ -2181,6 +2187,9 @@ namespace ArcGISProAIAgent.ViewModels
         /// 把模型或思考档位切换写入 transcript，记录 Provider 的实际参数
         ///（llm.ModelName/ThinkingEffort），并与每轮 llm_request 的 model 字段互证。
         /// 通过 ITranscriptTurnWriter 契约写入。
+        /// Writes model or reasoning-level changes to the transcript using the Provider's effective parameters
+        /// (llm.ModelName/ThinkingEffort), cross-checks them against each llm_request model field,
+        /// and writes through the ITranscriptTurnWriter contract.
         /// </summary>
         private void LogModelSwitch(string reason)
         {
@@ -2188,7 +2197,7 @@ namespace ArcGISProAIAgent.ViewModels
             {
                 _transcript.WriteModelSwitch(reason, _llm.ModelName, _llm.ThinkingEffort);
             }
-            catch { /* 日志失败不影响模型切换。 */ }
+            catch { /* 日志失败不影响模型切换。 / A logging failure must not block model switching. */ }
         }
 
         private static AgentPermissionLevel PermissionLevelFromLabel(string label) => label switch
@@ -2206,7 +2215,7 @@ namespace ArcGISProAIAgent.ViewModels
         };
 
         // ================================================================
-        // 鎸佷箙鍖?
+        // 持久化 / Persistence
         // ================================================================
         private void LoadApiKey()
         {
@@ -2220,13 +2229,15 @@ namespace ArcGISProAIAgent.ViewModels
                     var encKey = (string?)d?.encKey;
                     if (!string.IsNullOrWhiteSpace(k))
                     {
-                        // Plaintext (legacy or first-run): use as-is, re-save encrypted
+                        // Plaintext (legacy or first-run): use as-is, then re-save it encrypted.
+                        // 明文（旧版本或首次运行）：直接使用，然后重新加密保存。
                         _llm.SetApiKey(k);
                         SaveApiKey(k);
                     }
                     else if (!string.IsNullOrWhiteSpace(encKey) && !string.IsNullOrWhiteSpace(encrypted))
                     {
-                        // Decrypt with DPAPI (CurrentUser scope)
+                        // Decrypt with DPAPI (CurrentUser scope).
+                        // 使用 DPAPI 解密（CurrentUser 作用域）。
                         byte[] keyBytes = Convert.FromBase64String(encKey);
                         byte[] dataBytes = Convert.FromBase64String(encrypted);
                         byte[] decrypted = System.Security.Cryptography.ProtectedData.Unprotect(
@@ -2247,6 +2258,8 @@ namespace ArcGISProAIAgent.ViewModels
             {
                 // Encrypt with DPAPI (Windows Data Protection API, CurrentUser scope).
                 // The key is only decryptable by the same Windows user on the same machine.
+                // 使用 DPAPI（Windows 数据保护 API，CurrentUser 作用域）加密；
+                // 该密钥只能由同一台计算机上的同一 Windows 用户解密。
                 byte[] entropy = new byte[16];
                 using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
                     rng.GetBytes(entropy);
@@ -2283,6 +2296,8 @@ namespace ArcGISProAIAgent.ViewModels
         /// <summary>
         /// 同步 flush 待落盘日志缓冲。关闭窗口时调用，防止缓冲日志丢失。
         /// 正常会话期间的落盘由各日志层的实时写入策略保证，不依赖此方法。
+        /// Synchronously flushes pending log buffers when closing the window to prevent buffered-log loss.
+        /// Normal-session persistence is provided by each logging layer's real-time write policy, not this method.
         /// </summary>
         public void FlushPendingWrites()
         {
@@ -2295,6 +2310,8 @@ namespace ArcGISProAIAgent.ViewModels
         /// Reversible close observation. It creates a synchronous recovery
         /// barrier without closing log streams or terminalizing the session,
         /// because ArcGIS Pro may still cancel its close sequence.
+        /// 可逆的关闭观察：创建同步恢复屏障，但不关闭日志流或终结会话，
+        /// 因为 ArcGIS Pro 仍可能取消关闭流程。
         /// </summary>
         public void PrepareForHostShutdown(string reason = "ArcGISProClosing")
         {
@@ -2320,6 +2337,8 @@ namespace ArcGISProAIAgent.ViewModels
         /// <summary>
         /// Synchronous, bounded and idempotent host-close barrier. ArcGIS Pro
         /// calls this even when the chat window was never closed explicitly.
+        /// 同步、有界且幂等的宿主关闭屏障；即使聊天窗口从未显式关闭，
+        /// ArcGIS Pro 也会调用此方法。
         /// </summary>
         public void FinalizeForHostShutdown(string reason = "ArcGISProClosing")
         {
@@ -2381,6 +2400,7 @@ namespace ArcGISProAIAgent.ViewModels
                     _snapshotter.Flush();
                 },
                 // The lease is the commit marker and is released last.
+                // 租约是提交标记，因此最后释放。
                 releaseLease: () => ReleaseSessionLease(terminationReason));
             if (!finalized)
                 FlushPendingWrites();
@@ -2422,6 +2442,8 @@ namespace ArcGISProAIAgent.ViewModels
         /// <summary>
         /// Ask LLM to extract 5W2H project facts from the conversation and persist.
         /// Called explicitly via /w5h2 or automatically at session end for new projects.
+        /// 请求 LLM 从对话中提取并持久化项目 5W2H 信息；可通过 /w5h2 显式调用，
+        /// 也可在新项目会话结束时自动调用。
         /// </summary>
         private async Task ExtractW5H2Async()
         {
@@ -2466,6 +2488,8 @@ namespace ArcGISProAIAgent.ViewModels
         /// <summary>
         /// Mid-session memory snapshot; saves lightweight session progress.
         /// Called after each agent response so work is not lost if Pro crashes.
+        /// 会话中途的记忆快照，用于保存轻量级会话进度；每次 Agent 响应后调用，
+        /// 避免 Pro 崩溃时丢失工作。
         /// </summary>
         private void SaveMemorySnapshot()
         {
@@ -2499,12 +2523,13 @@ namespace ArcGISProAIAgent.ViewModels
                 };
                 _memoryStore.RecordSessionSummary(snapshot);
             }
-            catch { /* non-blocking */ }
+            catch { /* 非阻塞。 / Non-blocking. */ }
         }
 
         private SessionSummary BuildSessionSummary()
         {
-            // 鈽?Structured tool chain: capture per-observation decisions, not just the last message
+            // ★ Structured tool chain: capture per-observation decisions, not just the last message.
+            // ★ 结构化工具链：捕获每次观察对应的决策，而不只记录最后一条消息。
             var toolChain = _session.Observations
                 .Select(o => o.ToolName)
                 .Distinct()
@@ -2762,7 +2787,7 @@ namespace ArcGISProAIAgent.ViewModels
         }
 
         // ================================================================
-        // INotifyPropertyChanged
+        // 属性变更通知 / INotifyPropertyChanged
         // ================================================================
         public event PropertyChangedEventHandler? PropertyChanged;
         public event Action? OnNewMessageAdded;
