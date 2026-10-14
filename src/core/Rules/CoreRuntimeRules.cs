@@ -25,37 +25,49 @@ namespace SpatialAgent.Core
         // ════════════════════════════════════════════════════════════════
 
         /// <summary>Key = 上回合调用的工具名, Value = 应预提升到 Tier1 的后继工具名</summary>
+        /// <remarks>English：Key = Name of the tool called last round, Value = Name of the successor tool that should be promoted to Tier 1</remarks>
         public static readonly Dictionary<string, string[]> ChainPredictions =
             new(StringComparer.OrdinalIgnoreCase)
         {
             // 投影 → 叠加分析链
+            // English：Projection → Overlay analysis chain
             ["management_Project"] = new[] { "analysis_Clip", "analysis_Intersect", "analysis_Erase", "analysis_Statistics" },
             // 裁剪/相交 → 擦除 + 统计链
+            // English：Clip/Intersect → Erase + Statistical Chain
             ["analysis_Clip"] = new[] { "analysis_Erase", "analysis_Statistics" },
             ["analysis_Intersect"] = new[] { "analysis_Erase", "analysis_Statistics", "management_SelectLayerByAttribute" },
             ["analysis_Erase"] = new[] { "analysis_Statistics" },
             // 缓冲 → 裁剪链
+            // English：Buffer → Cutting chain
             ["analysis_Buffer"] = new[] { "analysis_Clip", "analysis_Intersect" },
             // 合并 → 溶解/统计
+            // English：Merge → Dissolve/Statistics
             ["management_Merge"] = new[] { "management_Dissolve", "analysis_Statistics", "management_CalculateField" },
             ["management_Dissolve"] = new[] { "analysis_Statistics", "management_CalculateField" },
             // 字段赋值 → 统计/验证
+            // English：Field assignment → Statistics/validation
             ["management_CalculateField"] = new[] { "analysis_Statistics", "cc_read_rows" },
             ["management_AddField"] = new[] { "management_CalculateField", "analysis_Statistics" },
             // 映射赋值 → 统计/自检
+            // English：Mapping assignment → Statistics/self-check
             ["cc_map_field_values"] = new[] { "analysis_Statistics", "cc_lookup_land_code" },
             // 对照查询 → 映射赋值
+            // English：Mapping assignments to query → reference
             ["cc_lookup_land_code"] = new[] { "cc_map_field_values", "management_CalculateField" },
             // 选择 → 计算/统计
+            // English：Select → Calculate/Stat
             ["management_SelectLayerByAttribute"] = new[] { "management_CalculateField", "analysis_Statistics" },
             // 面积/长度计算 → 统计
+            // English：Area/length calculation → Statistics
             ["cc_calculate_area"] = new[] { "analysis_Statistics" },
             ["cc_calculate_length"] = new[] { "analysis_Statistics" },
             // 拓扑自交（快检路径）→ 擦除（空隙）
+            // English：Topological autocrossing (rapid detection path) → Erasure (voids)
             ["analysis_Union"] = new[] { "analysis_Erase", "analysis_Intersect" },
         };
 
         /// <summary>从上一回合的工具调用记录中提取后继预测——并入 Tier1</summary>
+        /// <remarks>English：Extract successor predictions from the previous round's tool call records—merge them into Tier 1</remarks>
         public static IReadOnlyList<string> PredictNextTools(
             IReadOnlyList<string>? lastTurnToolCalls)
         {
@@ -76,6 +88,7 @@ namespace SpatialAgent.Core
         // ════════════════════════════════════════════════════════════════
 
         /// <summary>Selection-mutating GP tools and their layer parameter names.</summary>
+        /// <remarks>中文：选择会修改状态的 GP 工具及其图层参数名。</remarks>
         public static readonly Dictionary<string, string[]> SelectionToolLayerParams =
             new(StringComparer.OrdinalIgnoreCase)
             {
@@ -88,6 +101,7 @@ namespace SpatialAgent.Core
         /// only then is a terminal selection kept. Deliberately excludes the
         /// generic "选择" (too ambiguous: "选择合适的方案").
         /// </summary>
+        /// <remarks>中文：用户消息关键词表明“选择功能即为任务”——只有此时才会保留终端选择。故意排除通用的“选择”（太模糊：“选择合适的方案”）。</remarks>
         public static readonly string[] SelectionIntentWords =
             { "选中", "选出", "挑出", "框选", "高亮", "select" };
 
@@ -98,6 +112,7 @@ namespace SpatialAgent.Core
         /// cleared UNLESS it is the turn's final executed step AND the user's
         /// message contains explicit selection intent.
         /// </summary>
+        /// <remarks>中文：决定哪些层需要在回合结束时清除其选择。边界（2026-07-19收紧）：除非是该回合的最后执行步骤且用户消息包含明确的选择意图，否则代理创建的选择会被清除。</remarks>
         public static IReadOnlyList<string> ResolveSelectionCleanups(
             IReadOnlyList<(string ToolName, IReadOnlyDictionary<string, object?>? Args)> executedSteps,
             string userMessage = "")
@@ -110,6 +125,7 @@ namespace SpatialAgent.Core
                     userMessage.Contains(w, StringComparison.OrdinalIgnoreCase));
 
             // layer → index of its last selection-setting call
+            // 中文：其最后一次选择设置调用的图层→索引
             var pending = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
             for (int i = 0; i < executedSteps.Count; i++)
@@ -152,6 +168,7 @@ namespace SpatialAgent.Core
         /// <summary>
         /// Build the standard CLEAR_SELECTION call for a layer.
         /// </summary>
+        /// <remarks>中文：构建标准CLEAR_SELECTION调用层。</remarks>
         public static ToolCall BuildSelectionClearCall(string layer) => new()
         {
             Name = "management_SelectLayerByAttribute",
@@ -166,6 +183,7 @@ namespace SpatialAgent.Core
         // ════════════════════════════════════════════════════════════════
         // 3. 状态文本映射
         // ════════════════════════════════════════════════════════════════
+        // English：3. State text mapping
 
         public static string StepStatusText(StepResultStatus st) => st switch
         {
@@ -180,6 +198,7 @@ namespace SpatialAgent.Core
         // ════════════════════════════════════════════════════════════════
         // 4. 续推指令兜底模板
         // ════════════════════════════════════════════════════════════════
+        // English：4. Continue push instructions to provide a bottom-line template
 
         public const string DefaultContinuationTemplate =
             "第{round}/{maxRounds}轮完成。本轮结果：{executedSummary}。剩余 {remaining} 轮。{warnNote}{blockedNote}\n\n" +

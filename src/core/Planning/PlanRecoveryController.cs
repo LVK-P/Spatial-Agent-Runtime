@@ -17,6 +17,7 @@ namespace SpatialAgent.Core
     /// Repeating the same rejected constraint signature is a runtime liveness
     /// failure, not evidence that another identical model retry will help.
     /// </summary>
+    /// <remarks>中文：检测无效恢复，却不知道用户意图或工具名称。重复相同的被拒绝约束签名是运行时活体失败，而非再次重试相同模型会有帮助的证据。</remarks>
     public sealed class PlanRecoveryController
     {
         private readonly Dictionary<string, int> _counts =

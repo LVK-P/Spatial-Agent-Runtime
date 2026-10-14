@@ -6,6 +6,7 @@ namespace SpatialAgent.Core
     /// Deterministic scope expansion. Default product policy is Expand when a
     /// unique expansion rule applies. No tool names and no physical plans.
     /// </summary>
+    /// <remarks>中文：确定性范围扩展。默认产品策略是当唯一扩展规则适用时，为“扩展”。没有工具名称，也没有实体设计图。</remarks>
     public static class DefaultScopeExpander
     {
         private static readonly HashSet<string> AlignToReferenceCapabilities =
@@ -55,6 +56,7 @@ namespace SpatialAgent.Core
                     // That is not over-expansion; it is the default universal set.
                     // Collapse to lineage/name-family representatives only when
                     // the user (or quantifier) explicitly prefers a representative.
+                    // 中文：乘积规则：当用户为几何类命名但未命名特定图层时，集合为“该类的所有成员”——如果两者都存在，原始+投影副本均计入。这不是过度扩张;它是默认的通用集。只有当使用者（或量词）明确偏好某个代表时，才会崩溃为血统/名称家族代表。
                     bool preferRepresentative =
                         scope.Quantifier ==
                             GoalTargetQuantifier.RepresentativePerLineage
@@ -119,6 +121,7 @@ namespace SpatialAgent.Core
             // expansion rule stay NotRequired. The coverage/admissibility
             // boundary may authorize a genuinely new OutputOnly artifact, but
             // cannot authorize mutation of existing state without a target.
+            // 中文：适用但成员数为零的扩展规则仍不充分。没有匹配扩展规则的自由变更能力依然不是必需项。覆盖范围/可采纳性边界可以授权真正的新 OutputOnly 产物，但不能授权在无目标时修改现有状态。
             bool alignAttempted = hasAlignCapability && scope.ReferenceTargets.Count > 0;
             bool categoryAttempted = scope.DomainCategories.Count > 0
                 && scope.Quantifier is GoalTargetQuantifier.AllPhysicalTargets
@@ -143,6 +146,7 @@ namespace SpatialAgent.Core
         /// Collapse physical candidates to operable representatives so safety
         /// contracts stay tight without starving the agent of executable work.
         /// </summary>
+        /// <remarks>中文：将实体候选人整合为可操作的代表，以确保安全合同紧密，同时不使智能体缺乏可执行的工作。</remarks>
         internal static List<string> CollapseToOperableRepresentatives(
             IEnumerable<LayerInfo> layers)
         {
@@ -153,6 +157,7 @@ namespace SpatialAgent.Core
                 return new List<string>();
 
             // 1) Prefer lineage depth when the host provides roots.
+            // 中文：1）当宿主提供根节点时，优先使用谱系深度。
             var withLineage = list
                 .Where(layer => !string.IsNullOrWhiteSpace(layer.LineageRoot))
                 .GroupBy(
@@ -172,6 +177,7 @@ namespace SpatialAgent.Core
 
             // 2) Name-family collapse for layers without lineage
             //    (e.g. roads vs roads_4490 after Project).
+            // 中文：2）无谱系层（例如项目后的道路与roads_4490层）名称族崩溃。
             var noLineage = list
                 .Where(layer => string.IsNullOrWhiteSpace(layer.LineageRoot)
                     || !lineageRoots.Contains(layer.LineageRoot))
@@ -199,6 +205,7 @@ namespace SpatialAgent.Core
         {
             string value = name.Trim();
             // Strip common CRS / projection suffixes produced by agent Project.
+            // 中文：去除由Project代理产生的常见CRS / 投影后缀。
             value = System.Text.RegularExpressions.Regex.Replace(
                 value,
                 @"_(?:4490|4326|3857|4547|proj|project|projected)$",

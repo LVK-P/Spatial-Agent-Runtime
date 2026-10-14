@@ -7,6 +7,7 @@ namespace SpatialAgent.Core
     /// cross-turn domain artifact ledger. The ledger is driven by invocation
     /// effects and logical capabilities, never by a physical tool name.
     /// </summary>
+    /// <remarks>中文：把已验证的现场生成和移除转换归并到跨轮次领域产物账本。账本由调用效果和逻辑能力驱动，绝不依赖物理工具名称。</remarks>
     public sealed class DefaultDomainArtifactLedger
     {
         public void Apply(

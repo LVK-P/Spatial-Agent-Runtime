@@ -22,6 +22,7 @@ namespace SpatialAgent.Core
     public static class CoreReconciliationRules
     {
         /// <summary>Parse "· layerName：GeometryType，…" style lines into layer names.</summary>
+        /// <remarks>中文：解析 “·layerName：GeometryType,...”样式线条变成图层名称。</remarks>
         public static IEnumerable<string> ParseLayerNames(string? mapInfo)
         {
             if (string.IsNullOrWhiteSpace(mapInfo))
@@ -47,6 +48,7 @@ namespace SpatialAgent.Core
         /// Extract the layer names referenced in a past session's transcript lines.
         /// Parses context_gathered events for map layer descriptions.
         /// </summary>
+        /// <remarks>中文：提取上次会话转录中提到的层名。解析context_gathered事件以描述地图图层。</remarks>
         public static List<string> ExtractReferencedLayers(IEnumerable<string> transcriptLines)
         {
             var layers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -66,7 +68,7 @@ namespace SpatialAgent.Core
                     foreach (var name in ParseLayerNames(mapInfo))
                         layers.Add(name);
                 }
-                catch (Newtonsoft.Json.JsonException) { /* corrupt transcript line — skip */ }
+                catch (Newtonsoft.Json.JsonException) { /* 转录行损坏，跳过。 / Corrupt transcript line; skip it. */ }
             }
 
             return layers.ToList();
@@ -76,6 +78,7 @@ namespace SpatialAgent.Core
         /// Extract the tool chain from a past session's transcript lines.
         /// Parses tool_end events.
         /// </summary>
+        /// <remarks>中文：从上次会话的转录记录中提取工具链，并解析 tool_end 事件。</remarks>
         public static List<string> ExtractToolChain(IEnumerable<string> transcriptLines)
         {
             var tools = new List<string>();
@@ -93,7 +96,7 @@ namespace SpatialAgent.Core
                     if (!string.IsNullOrWhiteSpace(toolName))
                         tools.Add(toolName);
                 }
-                catch (Newtonsoft.Json.JsonException) { /* corrupt transcript line — skip */ }
+                catch (Newtonsoft.Json.JsonException) { /* 转录行损坏，跳过。 / Corrupt transcript line; skip it. */ }
             }
 
             return tools;
@@ -106,6 +109,7 @@ namespace SpatialAgent.Core
         /// ★ Truthfulness rule: 空数据 ≠ 零图层。只有当两边都有提取结果时才声称变更。
         /// 解析失败 → canDiff=false → 不制造虚假声明。
         /// </summary>
+        /// <remarks>中文：纯微分计算：比较过去会话层与当前地图层。返回（stillPresent、missing、newLayers、needsAttention）。Truthfulness rule： 空数据 ≠ 零图层。只有当两边都有提取结果时才声称变更。解析失败 → canDiff=false → 不制造虚假声明。</remarks>
         public static (List<string> StillPresent, List<string> Missing, List<string> New, bool NeedsAttention)
             ComputeDiff(
                 IReadOnlyList<string> pastLayers,
@@ -132,6 +136,7 @@ namespace SpatialAgent.Core
     /// <summary>
     /// Result of comparing past session state with current project reality.
     /// </summary>
+    /// <remarks>中文：表示上次会话状态与当前项目实际状态的比较结果。</remarks>
     public class ReconciliationReport
     {
         public string PastThreadId { get; set; } = "";
@@ -148,6 +153,7 @@ namespace SpatialAgent.Core
         /// Build a human-readable summary for injection into the system prompt.
         /// Only states facts that were actually observed.
         /// </summary>
+        /// <remarks>中文：构建一个人类可读的摘要，注入系统提示中。只陈述了实际观察到的事实。</remarks>
         public string ToPromptInjection()
         {
             var parts = new List<string>

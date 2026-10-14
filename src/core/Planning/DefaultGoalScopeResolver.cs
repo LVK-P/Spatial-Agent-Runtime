@@ -50,6 +50,7 @@ namespace SpatialAgent.Core
             // patch even when the user naturally omits words such as “change”.
             // This is structural comparison, not an operation-specific phrase
             // exception: any domain pack can contribute parameter constraints.
+            // 中文：仅更改类型满足参数的回合，即使用户自然省略“change”等词语，也是一个目标补丁。这是结构比较，而非操作特定的短语例外：任何域包都可以贡献参数约束。
             if (patch?.ParameterConstraints.Count > 0
                 && !patch.ResourceBindings.Any(binding =>
                     binding.Role == GoalResourceRole.Target
@@ -84,6 +85,7 @@ namespace SpatialAgent.Core
     /// only the user contract and the host catalog; a proposed physical plan
     /// cannot influence or commit semantic state.
     /// </summary>
+    /// <remarks>中文：拥有目标身份和会话继承权。解析器只消耗用户合同和主机目录;拟议的物理计划不能影响或承诺语义状态。</remarks>
     public sealed class DefaultGoalScopeResolver : IGoalScopeResolver
     {
         private readonly IGoalContractCompiler _compiler;
@@ -239,6 +241,7 @@ namespace SpatialAgent.Core
                     categories)
             };
             // Default product policy: Expand when a unique rule applies.
+            // 中文：默认产品策略：当唯一规则适用时展开。
             DefaultScopeExpander.ExpandInPlace(scope, context);
             scope.ContractFingerprint = ComputeFingerprint(scope);
             return scope;

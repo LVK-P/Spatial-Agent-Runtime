@@ -7,6 +7,7 @@ namespace SpatialAgent.Core
     /// Validates a physical plan against an already compiled goal. It cannot
     /// resolve, broaden or commit goal state.
     /// </summary>
+    /// <remarks>中文：验证物理计划是否符合已编译目标；它不能解析、扩大或提交目标状态。</remarks>
     public sealed class DefaultPlanCoverageValidator : IPlanCoverageValidator
     {
         public TargetCoverageResult Validate(
@@ -63,6 +64,7 @@ namespace SpatialAgent.Core
             // The goal compiler declared mutating work without a determinate
             // target set. This uncertainty cannot be converted into write
             // authorization by the physical plan.
+            // 中文：目标编译器声明了变更工作，却没有确定目标集合。物理计划不能把这种不确定性转化为写入授权。
             if (scope.ScopeSufficiency is GoalScopeSufficiency.Insufficient
                     or GoalScopeSufficiency.ClarificationRequired)
             {
@@ -92,6 +94,7 @@ namespace SpatialAgent.Core
             {
                 // Existing-state mutation without a compiled target boundary is
                 // not authorized. New artifacts are handled by OutputOnly above.
+                // 中文：缺少已编译目标边界时，不得修改现有状态。新产物由上方的 OutputOnly 分支处理。
                 return new TargetCoverageResult
                 {
                     IsApplicable = true,

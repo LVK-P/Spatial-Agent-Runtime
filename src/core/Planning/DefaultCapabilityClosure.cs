@@ -12,6 +12,7 @@ namespace SpatialAgent.Core
     /// the catalog's keyword heuristics missed it. This prevents architecture
     /// starvation — a catalog mapping gap must not hard-block a correct tool plan.
     /// </summary>
+    /// <remarks>中文：将ArcGIS工具映射到稳定的逻辑能力。工具名称仅存在于适配器边界;目标层和完成层消耗ID。还提供反向检查：当声明集合中缺少某项能力时，PlausiblyProvidesCapability 会检查工具的身份（名称 + 描述）是否表明即使目录的关键词启发式未包含该功能，它仍然可能提供该能力。这防止了架构枯竭——目录映射缺口不应硬性阻塞正确的工具计划。</remarks>
     public sealed class DefaultCapabilityCatalog : ICapabilityCatalog
     {
         public IReadOnlyList<string> ResolveProvidedCapabilities(
@@ -118,6 +119,7 @@ namespace SpatialAgent.Core
         // one of these but the catalog didn't declare the capability, the gap is
         // Soft (Warning) rather than Hard (Error).
         // ════════════════════════════════════════════════════════════════
+        // 中文：反向映射：能够利用身份→关键词进行合理检查。这些与ResolveProvidedCapabilities中使用的同类关键词族，以及更广泛的防御纵壕通用词。当工具的身份符合其中一个，但目录未声明该能力时，空白是软（警告）而非困难（错误）。
 
         private static readonly IReadOnlyDictionary<string, string[]> PlausibleKeywords =
             new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
@@ -176,6 +178,7 @@ namespace SpatialAgent.Core
         /// Hard gaps (genuinely missing capability) from Soft gaps (catalog
         /// mapping is incomplete but the tool probably provides it).
         /// </summary>
+        /// <remarks>中文：检查工具的身份（名称+描述）是否合理地与某项所需能力相关，尽管目录中的关键词启发式没有匹配。闭合验证器用来区分硬缺口（真正缺失的能力）和软缺口（目录映射不完整，但工具可能提供）。</remarks>
         public static bool PlausiblyProvidesCapability(
             string toolName,
             IToolDescriptor? descriptor,
@@ -246,6 +249,7 @@ namespace SpatialAgent.Core
             // For each missing capability, check if ANY plan step's tool
             // identity plausibly relates to it. If yes, the gap is a catalog
             // mapping issue — not a genuine missing capability. Treat as Soft.
+            // 中文：软门控：对于每项缺失但合理的未确认能力，检查计划步骤中的工具身份是否与之相关。若相关，则缺口来自目录映射，而非能力真正缺失，应按软缺口处理。
             var plausible = new List<string>();
             foreach (string capabilityId in missing)
             {

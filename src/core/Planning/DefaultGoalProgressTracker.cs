@@ -7,6 +7,7 @@ namespace SpatialAgent.Core
     /// A completed subset is durable progress; it is never discarded merely
     /// because the current batch did not cover the whole goal.
     /// </summary>
+    /// <remarks>中文：在物理计划批次中保持单调、目标级别的进展。完成的子集是持久的进展;从不因为当前批次未覆盖全部目标而被舍弃。</remarks>
     public sealed class DefaultGoalProgressTracker : IGoalProgressTracker
     {
         public GoalProgressUpdate Update(

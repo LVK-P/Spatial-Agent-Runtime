@@ -7,6 +7,7 @@ namespace SpatialAgent.Core
     /// compiler never knows ArcGIS parameter names; descriptors remain the
     /// authority for the concrete schema and accepted enum values.
     /// </summary>
+    /// <remarks>中文：将稳定的目标语义映射到物理工具参数。目标编译器永远不知道ArcGIS参数名称;描述符仍然是具体模式和被接受枚举值的权威。</remarks>
     public static class GoalParameterConstraintBinder
     {
         private static readonly IReadOnlyDictionary<string, string[]> Aliases =

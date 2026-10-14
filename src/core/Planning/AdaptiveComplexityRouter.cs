@@ -7,6 +7,7 @@ namespace SpatialAgent.Core
     /// one-call path and reserves planner/subagent cost for genuinely complex
     /// or high-risk work.
     /// </summary>
+    /// <remarks>中文：廉价的确定性路由使简单的桌面交互保持在单通话路径上，并将规划员/分代理的成本留给真正复杂或高风险的工作。</remarks>
     public sealed class AdaptiveComplexityRouter : IComplexityRouter
     {
         private readonly ComplexityRoutingPolicy _policy;

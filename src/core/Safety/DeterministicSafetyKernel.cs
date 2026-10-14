@@ -6,6 +6,7 @@ namespace SpatialAgent.Core
     /// Pure deterministic policy kernel. LLM planners and reviewers may supply
     /// evidence, but they cannot override this decision.
     /// </summary>
+    /// <remarks>中文：纯确定性策略内核。LLM的规划者和审核员可以提供证据，但他们不能推翻这一决定。</remarks>
     public sealed class DeterministicSafetyKernel : IInvocationSafetyKernel
     {
         public SafetyDecision Evaluate(

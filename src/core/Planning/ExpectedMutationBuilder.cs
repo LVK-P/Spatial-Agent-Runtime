@@ -7,6 +7,7 @@ namespace SpatialAgent.Core
     /// Workspace-routed outputs are included so host probes close the loop with
     /// agent write routing (agentworkspace.gdb), without special-casing tools.
     /// </summary>
+    /// <remarks>中文：从已编译步骤和效果推导计划级变更预算。它包含工作区路由输出，因此宿主探测可通过代理写入路由（agentworkspace.gdb）闭环，无需特殊包装工具。</remarks>
     public static class ExpectedMutationBuilder
     {
         public static ExpectedMutationSet Build(AgentPlan plan)

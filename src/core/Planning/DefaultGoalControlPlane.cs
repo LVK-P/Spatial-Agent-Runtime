@@ -15,6 +15,7 @@ namespace SpatialAgent.Core
     /// approval resumption. The model proposes actions; this controller owns
     /// deterministic goal termination.
     /// </summary>
+    /// <remarks>中文：和解后决策表面与正常执行和批准恢复共享。模型提出动作;该控制器拥有确定性目标终止权。</remarks>
     public sealed class DefaultGoalControlPlane
     {
         public GoalControlState Decide(

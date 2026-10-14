@@ -5,6 +5,7 @@ namespace SpatialAgent.Core
     /// All modules (Scheduler, PostConditionValidationRule, SchemaGPToolAdapter)
     /// route through this to avoid duplicated keyword matching logic.
     /// </summary>
+    /// <remarks>中文：用于分类GP工具参数名称的集中启发式方法。所有模块（Scheduler、PostConditionValidationRule、SchemaGPToolAdapter）都会通过该流程路由，以避免重复的关键词匹配逻辑。</remarks>
     public static class ParameterNameClassifier
     {
         public static bool IsOutputParameter(string? name)
@@ -27,6 +28,7 @@ namespace SpatialAgent.Core
             // ArcGIS uses the "out_*" prefix for both datasets and settings.
             // Treating settings such as out_coor_system=4490 as paths makes a
             // valid multi-layer batch look like it has duplicate outputs.
+            // 中文：ArcGIS 在数据集和设置中都使用“out_*”前缀。将诸如 out_coor_system=4490 这样的设置视为路径，使有效的多层批次看起来像是有重复的输出。
             string[] exact =
             {
                 "out_coor_system", "output_coordinate_system",
@@ -45,6 +47,7 @@ namespace SpatialAgent.Core
         /// Returns true when the parameter name looks like a GIS data source
         /// (feature class, layer, table, dataset, etc.).
         /// </summary>
+        /// <remarks>中文：紧密匹配——由备份解析器和verify_no_overlap使用。当参数名称看起来像GIS数据源（特征类、图层、表、数据集等）时，返回为真。</remarks>
         public static bool LooksLikeInputDataSource(string? key)
         {
             if (string.IsNullOrWhiteSpace(key))
@@ -53,14 +56,17 @@ namespace SpatialAgent.Core
             string lower = key.Trim().ToLowerInvariant();
 
             // Never consider output parameters as data sources.
+            // 中文：永远不要把输出参数当作数据源。
             if (IsOutputParameter(lower))
                 return false;
 
             // Field/expression/configuration parameters are NOT data sources.
+            // 中文：字段/表达式/配置参数不是数据源。
             if (HasBadQualifier(lower))
                 return false;
 
             // Must contain at least one geometry/data qualifier.
+            // 中文：必须包含至少一个几何/数据限定词。
             return HasDataSourceQualifier(lower);
         }
 
@@ -68,6 +74,7 @@ namespace SpatialAgent.Core
         /// Broader match — used for input parameter inference when manifest
         /// metadata is absent (SchemaGPToolAdapter fallback).
         /// </summary>
+        /// <remarks>中文：更广泛的匹配——在缺乏manifest元数据时用于输入参数推断（SchemaGPToolAdapter的备用）。</remarks>
         public static bool IsLikelyInputParameter(string? name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -76,6 +83,7 @@ namespace SpatialAgent.Core
             string lower = name.Trim().ToLowerInvariant();
 
             // Must not look like an output parameter.
+            // 中文：不能看起来像输出参数。
             if (IsOutputParameter(lower))
                 return false;
 

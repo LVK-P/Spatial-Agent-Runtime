@@ -7,6 +7,7 @@ namespace SpatialAgent.Core
     /// Compiles user language into a planner-independent semantic contract.
     /// Physical tools and proposed calls are deliberately unavailable here.
     /// </summary>
+    /// <remarks>中文：将用户语言编译成与规划器无关的语义契约。这里故意没有提供实体工具和拟议通话。</remarks>
     public sealed class DefaultGoalContractCompiler : IGoalContractCompiler
     {
         private static readonly IReadOnlyDictionary<string, string[]> CategoryTerms =
@@ -331,6 +332,7 @@ namespace SpatialAgent.Core
             // A single category may be provided elsewhere in the sentence.
             // Preserve it for a conventional "delete <field> field" clause,
             // but never guess among multiple resource categories.
+            // 中文：句子的其他地方可能只给出一个类别。保留它作为传统的“删除字段”子句，但切勿在多个资源类别之间猜测。
             if (requirements.Count == 0 && categories.Count == 1)
             {
                 var fallback = Regex.Match(

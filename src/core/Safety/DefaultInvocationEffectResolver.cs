@@ -7,6 +7,7 @@ namespace SpatialAgent.Core
     /// compact effect model. Domain packs may provide a richer static profile;
     /// this resolver supplies a conservative fallback for every tool.
     /// </summary>
+    /// <remarks>中文：将静态工具元数据和已解析的调用参数转换为紧凑的效果模型。领域包可以提供更丰富的静态配置；此解析器为每个工具提供保守回退。</remarks>
     public sealed class DefaultInvocationEffectResolver : IInvocationEffectResolver
     {
         public InvocationEffect Resolve(
@@ -279,6 +280,7 @@ namespace SpatialAgent.Core
     /// effects and stronger safeguards, but it cannot erase effects, backup
     /// requirements, single-writer constraints, or reversibility risk.
     /// </summary>
+    /// <remarks>中文：强制执行扩展权限边界：域包可以添加效果和更强的保护措施，但不能消除效果、备份要求、单写者约束或可逆性风险。</remarks>
     public static class EffectProfilePolicy
     {
         public static EffectProfile MergeIncreaseOnly(

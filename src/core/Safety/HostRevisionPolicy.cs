@@ -5,6 +5,7 @@ namespace SpatialAgent.Core
     /// <summary>
     /// Pure causal policy for host revision diffs. No ArcGIS calls.
     /// </summary>
+    /// <remarks>中文：纯因果政策处理宿主修正差异。没有ArcGIS调用。</remarks>
     public static class HostRevisionPolicy
     {
         public static HostStateGuardResult Evaluate(
@@ -56,6 +57,7 @@ namespace SpatialAgent.Core
             // A mutation budget is only a forecast. Before this plan has
             // actually committed a write, it can never explain a live host
             // change: that change is external by definition.
+            // 中文：变更预算只是预测。在计划实际提交写入前，它不可能解释实时宿主状态的变化；这种变化本质上来自外部。
             bool selfExplained = onlySelfWriteSurfaces
                 && planHasCommittedMutation
                 && hasBudget
@@ -66,6 +68,7 @@ namespace SpatialAgent.Core
                 return new HostStateGuardResult
                 {
                     // Treat as current for scheduling: adopt current as baseline.
+                    // 中文：排班时视为当前：采用当前为基线。
                     IsCurrent = true,
                     Decision = HostRevisionDecision.SelfCommitted,
                     Reason =

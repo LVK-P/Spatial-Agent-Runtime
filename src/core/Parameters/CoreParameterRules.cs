@@ -19,15 +19,18 @@ namespace SpatialAgent.Core
         /// Fuzzy substring match — case-insensitive exact, then containment.
         /// Returns canonical form on match, null otherwise.
         /// </summary>
+        /// <remarks>中文：模糊子串匹配——大小写不区分的精确，然后是包含。匹配时返回规范形式，否则无效。</remarks>
         public static string? FuzzySubstringMatch(string input, List<string> validValues)
         {
             var upper = input.ToUpperInvariant();
             // Prefer exact substring match
+            // 中文：偏好精确的子串匹配
             var exact = validValues.FirstOrDefault(v =>
                 v.ToUpperInvariant() == upper);
             if (exact != null) return exact;
 
             // Then containment match
+            // 中文：然后是遏制匹配
             var contains = validValues.FirstOrDefault(v =>
                 v.ToUpperInvariant().Contains(upper) ||
                 upper.Contains(v.ToUpperInvariant()));
@@ -37,11 +40,12 @@ namespace SpatialAgent.Core
         /// <summary>
         /// Validate that a numeric parameter value falls within [MinValue, MaxValue].
         /// </summary>
+        /// <remarks>中文：验证某个数值参数值是否落在[最小值，最大值]范围内。</remarks>
         public static (bool valid, string? error) ValidateNumericRange(
             string name, object? val, double? minValue, double? maxValue)
         {
             if (!double.TryParse(val?.ToString(), out var num))
-                return (true, null); // non-numeric → defer to type validator
+                return (true, null); // 非数值则交给类型验证器。 / Non-numeric values are deferred to the type validator.
 
             if (minValue.HasValue && num < minValue.Value)
                 return (false, $"参数 {name} 值 {num} 小于最小值 {minValue}");
@@ -54,6 +58,7 @@ namespace SpatialAgent.Core
         /// <summary>
         /// Validate that a parameter value is a numeric CLR type or parseable as long/double.
         /// </summary>
+        /// <remarks>中文：验证参数值是否为数值 CLR 类型，或能否解析为 long/double。</remarks>
         public static string? ValidateNumericType(string name, object? val)
         {
             if (val is long or int or double or float) return null;

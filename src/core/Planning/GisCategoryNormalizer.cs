@@ -9,6 +9,7 @@ namespace SpatialAgent.Core
     /// DefaultPlanCoverageValidator (line 311), and DefaultScopeExpander
     /// (line 269). Consolidated 2026-07-27 during phase2 sanitization.
     /// </summary>
+    /// <remarks>中文：共享纯工具用于GIS几何类别归一化和谱系偏好检测。零主机/I/O依赖——根据ADR 0056，核心层安全。此前在 DefaultGoalScopeResolver（第 426 行）、DefaultPlanCoverageValidator（第 311 行）和 DefaultScopeExpander（第 269 行）之间重复使用。合并日期为2026-07-27，处于第二阶段消毒期间。</remarks>
     public static class GisCategoryNormalizer
     {
         /// <summary>
@@ -16,6 +17,7 @@ namespace SpatialAgent.Core
         /// DefaultGoalContractCompiler.LineagePreferenceTerms and
         /// DefaultScopeExpander.HasLineagePreferenceLanguage.
         /// </summary>
+        /// <remarks>中文：统一的血统偏好语言术语。合并自 DefaultGoalContractCompiler.LineagePreferenceTerms 和 DefaultScopeExpander.HasLineagePreferenceLanguage。</remarks>
         public static readonly string[] LineagePreferenceTerms =
         {
             "每条血缘", "每个血缘", "最新版本", "最深版本", "派生版本优先",
@@ -30,6 +32,7 @@ namespace SpatialAgent.Core
         /// Accepts both English values ("Polygon", "Polyline", …) and
         /// Chinese descriptions ("面", "线", …) for defense-in-depth.
         /// </summary>
+        /// <remarks>中文：将ArcGIS几何类型字符串归一化为稳定的类别键。接受英文数值（“Polygon”、“Polyline”等）和中文描述（“面”、“线”等）进行纵深防御。</remarks>
         public static string NormalizeGeometry(string? geometryType)
         {
             string lower = (geometryType ?? "").Trim().ToLowerInvariant();
@@ -54,6 +57,7 @@ namespace SpatialAgent.Core
         /// Detect whether the user's goal text expresses a preference for
         /// lineage/crs-derived representatives rather than all physical members.
         /// </summary>
+        /// <remarks>中文：检测用户的目标文本是否偏好源自血统/CRS的代表，而非所有实体成员。</remarks>
         public static bool HasLineagePreferenceLanguage(string? goal)
         {
             if (string.IsNullOrWhiteSpace(goal))

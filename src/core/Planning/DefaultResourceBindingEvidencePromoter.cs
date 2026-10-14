@@ -9,6 +9,7 @@ namespace SpatialAgent.Core
     /// It consumes only physical input identity, typed observation, host schema
     /// and goal lineage constraints; model prose and tool names are unavailable.
     /// </summary>
+    /// <remarks>中文：促进只读支持探针成功进入类型绑定补丁。它仅消耗物理输入身份、类型观察、宿主模式和目标系谱约束;模板、散文和工具名称不可用。</remarks>
     public sealed class DefaultResourceBindingEvidencePromoter :
         IResourceBindingEvidencePromoter
     {

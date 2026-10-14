@@ -13,6 +13,7 @@ namespace SpatialAgent.Core
     /// It never evaluates permission, backup or host freshness. Those remain
     /// authoritative in SafetyGate and Scheduler immediately before execution.
     /// </summary>
+    /// <remarks>中文：将独立验证者的发现转换为一个运行时决策。评估者有意区分：- 硬安全/授权/完整性边界;- 目标进度义务，可能在模型轮次中保持开放;- 只读探针，提升知识但不声称完成。它从不评估权限、备份或主机的新鲜度。这些在执行前立即在SafetyGate和Scheduler中保持权威。</remarks>
     public sealed class DefaultPlanAdmissibilityEvaluator :
         IPlanAdmissibilityEvaluator
     {
@@ -54,6 +55,7 @@ namespace SpatialAgent.Core
             {
                 // Error-severity findings without an executable disposition
                 // remain fail-closed for backward-compatible validators.
+                // 中文：没有可执行判定的错误严重性发现对向后兼容的验证者来说仍然是失败封闭状态。
                 result.Decision = PlanAdmissibilityDecision.Block;
                 result.Issues.AddRange(validationErrors);
                 return result;
@@ -96,6 +98,7 @@ namespace SpatialAgent.Core
             // A read-only action is an epistemic probe. Goal closure is not an
             // execution prerequisite because the probe cannot mutate business
             // state or falsely satisfy a mutating obligation.
+            // 中文：只读动作是用于获取信息的探测。目标闭合不是其执行前提，因为探测不会改变业务状态，也不会虚假满足变更义务。
             if (!hasBusinessWrites)
             {
                 result.Decision = PlanAdmissibilityDecision.Probe;

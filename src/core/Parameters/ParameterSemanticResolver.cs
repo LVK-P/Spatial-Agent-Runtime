@@ -9,6 +9,7 @@ namespace SpatialAgent.Core
     /// verification and UI projections should consume this single semantic
     /// classification instead of maintaining tool-specific parameter lists.
     /// </summary>
+    /// <remarks>中文：首先解析描述符元数据中的参数含义，其次才确定稳定的ArcGIS命名/数据类型惯例。运行时安全、审批、验证和界面投影应使用这一单一语义分类，而非维护工具特定的参数列表。</remarks>
     public enum ParameterSemanticKind
     {
         Unknown,
