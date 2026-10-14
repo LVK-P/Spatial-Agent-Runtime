@@ -5,6 +5,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// <summary>
     /// Skill matching provider. Concrete implementation in Runtime (SkillManager).
     /// </summary>
+    /// <remarks>中文：技能匹配提供者。运行时（SkillManager）中的具体实现。</remarks>
     public interface ISkillProvider
     {
         int Count { get; }
@@ -25,6 +26,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// the model cannot call is dead text (e.g. topology chain tools are never
         /// in the context-filtered top-50 unless a skill pulls them in).
         /// </summary>
+        /// <remarks>中文：这项技能的工作流程依赖的工具（模式名称）。当技能匹配时合并到暴露工具集中——如果技能引用模型无法调用的工具，则是死文本（例如拓扑链工具除非技能拉入上下文过滤的前50名）。</remarks>
         public List<string> RequiredTools { get; set; } = new();
     }
 }

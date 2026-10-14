@@ -15,6 +15,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Implementations provide case-insensitive matching, common alias tables,
     /// and type-system conversion (e.g. "string" → "TEXT" for field_type).
     /// </summary>
+    /// <remarks>中文：把 LLM 生成的枚举值解析为规范的 GP 工具值。实现应提供不区分大小写的匹配、常用别名表和类型系统转换（例如 field_type 的 "string" → "TEXT"）。</remarks>
     public interface IEnumAliasProvider
     {
         /// <summary>
@@ -24,6 +25,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// <param name="paramName">Parameter name (e.g. "field_type", "selection_type").</param>
         /// <param name="inputValue">LLM-provided value (may be wrong case, alias, or chinese).</param>
         /// <returns>Canonical enum value, or null if unresolvable.</returns>
+        /// <remarks>中文：把可能不正确的枚举值解析为规范形式。找不到匹配时返回 null，由调用方报告错误。参数名示例为 "field_type"、"selection_type"；输入值可能存在大小写错误、使用别名或为中文。</remarks>
         string? ResolveAlias(string paramName, string inputValue);
 
         /// <summary>
@@ -31,6 +33,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// type system (GP field types, GP selection types) rather than free-form
         /// enums. Type selectors benefit from an additional conversion step.
         /// </summary>
+        /// <remarks>中文：该参数是否为“类型选择器”，即其值属于类型系统（GP 字段类型、GP 选择类型），而非自由形式枚举。类型选择器可使用额外的转换步骤。</remarks>
         bool IsTypeSelector(string paramName);
 
         /// <summary>
@@ -38,6 +41,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// E.g. "string" → "TEXT", "integer" → "LONG", "double" → "DOUBLE".
         /// Returns null if no conversion available.
         /// </summary>
+        /// <remarks>中文：把通用类型名转换为 GP 专用值，例如 "string" → "TEXT"、"integer" → "LONG"、"double" → "DOUBLE"；没有可用转换时返回 null。</remarks>
         string? ConvertType(string paramName, string typeNameFromLLM);
     }
 }

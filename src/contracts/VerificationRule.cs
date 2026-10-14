@@ -4,6 +4,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Verification rule definition — specifies what to check after tool execution.
     /// Used by PostConditionVerifier and GPToolContract.
     /// </summary>
+    /// <remarks>中文：验证规则定义——规定工具执行后需要检查的内容。被PostConditionVerifier和GPToolContract使用。</remarks>
     public class VerificationRule
     {
         public string Type { get; set; } = "notnull";

@@ -11,6 +11,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Adapter-neutral request to prove that numeric values satisfy the same
     /// capability and parameter contract that governed execution.
     /// </summary>
+    /// <remarks>中文：适配器中性请求，用于证明数值满足与执行相同的能力和参数契约。</remarks>
     public sealed class ParameterScopedProofRequirement
     {
         public string ProofObligationId { get; set; } = "";

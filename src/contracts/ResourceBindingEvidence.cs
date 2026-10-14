@@ -48,6 +48,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Evaluates completed support probes and proposes binding patches. The
     /// policy cannot execute tools, approve mutations or parse model prose.
     /// </summary>
+    /// <remarks>中文：评估已完成的支撑探测并提出绑定补丁。该策略不能执行工具、批准修改操作或解析模型生成的文本。</remarks>
     public interface IResourceBindingEvidencePromoter
     {
         ResourceBindingPromotionResult Evaluate(

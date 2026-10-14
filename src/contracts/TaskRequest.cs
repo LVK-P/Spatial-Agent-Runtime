@@ -3,6 +3,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// <summary>
     /// Encapsulated user request.
     /// </summary>
+    /// <remarks>中文：封装用户请求。</remarks>
     public class TaskRequest
     {
         public string UserMessage { get; set; } = "";

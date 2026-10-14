@@ -7,6 +7,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Modify: overwrites existing field values (CalculateField, cc_calculate_area on re-run).
     /// Destructive: irreversible delete/schema-alter (DeleteField, TruncateTable).
     /// </summary>
+    /// <remarks>中文：工具风险等级——ADR 0051四层模型。只读：只读查询，不更改数据。增量：创建新数据而不覆盖现有值（缓冲区、剪辑、统计数据）。修改：覆盖现有字段值（CalculateField，重运行时cc_calculate_area）。破坏性：不可逆的删除/schema-alter（DeleteField，TruncateTable）。</remarks>
     public enum ToolRiskLevel { ReadOnly, Increment, Modify, Destructive }
 
     public enum SafetyDecisionKind { Allow, RequireApproval, Block }

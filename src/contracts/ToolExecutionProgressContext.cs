@@ -9,6 +9,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// ambient reporter through async execution context without depending on
     /// Runtime or UI assemblies.
     /// </summary>
+    /// <remarks>中文：逻辑 Scheduler 步骤运行期间由工具适配器发出的提供程序中立进度。底层复合操作通过异步执行上下文继承环境中的报告器，无需依赖 Runtime 或 UI 程序集。</remarks>
     public sealed class ToolExecutionProgressUpdate
     {
         public string Phase { get; init; } = "execute";
@@ -35,6 +36,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// Captures the logical-step reporter before entering an SDK callback.
         /// Some native callbacks do not preserve AsyncLocal state themselves.
         /// </summary>
+        /// <remarks>中文：进入 SDK 回调前捕获逻辑步骤报告器；某些原生回调不会自行保留 AsyncLocal 状态。</remarks>
         public static Action<ToolExecutionProgressUpdate>? CaptureReporter() =>
             CurrentReporter.Value;
 

@@ -43,6 +43,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// provider's ACTUAL parameters, cross-checkable against subsequent
         /// llm_request events.
         /// </summary>
+        /// <remarks>中文：记录一个模式/思维与努力的切换。模型/思维必须是提供者的实际参数，并且可以与后续llm_request事件进行交叉核对。</remarks>
         void WriteModelSwitch(string reason, string model, string thinking);
         void WriteLLMResponse(int turn, object toolCalls, string? textContent,
             long elapsedMs, int promptTokens = 0, int completionTokens = 0,

@@ -31,12 +31,14 @@ namespace SpatialAgent.Runtime.Contracts
         /// must never be populated from an older turn merely because the
         /// current turn has not yet settled.
         /// </summary>
+        /// <remarks>中文：该检查点所代表轮次中解析出的范围。绝不能仅因当前轮次尚未结算，就使用旧轮次的范围填充此值。</remarks>
         public ResolvedGoalScope? GoalScope { get; set; }
         /// <summary>
         /// Most recent successfully settled business scope. Follow-up turns
         /// may inherit from this value, while diagnostics and UI render the
         /// independent current <see cref="GoalScope"/>.
         /// </summary>
+        /// <remarks>中文：最近一次成功结算的业务范围。后续轮次可以继承此值，而诊断和 UI 会单独呈现当前 GoalScope。</remarks>
         public ResolvedGoalScope? PreviousGoalScope { get; set; }
         public TargetCoverageResult? GoalCoverage { get; set; }
         public PlanLedger Ledger { get; set; } = new();
@@ -58,6 +60,7 @@ namespace SpatialAgent.Runtime.Contracts
     {
         public string Output { get; set; } = "";
         /// <summary>Legacy primary input retained for checkpoint compatibility.</summary>
+        /// <remarks>中文：保留了遗留的主要输入以保证检查点兼容性。</remarks>
         public string Parent { get; set; } = "";
         public List<DataLineageInput> Inputs { get; set; } = new();
     }
@@ -87,6 +90,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Optional bounded writer for a host shutdown boundary. The atomic
     /// checkpoint must be durable when this call returns.
     /// </summary>
+    /// <remarks>中文：宿主关闭边界使用的可选有界写入器。调用返回时，原子检查点必须已经持久化。</remarks>
     public interface ICriticalRunCheckpointStore
     {
         void SaveCritical(AgentRunState state);

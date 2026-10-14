@@ -29,22 +29,27 @@ namespace SpatialAgent.Runtime.Contracts
         public string UpdatedAt { get; set; } = "";
 
         /// <summary>5W2H 已确认的答案</summary>
+        /// <remarks>English：5W2H has confirmed the answer</remarks>
         [JsonProperty("w5h2")]
         public W5H2Confirmed W5H2 { get; set; } = new();
 
         /// <summary>用户纠正记录（操作链修正）</summary>
+        /// <remarks>English：User Correction Records (Operation Chain Correction)</remarks>
         [JsonProperty("corrections")]
         public List<CorrectionEntry> Corrections { get; set; } = new();
 
         /// <summary>用户偏好（长期有效）</summary>
+        /// <remarks>English：User preference (long-term validity)</remarks>
         [JsonProperty("preferences")]
         public Dictionary<string, string> Preferences { get; set; } = new();
 
         /// <summary>学到的零散事实</summary>
+        /// <remarks>English：Learned scattered facts</remarks>
         [JsonProperty("learned_facts")]
         public List<string> LearnedFacts { get; set; } = new();
 
         /// <summary>对话摘要（用于跨会话连续性）</summary>
+        /// <remarks>English：Conversation Summary (for cross-session continuity)</remarks>
         [JsonProperty("session_summaries")]
         public List<SessionSummary> SessionSummaries { get; set; } = new();
 

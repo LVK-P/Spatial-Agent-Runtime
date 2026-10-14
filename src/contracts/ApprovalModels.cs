@@ -4,6 +4,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Why the agent paused for approval. Describes the pause reason only.
     /// Session permission is user-controlled and independent of approval kind.
     /// </summary>
+    /// <remarks>中文：Agent 暂停并请求审批的原因，仅描述暂停原因。会话权限由用户控制，且独立于审批类型。</remarks>
     public enum ApprovalKind
     {
         Destructive,
@@ -13,6 +14,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// <summary>
     /// Scope of a user decision. ExactCall is the secure default.
     /// </summary>
+    /// <remarks>中文：用户决策的适用范围；ExactCall 是安全默认值。</remarks>
     public enum ApprovalScope
     {
         ExactCall,
@@ -20,6 +22,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// One decision covering an immutable set of exact call signatures.
         /// Any change to one covered call invalidates the batch decision.
         /// </summary>
+        /// <remarks>中文：一个决策覆盖一组不可变的精确调用签名。任何已覆盖调用发生变化，都会使批次决策失效。</remarks>
         ExactBatch,
         SameCapabilityOnTarget,
         ToolSessionWide
@@ -34,6 +37,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// <summary>
     /// Stable identity for the GIS target this approval applies to.
     /// </summary>
+    /// <remarks>中文：该审批所适用 GIS 目标的稳定标识。</remarks>
     public class ApprovalTarget
     {
         public string Dataset { get; set; } = "";
@@ -47,6 +51,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// <summary>
     /// Human/audit-facing evidence that justified the approval pause.
     /// </summary>
+    /// <remarks>中文：供用户和审计查看、用于说明为何暂停审批的证据。</remarks>
     public class ApprovalEvidence
     {
         public string Summary { get; set; } = "";
@@ -73,6 +78,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// by this ticket; the pre-scan collects all Destructive steps in one plan into
     /// a single ticket so the user approves once for all, not once per step.
     /// </summary>
+    /// <remarks>中文：Runtime 发出的单次审批请求，之后只消费一次。对于批量破坏性审批，CoveredStepIds 包含票据覆盖的全部步骤 ID；预扫描会把一个计划中的所有破坏性步骤汇总到一张票据中，让用户一次批准全部步骤。</remarks>
     public class ApprovalTicket
     {
         public string Id { get; set; } = "";
@@ -110,6 +116,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// <summary>
     /// User decision returned to Runtime when resuming a paused run.
     /// </summary>
+    /// <remarks>中文：恢复已暂停运行时返回给 Runtime 的用户决策。</remarks>
     public class ApprovalDecision
     {
         public string TicketId { get; set; } = "";

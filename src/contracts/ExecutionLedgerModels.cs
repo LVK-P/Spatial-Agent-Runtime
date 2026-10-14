@@ -4,6 +4,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Serializable observation DTO used by the durable run ledger. Runtime
     /// implementations can materialize this back into an IObservation.
     /// </summary>
+    /// <remarks>中文：持久运行账本使用的可序列化 Observation DTO；Runtime 实现可将其还原为 IObservation。</remarks>
     public sealed class ObservationRecord
     {
         public string ToolName { get; set; } = "";
@@ -19,6 +20,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// This deliberately avoids interface-typed members so checkpoint JSON can
     /// be restored without TypeNameHandling.
     /// </summary>
+    /// <remarks>中文：单个执行步骤的持久化、提供程序中立证据。它刻意避免接口类型成员，使检查点 JSON 无需 TypeNameHandling 即可恢复。</remarks>
     public sealed class StepExecutionRecord
     {
         public int StepId { get; set; }
@@ -50,6 +52,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Durable plan/execution ledger. Version is incremented whenever the
     /// physical plan changes; approvals bind to one immutable version.
     /// </summary>
+    /// <remarks>中文：持久化的计划/执行账本。物理计划每次变化都会递增版本；审批绑定到一个不可变版本。</remarks>
     public sealed class PlanLedger
     {
         public string PlanId { get; set; } = Guid.NewGuid().ToString("N");

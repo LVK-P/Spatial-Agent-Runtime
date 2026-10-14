@@ -13,9 +13,11 @@ namespace SpatialAgent.Runtime.Contracts
         void CheckConsistency(IEventCounters? counters = null);
 
         /// <summary>低层级写入（供诊断/审计直接写行）。</summary>
+        /// <remarks>English：Low-level write (for diagnostic/auditing to write lines directly).</remarks>
         void Write(object entry);
 
         /// <summary>刷新输出缓冲区。</summary>
+        /// <remarks>English：Refresh the output buffer.</remarks>
         void Flush();
     }
 }

@@ -6,12 +6,15 @@ namespace SpatialAgent.Runtime.Contracts
     /// <summary>
     /// Tool annotation — behavioral metadata consumed by Planner and Safety layer.
     /// </summary>
+    /// <remarks>中文：工具注释——由Planner和Safety层消耗的行为元数据。</remarks>
     public enum ToolAnnotation
     {
         ReadOnly,
         /// <summary>Creates new data without overwriting existing field values (Buffer, Clip, Statistics).</summary>
+        /// <remarks>中文：创建新数据而不覆盖现有字段值（缓冲区、剪辑、统计数据）。</remarks>
         Increment,
         /// <summary>Overwrites existing field values (CalculateField, cc_calculate_area on re-run).</summary>
+        /// <remarks>中文：覆盖现有字段值（CalculateField，重启时cc_calculate_area）。</remarks>
         Modify,
         Destructive,
         Idempotent
@@ -62,6 +65,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Runtime-only safety metadata. This is consumed by runtime policy and safety
     /// gates, not by the prompt-layer tool schema.
     /// </summary>
+    /// <remarks>中文：仅运行时的安全元数据。这由运行时策略和安全门占用，而非提示层工具模式。</remarks>
     public interface IToolSafetyDescriptor
     {
         ToolSafetyProfile SafetyProfile { get; }
@@ -82,6 +86,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// intentionally independent from a user request so capability discovery can
     /// scale through manifests and domain packs instead of tool-name conditionals.
     /// </summary>
+    /// <remarks>中文：一个由工具声明的稳定逻辑能力。适用性元数据是有意独立于用户请求的，因此能力发现可以通过清单和域包而非工具名条件句来扩展。</remarks>
     public sealed class ToolCapabilityClaim
     {
         public string CapabilityId { get; init; } = "";
@@ -96,6 +101,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Optional semantic capability metadata. Safety metadata remains in
     /// IToolSafetyDescriptor; a capability claim can never downgrade risk.
     /// </summary>
+    /// <remarks>中文：可选语义能力元数据。安全元数据仍保留在IToolSafetyDescriptor;能力索赔永远不会降低风险。</remarks>
     public interface IToolCapabilityDescriptor
     {
         IReadOnlyList<ToolCapabilityClaim> CapabilityClaims { get; }
@@ -186,6 +192,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Describes a tool to the LLM for Function Calling.
     /// Pure data object — no execution logic.
     /// </summary>
+    /// <remarks>中文：描述了一种用于函数调用的工具。纯数据对象——没有执行逻辑。</remarks>
     public interface IToolDescriptor
     {
         string Name { get; }
@@ -195,6 +202,7 @@ namespace SpatialAgent.Runtime.Contracts
         IReadOnlyDictionary<string, ParameterProperty> Parameters { get; }
         IReadOnlyList<string> RequiredParameters { get; }
         /// <summary>Verification rule for post-condition checking. Null = use GPToolContract or skip.</summary>
+        /// <remarks>中文：后期条件检查的验证规则。Null = 使用 GPToolContract 或跳过。</remarks>
         VerificationRule? Verification { get; }
 
         /// <summary>
@@ -203,6 +211,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// Used by Scheduler.ResolveArgs to distinguish LLM-provided vs tool-default args.
         /// Null = no defaults declared for this tool.
         /// </summary>
+        /// <remarks>中文：当LLM省略这些参数时，工具模式会填充默认参数值。键是参数名称（例如“field_name”、“单位”），值为默认值。Scheduler.ResolveArgs 用于区分 LLM 提供的 ARG，工具默认的 arg。Null = 该工具未声明默认值。</remarks>
         IReadOnlyDictionary<string, string>? DefaultParameters { get; }
     }
 
@@ -210,6 +219,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Optional data-flow metadata for tools whose manifests distinguish inputs and outputs.
     /// Scheduler uses this before falling back to name-based heuristics.
     /// </summary>
+    /// <remarks>中文：为区分输入和输出的工具提供可选的数据流元数据。调度器在退回基于名称的启发式之前使用了这一点。</remarks>
     public interface IToolDataflowDescriptor
     {
         IReadOnlyList<string> InputParameters { get; }
@@ -222,6 +232,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// tools. Plans persist all identities so UI/audit records do not drift
     /// when the model used an alias.
     /// </summary>
+    /// <remarks>中文：可选的三名称身份，由动态发现的ArcGIS工具提供。计划保留所有身份，因此当模型使用别名时，UI/审计记录不会偏移。</remarks>
     public interface IToolIdentityDescriptor
     {
         string FunctionName { get; }
@@ -233,6 +244,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Executes a tool. Called by Scheduler at runtime.
     /// Separate from Descriptor so LLM never sees execution logic.
     /// </summary>
+    /// <remarks>中文：执行一个工具。运行时由调度器调用。它和描述符是分开的，所以大型语言模型从未看到执行逻辑。</remarks>
     public interface IToolExecutor
     {
         /// <summary>
@@ -240,6 +252,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// Default ct=default preserves source compatibility with existing implementations.
         /// Note: binary-incompatible change — all IToolExecutor implementations must be recompiled.
         /// </summary>
+        /// <remarks>中文：执行支持取消的工具调用。默认 ct=default 保留与现有实现的源代码兼容性。注意：二进制不兼容的变更——所有IToolExecutor实现必须重新编译。</remarks>
         Task<ToolResult> ExecuteAsync(ToolCall call, CancellationToken ct = default);
     }
 
@@ -247,11 +260,13 @@ namespace SpatialAgent.Runtime.Contracts
     /// Combined: a tool that can both describe and execute itself.
     /// Implementations register with ToolRegistry.
     /// </summary>
+    /// <remarks>中文：综合：一个既能描述又能执行自己的工具。实现在 ToolRegistry 注册。</remarks>
     public interface ITool : IToolDescriptor, IToolExecutor { }
 
     /// <summary>
     /// LLM-generated tool call.
     /// </summary>
+    /// <remarks>中文：LLM生成的工具调用。</remarks>
     public class ToolCall
     {
         public string Id { get; set; } = "";
@@ -262,6 +277,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// <summary>
     /// Tool execution result.
     /// </summary>
+    /// <remarks>中文：工具执行结果。</remarks>
     public class ToolResult
     {
         public string ToolName { get; set; } = "";
@@ -272,6 +288,7 @@ namespace SpatialAgent.Runtime.Contracts
         public string VerificationDetail { get; set; } = "";
         public List<string> AutofixApplied { get; set; } = new();
         /// <summary>Typed output for structured Observation. Tools set this directly to skip JSON parsing.</summary>
+        /// <remarks>中文：结构化观察的打字输出。工具会直接设置跳过 JSON 解析。</remarks>
         public ObservationOutput? StructuredOutput { get; set; }
     }
 }

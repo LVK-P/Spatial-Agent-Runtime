@@ -8,6 +8,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Relationship between a user turn and the currently active goal.
     /// A universal quantifier is deliberately not a continuation signal.
     /// </summary>
+    /// <remarks>中文：用户回合与当前激活目标之间的关系。全称量词故意不是延续信号。</remarks>
     public enum GoalTurnRelation
     {
         New,
@@ -61,6 +62,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Stable logical GIS capabilities. User language and ArcGIS tool names
     /// both map to these ids; neither layer depends directly on the other.
     /// </summary>
+    /// <remarks>中文：稳定的逻辑 GIS 能力。用户语言和 ArcGIS 工具名称都映射到这些 ID，两个层次彼此不直接依赖。</remarks>
     public static class GisCapabilityIds
     {
         public const string SpatialAggregateWithin =
@@ -88,6 +90,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// errors — the tool probably provides the capability and the catalog
         /// mapping is just incomplete. Proof closure still applies post-exec.
         /// </summary>
+        /// <remarks>中文：工具目录未声明这些能力，但至少一个计划步骤的工具标识（名称/描述）与能力合理相关。它们作为软警告而非硬错误处理，因为工具可能具备该能力，只是目录映射不完整；执行后的证据闭环仍然适用。</remarks>
         public List<string> PlausibleButUnconfirmed { get; set; } = new();
 
         public bool IsComplete => MissingCapabilities.Count == 0;

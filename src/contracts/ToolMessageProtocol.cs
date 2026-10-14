@@ -5,6 +5,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// closed only after every opaque call id has exactly one tool response and
     /// before any user/assistant message starts the next conversational phase.
     /// </summary>
+    /// <remarks>中文：对助手工具调用批次进行提供程序中立的验证。只有每个不透明调用 ID 恰好对应一个工具响应，且尚未由用户/助手消息开始下一对话阶段时，批次才算闭合。</remarks>
     public static class ToolMessageProtocol
     {
         public static ToolMessageProtocolResult Validate(

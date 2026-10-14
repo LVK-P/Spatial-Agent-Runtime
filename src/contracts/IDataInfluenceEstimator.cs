@@ -8,6 +8,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Where the estimator got its evidence for the data-influence assessment.
     /// Determines auditability and drives fail-closed behavior.
     /// </summary>
+    /// <remarks>中文：数据影响评估所依据的证据来源，用于确定可审计性并驱动失败关闭行为。</remarks>
     public enum EvidenceSource
     {
         Describe,
@@ -31,6 +32,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// Probe result for one tool call. The estimator tracks overwrite risk from
     /// the real layer state and can aggregate multiple target fields on a layer.
     /// </summary>
+    /// <remarks>中文：单次工具调用的探测结果。估算器根据图层真实状态跟踪覆盖风险，并可聚合同一图层的多个目标字段。</remarks>
     public class DataInfluenceEstimate
     {
         private int _existingNonEmptyTargetCount;
@@ -44,23 +46,27 @@ namespace SpatialAgent.Runtime.Contracts
         /// Objects in the current execution scope. This can be the full layer,
         /// the current selection, or a conservative fallback.
         /// </summary>
+        /// <remarks>中文：当前执行范围内的对象数，可以对应整个图层、当前选择集或保守回退范围。</remarks>
         public int ScopeObjectCount { get; set; } = -1;
 
         /// <summary>
         /// Count of target fields that this write may update.
         /// </summary>
+        /// <remarks>中文：本次写入可能更新的目标字段数量。</remarks>
         public int TargetFieldCount { get; set; }
 
         /// <summary>
         /// Estimated write cells in the current scope.
         /// ScopeObjectCount * TargetFieldCount when both are known.
         /// </summary>
+        /// <remarks>中文：当前范围内估计的写入单元。当两者都已知时，ScopeObjectCount * TargetFieldCount。</remarks>
         public int ScopeValueCount { get; set; } = -1;
 
         /// <summary>
         /// Existing non-null values that would be overwritten.
         /// For multi-field writes this is the total across all target fields.
         /// </summary>
+        /// <remarks>中文：现有的非空值会被覆盖。对于多字段写入，这表示所有目标字段的总和。</remarks>
         public int ExistingNonEmptyTargetCount
         {
             get => _existingNonEmptyTargetCount;
@@ -70,6 +76,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// <summary>
         /// Backward-compatible alias for older scheduler/tests.
         /// </summary>
+        /// <remarks>中文：为较旧的调度器/测试提供向下兼容的别名。</remarks>
         public int NonNullCount
         {
             get => _existingNonEmptyTargetCount;
@@ -80,6 +87,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// Cells that are currently empty and are likely to be filled for the
         /// first time by this write.
         /// </summary>
+        /// <remarks>中文：当前为空、可能由本次写入首次填充的单元格数量。</remarks>
         public int NewValueFillCount { get; set; }
 
         /// <summary>
@@ -88,11 +96,13 @@ namespace SpatialAgent.Runtime.Contracts
         /// This is retained for evidence only; quantity gate thresholds should
         /// not use it directly.
         /// </summary>
+        /// <remarks>中文：本次调用预计造成的模式变更数，例如在计算/写入前隐式创建字段。该值仅作为证据保留，数量门阈值不应直接使用。</remarks>
         public int SchemaMutationCount { get; set; }
 
         /// <summary>
         /// Estimated number of newly created outputs. Kept coarse for now.
         /// </summary>
+        /// <remarks>中文：预计新建输出的数量，目前仅保留粗粒度估算。</remarks>
         public int NewOutputCount { get; set; }
 
         public bool UsesSelectionScope { get; set; }
@@ -107,6 +117,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// Count used by the quantity gate. Prefer overwrite count when known;
         /// otherwise fall back to the inferred scope.
         /// </summary>
+        /// <remarks>中文：数量门使用的计数。覆盖数量已知时优先使用，否则回退到推断的执行范围。</remarks>
         public int EffectiveCount =>
             (FieldName != null || FieldNames.Count > 0)
                 ? ExistingNonEmptyTargetCount
@@ -150,6 +161,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// <summary>
     /// Estimates the data influence of a tool call before execution.
     /// </summary>
+    /// <remarks>中文：在执行前估计工具调用对数据的影响。</remarks>
     public interface IDataInfluenceEstimator
     {
         Task<DataInfluenceEstimate> EstimateAsync(ToolCall call, DataInfluenceContext? context = null);

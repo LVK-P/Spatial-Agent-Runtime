@@ -22,6 +22,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// desired state that is lost when these dimensions are stored as parallel
     /// flat lists.
     /// </summary>
+    /// <remarks>中文：一个独立可基于用户目标的条款。需求保留了操作、资源类别、工件和期望状态之间的配对，而这些配对在这些维度存储为并行平面列表时会丢失。</remarks>
     public sealed class GoalRequirement
     {
         public string Id { get; set; } = "";
@@ -44,6 +45,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// numeric precision), never ArcGIS parameter names. Tool adapters map the
     /// constraint to their own physical arguments.
     /// </summary>
+    /// <remarks>中文：一个类型化、与计划者无关的约束，限制能力必须如何实现。键是稳定的领域语义（例如单位精度或数值精度），绝不是ArcGIS参数名称。工具适配器将约束映射到其自身的物理参数。</remarks>
     public sealed class GoalParameterConstraint
     {
         public string Key { get; set; } = "";
@@ -73,6 +75,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// DisplayName is presentation only; map-member/dataset identity, schema and
     /// lineage are the evidence-bearing reconciliation keys.
     /// </summary>
+    /// <remarks>中文：资源提及时尚未解析完成，仍保留稳定宿主标识。DisplayName 仅用于展示；地图成员/数据集标识、模式和血缘关系才是承载证据的协调键。</remarks>
     public sealed class GoalResourceCandidate
     {
         public string CandidateId { get; set; } = "";
@@ -93,6 +96,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// A resource mention extracted from the user's request before a planner is
     /// allowed to propose physical tool calls.
     /// </summary>
+    /// <remarks>中文：在规划者提出物理工具调用之前，从用户请求中提取的资源提及。</remarks>
     public sealed class GoalResourceBinding
     {
         public string Mention { get; set; } = "";
@@ -111,6 +115,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// removed so geometry words inside layer names cannot accidentally become
     /// set-valued category constraints.
     /// </summary>
+    /// <remarks>中文：规划者与语言独立契约。ScopeText 移除了资源名称，以防止层名内的几何词意外成为集合值的类别约束。</remarks>
     public sealed class CompiledGoalContract
     {
         public string SourceGoal { get; set; } = "";

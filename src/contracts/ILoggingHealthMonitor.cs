@@ -11,12 +11,15 @@ namespace SpatialAgent.Runtime.Contracts
     public interface ILoggingHealthMonitor
     {
         /// <summary>获取当前健康快照（不重置计数器）。</summary>
+        /// <remarks>English：Get the current health snapshot (without resetting the counter).</remarks>
         LoggingHealthSnapshot Snapshot();
 
         /// <summary>报告一次成功的日志写入。</summary>
+        /// <remarks>English：Write a log to report a successful event.</remarks>
         void ReportWriteSuccess(string layer);
 
         /// <summary>报告一次失败的日志写入。</summary>
+        /// <remarks>English：Write a log to report a failure.</remarks>
         void ReportWriteFailure(string layer, string reason);
 
         /// <summary>重置所有计数器（新 session 前调用）。</summary>
@@ -29,15 +32,18 @@ namespace SpatialAgent.Runtime.Contracts
     public class LoggingHealthSnapshot
     {
         /// <summary>快照时间戳。</summary>
+        /// <remarks>English：Snapshot timestamp.</remarks>
         public string Ts { get; set; } = DateTime.Now.ToString("O");
 
         // ── Transcript ──
+        // 中文：文字记录
         public bool TranscriptOk { get; set; } = true;
         public long TranscriptLostEvents { get; set; }
         public string? TranscriptFirstLossAt { get; set; }
         public string? TranscriptLastError { get; set; }
 
         // ── VerificationLedger ──
+        // 中文：验证账本
         public bool LedgerOk { get; set; } = true;
         public int LedgerWriteFailures { get; set; }
         public int LedgerTotalChecks { get; set; }
@@ -45,16 +51,19 @@ namespace SpatialAgent.Runtime.Contracts
         public int LedgerFailedChecks { get; set; }
 
         // ── ContextSnapshotter ──
+        // 中文：上下文快照器
         public bool SnapshotOk { get; set; } = true;
         public int SnapshotWriteFailures { get; set; }
         public int SnapshotCount { get; set; }
 
         // ── AuditLogger ──
+        // 中文：审计记录器
         public bool AuditOk { get; set; } = true;
         public int AuditWriteFailures { get; set; }
         public int AuditEntryCount { get; set; }
 
         /// <summary>是否有任何日志层出现故障。</summary>
+        /// <remarks>English：Check if any log layers are malfunctioning.</remarks>
         public bool AllHealthy =>
             TranscriptOk && LedgerOk && SnapshotOk && AuditOk;
 

@@ -7,6 +7,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// <summary>
     /// Semantic tool ranking service for L2 tool retrieval fallback.
     /// </summary>
+    /// <remarks>中文：语义工具排名服务用于L2工具检索备份。</remarks>
     public interface IToolSemanticScorer
     {
         bool IsReady { get; }
