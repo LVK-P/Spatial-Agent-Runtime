@@ -37,6 +37,8 @@ namespace ArcGISProAIAgent
             // CanUnload is not a reliable shutdown notification for every Pro
             // lifecycle. Subscribe to the host's explicit cancellable closing
             // event and keep a strong handler reference for the module lifetime.
+            // CanUnload 不能可靠覆盖 Pro 的所有关闭生命周期，因此订阅宿主明确且可取消的
+            // 关闭事件，并在模块整个生命周期内保留处理程序的强引用。
             _applicationClosingHandler = OnApplicationClosingAsync;
             ApplicationClosingEvent.Subscribe(_applicationClosingHandler, keepSubscriberAlive: true);
             _shutdownCoordinator = new HostShutdownCoordinator(
@@ -59,12 +61,15 @@ namespace ArcGISProAIAgent
 
         /// <summary>
         /// Called by Framework when ArcGIS Pro is closing
+        /// ArcGIS Pro 关闭时由 Framework 调用。
         /// </summary>
-        /// <returns>False to prevent Pro from closing, otherwise True</returns>
+        /// <returns>False to prevent Pro from closing, otherwise True. / 返回 False 阻止 Pro 关闭，否则返回 True。</returns>
         protected override bool CanUnload()
         {
             // The standalone chat window can remain open until Pro exits, so
             // host shutdown—not Window.Closing—is the durable session boundary.
+            // 独立聊天窗口可能一直保持打开直到 Pro 退出，因此持久会话边界是宿主关闭，
+            // 而不是 Window.Closing。
             _shutdownCoordinator?.Signal("ModuleCanUnload");
             return true;
         }

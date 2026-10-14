@@ -78,10 +78,16 @@ namespace ArcGISProAIAgent.ViewModels
         public bool IsTraceGroup => Kind == TimelineItemKind.TraceGroup;
         public bool IsPlanCard => Kind == TimelineItemKind.PlanCard;
 
-        /// <summary>轨迹组中是否有至少一个正在执行的步骤。</summary>
+        /// <summary>
+        /// 轨迹组中是否有至少一个正在执行的步骤。
+        /// Indicates whether the trace group contains at least one running step.
+        /// </summary>
         public bool HasRunningItem => IsTraceGroup && TraceItems.Any(t => t.Status == ToolTraceStatus.Running);
 
-        /// <summary>ViewModel 每次更新轨迹状态后调用，驱动 HasRunningItem 绑定刷新。</summary>
+        /// <summary>
+        /// ViewModel 每次更新轨迹状态后调用，驱动 HasRunningItem 绑定刷新。
+        /// Called after each trace-status update so the ViewModel refreshes the HasRunningItem binding.
+        /// </summary>
         public void RefreshHasRunningItem() => OnPropertyChanged(nameof(HasRunningItem));
 
         public string TokenInfo

@@ -10,12 +10,16 @@ namespace ArcGISProAIAgent
 {
     /// <summary>
     /// Process-level two-phase shutdown barrier.
+    /// 进程级两阶段关闭屏障。
     ///
     /// A close observation writes a reversible recovery checkpoint. An
     /// irreversible signal terminalizes the session and closes log streams.
     /// The main Pro window is attached lazily as well as at module startup:
     /// FrameworkApplication.MainWindow is commonly null during add-in
     /// initialization.
+    /// 观察到关闭请求时写入可逆的恢复检查点；收到不可逆信号时终结会话并关闭日志流。
+    /// 除模块启动时尝试挂接外，还会延迟挂接 Pro 主窗口，因为插件初始化期间
+    /// FrameworkApplication.MainWindow 通常为空。
     /// </summary>
     internal sealed class HostShutdownCoordinator : IDisposable
     {
