@@ -7,6 +7,7 @@ namespace SpatialAgent.Tools.Core
     /// <summary>
     /// Get project metadata: name, path, default GDB.
     /// </summary>
+    /// <remarks>中文：获取项目元数据：名称、路径、默认GDB。</remarks>
     public class GetProjectInfoTool : ITool
     {
         private readonly ProjectReader _reader = new();
