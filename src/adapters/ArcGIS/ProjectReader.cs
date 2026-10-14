@@ -9,6 +9,7 @@ namespace SpatialAgent.Adapters.ArcGIS
     /// <summary>
     /// Reads ArcGIS Pro project structure: path, GDB, file listing.
     /// </summary>
+    /// <remarks>中文：读取ArcGIS Pro项目结构：路径、GDB、文件列表。</remarks>
     public class ProjectReader : IProjectReader
     {
         public async Task<ProjectContext> GetProjectContextAsync()
@@ -22,6 +23,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                 // Pro 3.4 对未保存项目会在 %TEMP% 下创建临时 .aprx，URI 不为空。
                 // 不能用 URI 判空。改用 HomeFolderPath 是否在 OS 临时目录下。
                 // Path.GetTempPath() 是运行时 API 调用，不是路径硬编码。
+                // English：Pro 3.4 creates a temporary .aprx for unsaved items under %TEMP%, and the URI is not empty. You cannot use a URI to check it as empty. Switch to HomeFolderPath to see if it is in the OS's temporary directory. Path.GetTempPath() is a runtime API call, not a hardcoded path.
                 string tempRoot = System.IO.Path.GetTempPath().TrimEnd('\\');
                 bool isInTemp = (project.HomeFolderPath ?? "").StartsWith(tempRoot, StringComparison.OrdinalIgnoreCase);
 

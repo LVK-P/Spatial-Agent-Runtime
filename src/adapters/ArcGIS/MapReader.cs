@@ -14,6 +14,7 @@ namespace SpatialAgent.Adapters.ArcGIS
     /// Reads ArcGIS Pro map state: layers, fields, selections, extent.
     /// Pure adapter — returns JSON strings consumed by Tools layer.
     /// </summary>
+    /// <remarks>中文：读取ArcGIS Pro地图状态：图层、字段、选择、范围。纯适配器 — 返回工具层消耗的 JSON 字符串。</remarks>
     public class MapReader : SpatialAgent.Runtime.Contracts.IMapReader
     {
         public async Task<SpatialAgent.Runtime.Contracts.MapContextSnapshot> GetMapContextAsync()
@@ -88,6 +89,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                             $"[MapReader] Structured map snapshot failed for '{layer.Name}': " +
                             $"{ex.GetType().Name}: {ex.Message}");
                         // Preserve target identity even when a detailed probe fails.
+                        // 中文：即使详细探针失败，也要保持目标身份。
                         layers.Add(new SpatialAgent.Runtime.Contracts.LayerInfo
                         {
                             Name = layer.Name,
@@ -170,6 +172,7 @@ namespace SpatialAgent.Adapters.ArcGIS
             // Pending ArcGIS edit transactions do not necessarily update the
             // File GDB timestamps yet. Treat that state as unversionable so a
             // mutating plan fails closed until the user saves or discards it.
+            // 中文：待处理的 ArcGIS 编辑事务不一定会更新文件 GDB 的时间戳。将该状态视为不可变更，并让写入计划失败关闭，直到用户保存或放弃编辑。
             if (Project.Current?.HasEdits == true)
                 return "unreliable:pending-edits";
             var snapshot = await GetMapContextAsync();
@@ -274,9 +277,11 @@ namespace SpatialAgent.Adapters.ArcGIS
         /// Finds a Table by name in both feature layers and standalone tables.
         /// Returns (null, false) when no match is found in either collection.
         /// </summary>
+        /// <remarks>中文：在特征图层和独立表中，按名称查找表。当任一集合中都未找到匹配时返回（空、假）。</remarks>
         private static (Table? table, bool isStandalone) FindTable(string name, Map map)
         {
             // 1. Try feature layers first (most common case).
+            // 中文：1. 先尝试特征层（最常见的情况）。
             foreach (var layer in map.GetLayersAsFlattenedList())
             {
                 if (!layer.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) continue;
@@ -288,6 +293,7 @@ namespace SpatialAgent.Adapters.ArcGIS
             }
 
             // 2. Try standalone tables (e.g. Statistics output, GP result tables).
+            // 中文：2. 尝试独立表格（例如统计输出、GP结果表）。
             foreach (var table in map.StandaloneTables)
             {
                 if (!table.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) continue;
@@ -331,6 +337,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                 }).ToList();
 
                 // Include standalone tables (e.g. Statistics output, GP result tables).
+                // 中文：包括独立表格（例如统计数据输出、GP结果表）。
                 var tables = map.StandaloneTables.Select(t => new
                 {
                     name = t.Name,
@@ -342,6 +349,7 @@ namespace SpatialAgent.Adapters.ArcGIS
 
                 // ★ 排除 agentbackup.gdb 内的数据——备份不应暴露给 LLM，
                 // 否则会导致"备份→加入地图→LLM 看到→再次备份备份"的套娃循环。
+                // English：Exclude data from agentbackup.gdb—backups should not be exposed to the LLM, otherwise it will cause a nesting loop where the "backup→ added to the map→ LLM sees →back up backups again".
                 var layers = all.Where(it =>
                     !(it.datasource ?? "").Contains("agentbackup.gdb", StringComparison.OrdinalIgnoreCase))
                     .ToList();
@@ -355,6 +363,7 @@ namespace SpatialAgent.Adapters.ArcGIS
         /// 匹配行数超过 maxRows 时拒绝返回行数据——部分可见比不可见更误导，
         /// 类别性问题应走 Statistics/唯一值统计合并同类项。
         /// </summary>
+        /// <remarks>English：Fewsample line reading (cc_read_rows backend). Conservative Call Policy (User Rule on 2026-07-19): Reject row data when the number of matching rows exceeds maxRows—partially visible is more misleading than invisible. Categorical issues should be handled by Statistics/unique value statistics merging similar items.</remarks>
         public async Task<string> ReadRowsAsync(
             string layerName,
             IReadOnlyList<string> fields,
@@ -391,7 +400,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                     {
                         matched++;
                         if (matched > maxRows)
-                            break; // 超门槛：只需知道"超了"，不读更多
+                            break; // 超过门槛：只需知道“超了”，不再读取。 / Over the threshold: knowing that is enough, so stop reading.
 
                         var row = cursor.Current;
                         var record = new Dictionary<string, object?>();
@@ -428,6 +437,7 @@ namespace SpatialAgent.Adapters.ArcGIS
         /// maxDistinct 即中止——类别字段的唯一值数量在标准数量级内，
         /// 超限说明该字段不具类别意义（cc_map_field_values 前置）。
         /// </summary>
+        /// <remarks>English：Field Unique Value Scan (Merging Items of the Same Category): The entire table only retains the distinct set; exceeding maxDistinct terminates the count — the unique value of a category field is within the standard order of magnitude; exceeding the limit means the field does not have category meaning (cc_map_field_values prefix).</remarks>
         public async Task<string> GetDistinctValuesAsync(string layerName, string fieldName, int maxDistinct)
         {
             return await QueuedTask.Run(() =>
@@ -447,7 +457,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                 bool exceeded = false;
 
                 var filter = new QueryFilter { SubFields = fieldName };
-                using (var cursor = table.Search(filter, true)) // recycling：只收集值
+                using (var cursor = table.Search(filter, true)) // 回收游标：只收集值。 / Recycling cursor: values only.
                 {
                     while (cursor.MoveNext())
                     {
@@ -492,6 +502,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                 var allFields = def.GetFields().ToList();
 
                 // Build field info with value distribution
+                // 中文：构建场地信息与价值分布
                 var fields = new List<object>();
                 foreach (var f in allFields)
                 {
@@ -502,11 +513,12 @@ namespace SpatialAgent.Adapters.ArcGIS
                     }
 
                     // Sample values for categorical/numeric fields
+                    // 中文：范畴/数值字段的样本值
                     object? valueInfo = null;
                     int nullCount = 0;
                     try
                     {
-                        using var cursor = table.Search(null, false); // non-recycling cursor
+                        using var cursor = table.Search(null, false); // 非回收游标。 / Non-recycling cursor.
                         var valueCounts = new Dictionary<string, int>();
                         double? minVal = null, maxVal = null;
                         int sampled = 0;
@@ -533,6 +545,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                         }
 
                         // Only include distribution if reasonable cardinality
+                        // 中文：只有当基数合理时才包含分布
                         if (valueCounts.Count <= 20 && valueCounts.Count > 0)
                         {
                             var sorted = valueCounts.OrderByDescending(kv => kv.Value).ToList();
@@ -554,6 +567,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                         // 采样是 best-effort 增强——失败不中断描述流程。
                         // 但必须留诊断信号：LLM 拿不到此字段的值分布时，
                         // 排查人员需能从调试输出中定位。
+                        // English：Sampling is a best-effort enhancement—failure does not interrupt the description process. However, diagnostic signals must be retained: if the LLM cannot obtain the value distribution of this field, the investigator must be able to locate it from the debugging output.
                         System.Diagnostics.Debug.WriteLine(
                             $"[MapReader] Field sampling failed for '{f.Name}' " +
                             $"in layer/table '{layerName}': {ex.GetType().Name}: {ex.Message}");
@@ -613,6 +627,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                         // 单层读取失败不应拖垮整个摘要（其他层仍可用）。
                         // 但必须在摘要中保留一行标记——否则 LLM 以为该层不存在，
                         // 后续工具调用会反复报"找不到图层"而 LLM 不理解为什么。
+                        // English：A single-layer read failure should not drag down the entire summary (other layers remain available). However, a line of marker must be kept in the summary—otherwise, the LLM will assume the layer does not exist, and subsequent tool calls will repeatedly report "Layer not found" without the LLM understanding why.
                         System.Diagnostics.Debug.WriteLine(
                             $"[MapReader] Failed to summarize layer '{layer.Name}': " +
                             $"{ex.GetType().Name}: {ex.Message}");
@@ -621,6 +636,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                 }
 
                 // Include standalone tables in summary.
+                // 中文：总结中包含独立表格。
                 foreach (var table in map.StandaloneTables)
                 {
                     // 排除 agentbackup.gdb 内的数据
@@ -742,6 +758,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                 if (map == null) return ctx;
 
                 // Map spatial reference
+                // 中文：地图空间参考
                 var mapSr = map.SpatialReference;
                 if (mapSr != null)
                 {
@@ -752,12 +769,14 @@ namespace SpatialAgent.Adapters.ArcGIS
                 }
 
                 // Per-layer spatial references
+                // 中文：每层空间引用
                 foreach (var layer in map.GetLayersAsFlattenedList())
                 {
                     if (layer is not FeatureLayer fl) continue;
                     try
                     {
                         // Use GetDefinition().GetSpatialReference() per pitfall #8
+                        // 中文：使用GetDefinition（）。GetSpatialReference（） per pitfall #8
                         var fc = fl.GetFeatureClass();
                         var def = fc?.GetDefinition();
                         var layerSr = def?.GetSpatialReference();
@@ -792,6 +811,7 @@ namespace SpatialAgent.Adapters.ArcGIS
         /// GetDatastore().GetPath() 返回的是 URI 格式（file:///...），
         /// 需经 new Uri().LocalPath 转换为 Windows 路径。
         /// </summary>
+        /// <remarks>English：Parse layer/table names into complete feature classes/table paths for use by GP tools like CopyFeatures_management. GetDatastore(). GetPath() returns a URI format (file:///... ), requires new Uri(). LocalPath to Windows Path.</remarks>
         public async Task<string?> ResolveLayerPathAsync(string layerName)
         {
             return await QueuedTask.Run(() =>
@@ -800,6 +820,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                 if (map == null) return null;
 
                 // Feature layers
+                // 中文：特征层
                 foreach (var layer in map.GetLayersAsFlattenedList())
                 {
                     if (!layer.Name.Equals(layerName, StringComparison.OrdinalIgnoreCase)) continue;
@@ -809,12 +830,14 @@ namespace SpatialAgent.Adapters.ArcGIS
                         var gdbPath = fc?.GetDatastore()?.GetPath()?.ToString();
                         if (string.IsNullOrWhiteSpace(gdbPath)) return null;
                         // Convert URI to local path: "file:///G:/..." → "G:\..."
+                        // 中文：将URI转换为本地路径：“file:///G:/......”→ “G：\......”
                         string localPath = new Uri(gdbPath).LocalPath;
                         return Path.Combine(localPath, fc!.GetName());
                     }
                 }
 
                 // Standalone tables
+                // 中文：独立表格
                 foreach (var table in map.StandaloneTables)
                 {
                     if (!table.Name.Equals(layerName, StringComparison.OrdinalIgnoreCase)) continue;

@@ -16,6 +16,7 @@ namespace SpatialAgent.Adapters.Mcp
     /// ReadOnly tools only — write operations return error.
     /// ★ P2-C（2026-07-20）：随机 token 认证——防止本机恶意进程未经授权调用。
     /// </summary>
+    /// <remarks>中文：ASP.NET Core Kestrel 上的 MCP 可流式 HTTP 服务器。单一/mcp端点通过POST接受JSON-RPC 2.0。仅可读工具——写操作会返回错误。P2-C（2026-07-20）：随机 token 认证——防止本机恶意进程未经授权调用。</remarks>
     public sealed class McpStreamableHttpServer : IMcpService
     {
         private readonly IReadOnlyToolGateway _tools;
@@ -24,6 +25,7 @@ namespace SpatialAgent.Adapters.Mcp
         private WebApplication? _app;
 
         // ── S4（Phase 3）：速率限制（手动 token-bucket）+ 失败认证退避 ──
+        // English：S4 (Phase 3): Rate limit (manual token-bucket) + failed authentication avoidance
         private int _authFailCount;
         private DateTime _authLockUntil = DateTime.MinValue;
         private readonly object _rateLock = new();
@@ -35,6 +37,7 @@ namespace SpatialAgent.Adapters.Mcp
         private static readonly int[] AuthBackoffSeconds = { 1, 2, 4, 8 };
 
         // ── Q1（Phase 4）：每次启动生成新 token，不落盘 ──
+        // English：Q1 (Phase 4): New tokens are generated at each launch, no trades are placed
         private string _authToken = "";
 
         public int Port => _port;
@@ -81,11 +84,13 @@ namespace SpatialAgent.Adapters.Mcp
             if (_app != null) return;
 
             // ★ Q1（Phase 4）：每次启动生成新 token（不落盘）
+            // English：Q1 (Phase 4): New tokens are generated at each startup (no order placement)
             _authToken = GenerateToken();
 
             var builder = WebApplication.CreateBuilder();
             // Binding both localhost and 127.0.0.1 can resolve to the same
             // endpoint on Windows and fail with AddressAlreadyInUse.
+            // 中文：在Windows上绑定localhost和127.0.0.1可能解析到同一个端点，但会导致AddressAlreadyInUse失败。
             builder.WebHost.UseUrls($"http://127.0.0.1:{_port}");
 
             var app = builder.Build();
@@ -103,16 +108,18 @@ namespace SpatialAgent.Adapters.Mcp
         /// 改为每次进程启动生成新 token，消除持久化凭据风险。
         /// 用户需在 MCP 客户端中重新配置（通过 UI "复制 Token" 按钮）。
         /// </summary>
+        /// <remarks>English：Q1 (Phase 4): Each startup generates a new random token, no trades are placed. Originally, plaintext was stored in %LocalAppData%—attackers could obtain tokens by reading files. Instead, new tokens are generated each time a process starts, eliminating the risk of persistence credentials. Users need to reconfigure in the MCP client (via the UI "Copy Token" button).</remarks>
         private static string GenerateToken()
         {
             byte[] bytes = RandomNumberGenerator.GetBytes(32);
-            return Convert.ToBase64String(bytes)[..43]; // 43 chars
+            return Convert.ToBase64String(bytes)[..43]; // 43 个字符。 / 43 characters.
         }
 
         /// <summary>
         /// ★ Q1（Phase 4）：重新生成 token（供 UI "重置 Token" 按钮使用）。
         /// 仅影响当前进程，不落盘。
         /// </summary>
+        /// <remarks>English：Q1 (Phase 4): Regenerate tokens (for the UI "Reset Token" button). Only affects the current process, no orders are placed.</remarks>
         public string RegenerateToken()
         {
             _authToken = GenerateToken();
@@ -137,6 +144,7 @@ namespace SpatialAgent.Adapters.Mcp
                 return Task.CompletedTask;
             }
             // This server does not implement an SSE receive stream.
+            // 中文：该服务器不实现SSE接收流。
             context.Response.StatusCode = StatusCodes.Status405MethodNotAllowed;
             context.Response.Headers.Allow = "POST, DELETE";
             return Task.CompletedTask;
@@ -174,15 +182,17 @@ namespace SpatialAgent.Adapters.Mcp
         private bool IsAuthorized(HttpRequest request)
         {
             // S4：指数退避锁定——连续失败后临时锁定认证
+            // English：S4: Index Retreat Lock—Temporary Lock-in after consecutive failures
             lock (_rateLock)
             {
                 if (_authFailCount >= AuthLockThreshold && DateTime.UtcNow < _authLockUntil)
-                    return false; // 仍处于锁定状态
+                    return false; // 仍处于锁定状态。 / Still locked out.
                 if (_authFailCount >= AuthLockThreshold && DateTime.UtcNow >= _authLockUntil)
-                    _authFailCount = 0; // 锁定期过期，重置
+                    _authFailCount = 0; // 锁定期过期，重置。 / Reset after the lockout expires.
             }
 
             // S2 fail-closed：未配置 token 时拒绝所有请求
+            // English：S2 fail-closed: Rejects all requests when tokens are not configured
             if (string.IsNullOrEmpty(_authToken))
                 return false;
 
@@ -200,6 +210,7 @@ namespace SpatialAgent.Adapters.Mcp
             string token = header["Bearer ".Length..].Trim();
 
             // S2：恒定时间比较，防止时序侧信道攻击
+            // English：S2: Constant time comparison to prevent temporal sidechannel attacks
             if (token.Length != _authToken.Length)
             {
                 RecordAuthFailure();
@@ -218,6 +229,7 @@ namespace SpatialAgent.Adapters.Mcp
         }
 
         /// <summary>S4：记录认证失败，触发指数退避（1s→2s→4s→8s→lock 60s）。</summary>
+        /// <remarks>English：S4: Record authentication fails, triggering exponential retraction (1s→2s→4s→8s→lock 60s).</remarks>
         private void RecordAuthFailure()
         {
             lock (_rateLock)
@@ -234,6 +246,7 @@ namespace SpatialAgent.Adapters.Mcp
                     int delayIdx = Math.Min(_authFailCount - 1, AuthBackoffSeconds.Length - 1);
                     int delaySec = AuthBackoffSeconds[delayIdx];
                     // Exponential backoff is applied on next request via _authLockUntil
+                    // 中文：指数退避将在下一次请求时通过_authLockUntil应用
                     _authLockUntil = DateTime.UtcNow.AddSeconds(delaySec);
                 }
             }
@@ -249,6 +262,7 @@ namespace SpatialAgent.Adapters.Mcp
         }
 
         /// <summary>S4：手动 token-bucket——30 tokens/min，线性补充。</summary>
+        /// <remarks>中文：S4：手动 token-bucket——30 tokens/min，线性补充。</remarks>
         private bool TryConsumeToken()
         {
             lock (_rateLock)
@@ -291,9 +305,10 @@ namespace SpatialAgent.Adapters.Mcp
             }
 
             // ★ S4（Phase 3）：Token-bucket 速率限制 30 req/min
+            // 中文：S4（阶段3）：Token-bucket 速率限制 30 req/min
             if (!TryConsumeToken())
             {
-                context.Response.StatusCode = 429; // Too Many Requests
+                context.Response.StatusCode = 429; // 请求过多。 / Too Many Requests.
                 await context.Response.WriteAsync(JsonConvert.SerializeObject(new
                 {
                     jsonrpc = "2.0",
@@ -304,6 +319,7 @@ namespace SpatialAgent.Adapters.Mcp
             }
 
             // ★ P2-C：认证检查——所有 POST /mcp 请求必须携带有效 token
+            // English：P2-C: Authentication Check—All POST/MCP requests must carry valid tokens
             if (!IsAuthorized(context.Request))
             {
                 context.Response.StatusCode = 401;
@@ -379,6 +395,7 @@ namespace SpatialAgent.Adapters.Mcp
                 };
 
                 // JSON-RPC notifications intentionally have no response body.
+                // 中文：JSON-RPC 通知故意没有响应体。
                 if (id == null)
                 {
                     context.Response.StatusCode = StatusCodes.Status202Accepted;
@@ -428,6 +445,7 @@ namespace SpatialAgent.Adapters.Mcp
                 description = t.Description,
                 // ★ P1-B 修复（2026-07-20）：输出完整的 JSON Schema，
                 // 而非空 properties。MCP 客户端需要参数类型、枚举值来生成正确的调用。
+                // English：P1-B Fix (2026-07-20): Output full JSON Schema instead of empty properties. The MCP client requires parameter types and enum values to generate the correct call.
                 inputSchema = BuildJsonSchema(t)
             });
 
@@ -457,6 +475,7 @@ namespace SpatialAgent.Adapters.Mcp
                 };
 
                 // Enum 约束（如字段类型选择、测量单位等）
+                // English：Enum constraints (such as field type selection, measurement units, etc.)
                 if (kv.Value.Enum?.Count > 0)
                     propSchema["enum"] = new JArray(kv.Value.Enum);
 
@@ -487,23 +506,24 @@ namespace SpatialAgent.Adapters.Mcp
                 return "array";
             if (t == "object" || t == "any")
                 return "object";
-            return "string";  // default: string (GPString, String, 等)
+            return "string";  // 默认：字符串（GPString、String 等）。 / Default: string (GPString, String, etc.).
         }
 
         /// <summary>
         /// ★ P1-B：递归转换 JToken 为 .NET 对象图。
         /// 原实现只处理 JValue（标量），JArray 和 JObject 直接丢失。
         /// </summary>
+        /// <remarks>English：P1-B: Recursive transformation JToken to .NET object graph. The original implementation only handles JValue (scalar), while JArray and JObject are directly lost.</remarks>
         private static object? ConvertJToken(JToken? token) => token switch
         {
             null => null,
-            JValue v => v.Value,                                     // 标量 → .NET 原生类型
-            JArray a => a.Select(ConvertJToken).ToList(),            // 数组 → List<object?>
-            JObject o => o.Properties().ToDictionary(                // 对象 → Dictionary
+            JValue v => v.Value,                                     // 标量 → .NET 原生类型。 / Scalar → native .NET type.
+            JArray a => a.Select(ConvertJToken).ToList(),            // 数组 → List<object?>。 / Array → List<object?>.
+            JObject o => o.Properties().ToDictionary(                // 对象 → Dictionary。 / Object → Dictionary.
                 p => p.Name,
                 p => ConvertJToken(p.Value),
                 StringComparer.OrdinalIgnoreCase),
-            _ => token.ToString()                                    // fallback
+            _ => token.ToString()                                    // 回退。 / Fallback.
         };
 
         private async Task<string> HandleToolCallAsync(JObject request)
@@ -516,6 +536,7 @@ namespace SpatialAgent.Adapters.Mcp
             {
                 // ★ P1-B 修复（2026-07-20）：递归转换 JToken，保留数组和嵌套对象。
                 // 原实现 ((JValue?)prop.Value)?.Value 对标量有效但对 JArray/JObject 返回 null。
+                // English：P1-B Fix (2026-07-20): Recursive conversion to JToken, retaining arrays and nested objects. Primitive implementation ((JValue?) prop. Value)?. Value is valid for scalars but returns null for JArray/JObject.
                 foreach (var prop in argObj.Properties())
                     args[prop.Name] = ConvertJToken(prop.Value);
             }

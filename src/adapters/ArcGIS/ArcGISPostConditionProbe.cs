@@ -12,6 +12,7 @@ namespace SpatialAgent.Adapters.ArcGIS
     /// <summary>
     /// ArcGIS Pro SDK-backed probe for post-condition checks.
     /// </summary>
+    /// <remarks>中文：ArcGIS Pro SDK 支持的探针用于后期状态检查。</remarks>
     public class ArcGISPostConditionProbe : IPostConditionProbe
     {
         private readonly MapReader _mapReader = new();
@@ -235,6 +236,7 @@ namespace SpatialAgent.Adapters.ArcGIS
 
                     // Sample cap keeps the probe cheap on large layers; a full-table
                     // wipe is still caught because every sampled row is empty.
+                    // 中文：采样帽使探针在大层中保持廉价;由于每一行采样都是空的，因此仍然会被捕获全表擦除。
                     const int SampleCap = 2000;
                     long total = 0, populated = 0;
                     using (var cursor = fc.Search(null, false))
@@ -560,6 +562,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                 catch
                 {
                     // ignore feature-class lookup failures while probing
+                    // 中文：在探测时忽略特征类查找失败
                 }
             }
 

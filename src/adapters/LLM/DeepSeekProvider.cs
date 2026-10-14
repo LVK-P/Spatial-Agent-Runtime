@@ -11,6 +11,7 @@ namespace SpatialAgent.Adapters.LLM
     /// Supports Function Calling and Thinking/Reasoning. Retrieval uses a
     /// separately configured embedding provider or the local BM25 fallback.
     /// </summary>
+    /// <remarks>中文：DeepSeek API 提供者。实现ILLMProvider用于运行时。支持功能调用和思考/推理。检索使用单独配置的嵌入提供商或本地的 BM25 备份。</remarks>
     public class DeepSeekProvider : ILLMProvider, IDisposable
     {
         private const string CHAT_URL = "https://api.deepseek.com/chat/completions";
