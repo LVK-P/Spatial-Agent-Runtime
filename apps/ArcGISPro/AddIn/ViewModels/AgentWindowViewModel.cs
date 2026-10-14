@@ -25,7 +25,7 @@ namespace ArcGISProAIAgent.ViewModels
 {
     internal class AgentWindowViewModel : INotifyPropertyChanged
     {
-        // ── 核心依赖 ──
+        // ── 核心依赖 / Core dependencies ──
         private readonly DeepSeekProvider _llm;
         private readonly IEventBus _eventBus = new EventBus();
         private readonly ToolRegistry _tools = new();
@@ -35,7 +35,7 @@ namespace ArcGISProAIAgent.ViewModels
         private readonly AgentRuntime _runtime;
         private readonly IAgentSession _session;
 
-        // ── 日志子系统（两阶段初始化）──
+        // ── 日志子系统（两阶段初始化）/ Logging subsystem (two-phase initialization) ──
         private readonly TranscriptWriter _transcript = new();
         private readonly ContextSnapshotter _snapshotter;
         private VerificationLedger? _ledger;
@@ -59,10 +59,10 @@ namespace ArcGISProAIAgent.ViewModels
         private KnowledgeRetriever? _ragRetriever;
         private SessionIndex? _sessionIndex;
 
-        // ── 项目路径（延迟获取）──
+        // ── 项目路径（延迟获取）/ Project path (resolved lazily) ──
         private string _projFolder = "";
 
-        // ── UI 绑定属性 ──
+        // ── UI 绑定属性 / UI binding properties ──
         private ObservableCollection<TimelineItem> _timelineItems = new();
         private readonly Dictionary<int, TimelineItem> _traceGroups = new();
         private readonly Dictionary<(int Turn, int Step), ToolTraceItem> _traceIndex = new();
@@ -93,10 +93,13 @@ namespace ArcGISProAIAgent.ViewModels
         private string _taskStageBrush = "#4B6484";
         private int _currentTaskTurn;
         private bool _isTimelinePanelExpanded;
-        /// <summary>ViewModel 请求宿主关闭窗口（如检测到未保存项目）。</summary>
+        /// <summary>
+        /// ViewModel 请求宿主关闭窗口（如检测到未保存项目）。
+        /// Raised when the ViewModel asks the host to close the window, such as after detecting an unsaved project.
+        /// </summary>
         public event Action? CloseRequested;
 
-        // ── 会话浏览器 ──
+        // ── 会话浏览器 / Session browser ──
         public ObservableCollection<SessionInfo> SessionInfos { get; } = new();
         private SessionInfo? _selectedSessionInfo;
         public SessionInfo? SelectedSessionInfo
@@ -109,7 +112,7 @@ namespace ArcGISProAIAgent.ViewModels
         private string _sessionPickerLabel = "会话历史";
         public string SessionPickerLabel { get => _sessionPickerLabel; set => Set(ref _sessionPickerLabel, value); }
 
-        // ── 模型与思考档位切换 ──
+        // ── 模型与思考档位切换 / Model and reasoning-level selection ──
         public List<string> AvailableModels { get; } = new() { "DeepSeek V4 Pro", "DeepSeek V4 Flash" };
         private string _selectedModel = "DeepSeek V4 Pro";
         public string SelectedModel
@@ -149,13 +152,15 @@ namespace ArcGISProAIAgent.ViewModels
             }
         }
 
-        // ── 设置路径 ──
+        // ── 设置路径 / Settings path ──
         private static readonly string SETTINGS_FILE = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ArcGISProAIAgent", "settings.json");
 
-        // ── 资源目录 ──
+        // ── 资源目录 / Resource directories ──
         // 插件程序集部署在 AssemblyCache，BaseDirectory 指向 Pro 安装目录。
         // 因此必须从程序集所在目录探测资源。
+        // The add-in assembly is deployed in AssemblyCache while BaseDirectory points to the Pro installation.
+        // Resources must therefore be discovered relative to the assembly location.
         private static string GetSkillsDir() =>
             ResourcePaths.Resolve("Skills");
         private static string GetKnowledgeDir() =>
@@ -165,23 +170,27 @@ namespace ArcGISProAIAgent.ViewModels
             $"{prefix}-{DateTime.Now:yyyyMMdd-HHmmss-fff}";
 
         // 阶段 1 日志路径：项目初始化前先写入 AppData。
+        // Phase-1 log path: write to AppData until project initialization completes.
         private static string GetFallbackLogDir() =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ArcGISProAIAgent", "logs");
 
         // ================================================================
         // 构造函数：两阶段初始化的阶段 1。
+        // Constructor: phase 1 of the two-phase initialization.
         // ================================================================
         public AgentWindowViewModel()
         {
             _snapshotter = new ContextSnapshotter(_mapReader, _projectReader);
             // GIS Dispatcher 必须先于任何工具执行完成设置。
+            // The GIS Dispatcher must be configured before any tool executes.
             GPToolRunner.DefaultDispatcher = new ProGisDispatcher();
 
-            // LLM Provider
+            // LLM 提供程序 / LLM provider
             _llm = new DeepSeekProvider("deepseek-v4-pro");
             LoadApiKey();
 
             // 日志组件先写 AppData，Runtime 构造后由 InitializeLogging 统一激活。
+            // Logging components initially write to AppData and are activated together by InitializeLogging after Runtime construction.
             _ledger = new VerificationLedger();
             _healthMonitor.BindStats(
                 ledgerTotalChecks: () => _ledger.TotalChecks,
@@ -191,6 +200,7 @@ namespace ArcGISProAIAgent.ViewModels
                 auditEntryCount: () => _audit?.EntryCount ?? 0);
 
             // diagnostics.warning → UI toast；呈现职责保留在 ViewModel。
+            // diagnostics.warning → UI toast; presentation remains the ViewModel's responsibility.
             _eventBus.Subscribe("diagnostics.warning", e => OnUi(() =>
             {
                 var area = e.Metadata?.GetValueOrDefault("area", "runtime") ?? "runtime";
@@ -201,15 +211,16 @@ namespace ArcGISProAIAgent.ViewModels
                     : $"⚠ {area}: {message} ({error})");
             }));
 
-            // EventBus → Debug
+            // EventBus → 调试输出 / debug output
             _eventBus.Subscribe("*", e => Debug.WriteLine(
                 $"[Agent] {e.EventType} turn={e.Turn} {string.Join(",", e.Metadata?.Select(kv => $"{kv.Key}={kv.Value}") ?? Array.Empty<string>())}"));
             SubscribeTraceEvents();
 
-            // 注册工具
+            // 注册工具 / Register tools
             RegisterAllTools();
 
             // RAG + Skills：同步加载文件，后台构建向量和索引。
+            // RAG + Skills: load files synchronously, then build vectors and indexes in the background.
             var tfidf = new TfidfEmbeddingService();
             _ragRetriever = null;
             ISearchProvider? knowledge = null;
@@ -222,6 +233,8 @@ namespace ArcGISProAIAgent.ViewModels
 
                 // Phase 1: Load skill files immediately (sync I/O, no API needed).
                 // L1/L2 keyword matching works right away; L3 embedding builds async.
+                // 阶段 1：立即加载技能文件（同步 I/O，无需 API）。
+                // L1/L2 关键词匹配可立即使用；L3 嵌入在后台异步构建。
                 skills = new SkillManager(GetSkillsDir(), async text => await api.EmbedAsync(text));
                 skills.LoadAll();
                 Debug.WriteLine($"[ViewModel] Skills loaded: {skills.Count} skills");
@@ -229,6 +242,9 @@ namespace ArcGISProAIAgent.ViewModels
                 // Phase 2: Build knowledge index in background (may use embedding API).
                 // Fire-and-forget with error channel; the first query may get no results
                 // if index isn't ready, but subsequent queries will benefit.
+                // 阶段 2：在后台构建知识索引（可能使用嵌入 API）。
+                // 采用带错误通道的即发即弃方式；若索引尚未就绪，首次查询可能无结果，
+                // 但后续查询将受益于已完成的索引。
                 _ragRetriever = new KnowledgeRetriever(hybrid, GetKnowledgeDir());
                 knowledge = new SearchProviderAdapter(_ragRetriever);
                 _ = _ragRetriever.BuildIndexAsync().ContinueWith(t =>
@@ -242,17 +258,19 @@ namespace ArcGISProAIAgent.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"[ViewModel] RAG init failed: {ex.GetType().Name}: {ex.Message}");
-                // Fallback: skills with local file loading only, no embedding
+                // Fallback: skills with local file loading only, no embedding.
+                // 回退方案：仅从本地文件加载技能，不使用嵌入。
                 skills ??= new SkillManager(GetSkillsDir());
                 try { skills.LoadAll(); } catch (Exception ex2) {
                     Debug.WriteLine($"[ViewModel] Skill fallback load failed: {ex2.Message}");
                 }
             }
 
-            // ContextManager（包含 RAG 与 ToolIndex）
+            // ContextManager（包含 RAG 与 ToolIndex）/ ContextManager (including RAG and ToolIndex)
             _contextManager = new ContextManager(_projectReader, _mapReader, skills, knowledge);
 
-            // Load tool index for context-based tool filtering
+            // Load tool index for context-based tool filtering.
+            // 加载工具索引，用于基于上下文筛选工具。
             string toolIndexPath = ResourcePaths.Resolve("tools_index.json");
             _toolIndex = new ToolIndex();
             _toolIndex.Load(toolIndexPath);
@@ -263,12 +281,13 @@ namespace ArcGISProAIAgent.ViewModels
             _ = toolSemanticScorer.BuildAsync(_tools.GetAllDescriptors());
             _contextManager.SetToolSemanticScorer(toolSemanticScorer);
 
-            // AgentSession + AgentRuntime
+            // Agent 会话与运行时 / AgentSession + AgentRuntime
             _session = new AgentSession(CreateThreadId(), _eventBus);
             _session.PermissionLevel = PermissionLevelFromLabel(_selectedPermissionLevel);
             _runtime = new AgentRuntime(_session, _llm, _tools, _contextManager, _eventBus);
 
             // MCP server：Kestrel Streamable HTTP，替代旧 HttpListener。
+            // MCP server: Kestrel Streamable HTTP replaces the legacy HttpListener.
             try
             {
                 var mcpServer = new McpStreamableHttpServer(_tools, knowledge, port: 8765);
@@ -280,22 +299,26 @@ namespace ArcGISProAIAgent.ViewModels
             {
                 Debug.WriteLine($"[ViewModel] MCP server failed to start: {ex.Message}");
                 // MCP 启动失败不阻断 Agent 主流程。
+                // An MCP startup failure must not block the main Agent workflow.
             }
 
             // 注入安全、审计和日志模块。
+            // Inject the safety, audit, and logging modules.
             var safety = new SafetyGate();
             safety.SetToolRegistry(_tools);
             _runtime.SetSafety(safety);
             _runtime.SetTranscriptWriter(_transcript, _transcript, _transcript, _transcript);
 
             // 日志初始化统一通过 AgentRuntime，必须在 Runtime 构造后调用。
+            // Logging is initialized centrally through AgentRuntime and must run after Runtime construction.
             _runtime.SetLedger(_ledger);
             _runtime.SetSnapshotter(_snapshotter);
             _runtime.SetLoggingHealthMonitor(_healthMonitor);
             _runtime.InitializeLogging(new LoggingConfig { LogDir = GetFallbackLogDir() });
             _transcript.WriteSessionStart(_session.ThreadId, _selectedModel, _selectedThinking, null);
 
-            // PostCondition 验证器（注入 transcript 与 ledger）
+            // PostCondition 验证器（注入 transcript 与 ledger）。
+            // Post-condition validator with transcript and ledger injection.
             var postConditionRule = new PostConditionValidationRule(
                 new ArcGISPostConditionProbe(), _eventBus, _transcript, _ledger);
             var validators = new List<IValidationRule> { postConditionRule };
@@ -303,26 +326,29 @@ namespace ArcGISProAIAgent.ViewModels
             _runtime.SetParameterValidator(
                 new SpatialAgent.Runtime.Validation.ParameterValidator(_tools.GetAllDescriptors()));
 
-            // 数据影响安全门（ADR 0051）
+            // 数据影响安全门（ADR 0051）。
+            // Data-influence safety gate (ADR 0051).
             _runtime.SetDataInfluenceEstimator(new DataInfluenceEstimator(_mapReader));
 
-            // 订阅进度事件
+            // 订阅进度事件 / Subscribe to progress events
             _runtime.OnProgress += (_, detail) =>
             {
                 UpdateStatusBar();
             };
 
-            // UI 初始状态
+            // UI 初始状态 / Initial UI state
             ShowApiKeyInput = !_llm.IsConfigured;
             UpdateStatusBar();
 
             // API 已配置时进入阶段 2。
+            // Enter phase 2 when the API is configured.
             if (_llm.IsConfigured)
                 _ = InitializeProjectContextAsync();
         }
 
         // ================================================================
         // RAG 索引延迟重建：embedding API 就绪后重试。
+        // Deferred RAG index rebuild: retry after the embedding API becomes available.
         // ================================================================
         private async Task RebuildRagIndexIfNeededAsync()
         {
