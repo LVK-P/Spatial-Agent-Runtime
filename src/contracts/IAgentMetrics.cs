@@ -7,6 +7,7 @@
 //
 // 来源：跨实现架构审查后的可观测性合同。
 // ================================================================
+// English：================================================================ IAgentMetrics.cs — Agent Operation Metrics Collection Interface Lightweight memory counter requires no external infrastructure. Periodically writes Snapshot() to the Transcript log. Coverage: tool call success rate, delay distribution, parameter correction rate, token consumption. Source: Cross-implementation Architecture Review of Observability Contracts. ================================================================
 namespace SpatialAgent.Runtime.Contracts
 {
     /// <summary>
@@ -22,7 +23,7 @@ namespace SpatialAgent.Runtime.Contracts
         void RecordToolCall(string toolName, bool success, long elapsedMs, string? errorClass);
 
         /// <summary>Record a validation verdict.</summary>
-        /// <remarks>中文：记录验证判决。</remarks>
+        /// <remarks>中文：记录验证结论。</remarks>
         void RecordValidation(string ruleName, ValidationVerdict verdict);
 
         /// <summary>Record a parameter auto-correction (useful for measuring LLM error rate).</summary>

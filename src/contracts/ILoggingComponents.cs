@@ -7,6 +7,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// ★ Phase B1（2026-07-20）：VerificationLedger 的合约抽象。
     /// Runtime 层通过此接口访问 Ledger，避免直接依赖 Services 层。
     /// </summary>
+    /// <remarks>English：Phase B1 (2026-07-20): Contract abstraction of VerificationLedger. The Runtime layer accesses the Ledger through this interface, avoiding direct dependence on the Services layer.</remarks>
     public interface IVerificationLedger : IDisposable
     {
         string? FilePath { get; }
@@ -24,6 +25,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// ★ Phase B1（2026-07-20）：ContextSnapshotter 的合约抽象。
     /// Runtime 层通过此接口触发快照，避免直接依赖 Services 层。
     /// </summary>
+    /// <remarks>English：Phase B1 (2026-07-20): Contract abstraction for ContextSnapshotter. The Runtime layer triggers snapshots through this interface, avoiding direct dependence on the Services layer.</remarks>
     public interface IContextSnapshotter : IDisposable
     {
         string? FilePath { get; }
@@ -35,6 +37,7 @@ namespace SpatialAgent.Runtime.Contracts
         void SetLoggingHealthMonitor(ILoggingHealthMonitor? hm);
 
         /// <summary>拍摄上下文快照。fire-and-forget，失败不影响主流程。</summary>
+        /// <remarks>English：Take contextual snapshots. Fire-and-forget, failure does not affect the main flow.</remarks>
         Task SnapshotAsync(string trigger, int turn, string? detail = null);
     }
 
@@ -48,6 +51,7 @@ namespace SpatialAgent.Runtime.Contracts
         public string LogDir { get; set; } = "";
 
         /// <summary>项目文件夹路径（AuditLogger 需要）。</summary>
+        /// <remarks>English：Project folder path (required by AuditLogger).</remarks>
         public string? ProjectFolder { get; set; }
     }
 }

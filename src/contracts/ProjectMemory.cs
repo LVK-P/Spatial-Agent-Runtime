@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 //   2. 自动注入 — 每次对话自动加载到上下文
 //   3. 用户驱动 — 只记录用户明确确认或纠正的信息
 // ================================================================
+// English：================================================================ ProjectMemory.cs — Project-level persistent memory stores 5W2H answers, operation corrections, and preferences confirmed by users throughout the conversation. File located in the project folder: \.agent\memory.json Design principles: 1. Only add, not change — add new information, retain old information (retroactive). 2. Auto-injection — automatically loads into context every conversation 3. User-driven — only records information explicitly confirmed or corrected by the user ================================================================
 namespace SpatialAgent.Runtime.Contracts
 {
     public class ProjectMemory
@@ -99,7 +100,7 @@ namespace SpatialAgent.Runtime.Contracts
         public string ConfirmedAt { get; set; } = "";
 
         [JsonProperty("source")]
-        public string Source { get; set; } = "user"; // user / inferred / system
+        public string Source { get; set; } = "user"; // 用户/推断/系统。 / User/inferred/system.
     }
 
     public class CorrectionEntry

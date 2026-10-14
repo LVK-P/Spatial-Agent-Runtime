@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 //
 // 来源：跨实现架构审查后的宿主调度合同。
 // ================================================================
+// English：================================================================ IGisDispatcher.cs — Abstract GIS execution context scheduler isolates the ArcGIS Pro MCT thread model at the Adapters layer. Runtime and Tests obtain platform-independent execution scheduling through this interface. Source: Host scheduling contract after cross-implementation architecture review. ================================================================
 namespace SpatialAgent.Runtime.Contracts
 {
     /// <summary>

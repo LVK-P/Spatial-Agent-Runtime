@@ -10,9 +10,9 @@ namespace SpatialAgent.Runtime.Contracts
     {
         Completed,
         Failed,
-        AwaitingApproval, // paused before execution for user approval
-        Blocked,  // blocked by safety gate
-        Skipped   // skipped due to prior failure or user cancellation
+        AwaitingApproval, // 执行前暂停以等待用户批准。 / Paused before execution for user approval.
+        Blocked,  // 被安全门阻止。 / Blocked by the safety gate.
+        Skipped   // 因先前失败或用户取消而跳过。 / Skipped due to a prior failure or user cancellation.
     }
 
     public enum StateTransitionOutcome

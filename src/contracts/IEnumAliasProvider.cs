@@ -8,6 +8,7 @@
 // 架构审查发现：将 EnumAliases 硬编码在 ParameterValidator 中会导致
 // GP 领域知识泄漏到 Runtime 层。此接口用于守住分层边界。
 // ================================================================
+// English：================================================================ IEnumAliasProvider.cs — Enumeration Value Alias Parsing Interface Decouples GIS tool-specific enumeration knowledge from the Runtime core. Runtime's ParameterValidator relies on this interface for fuzzy matching, and the specific aliased data is injected by the Tools layer from the local tools_manifest.json + tools_aliases.json. The architecture review found that hard-coding EnumAliases in ParameterValidator causes GP domain knowledge to leak to the runtime layer. This interface is used to maintain layered boundaries. ================================================================
 namespace SpatialAgent.Runtime.Contracts
 {
     /// <summary>

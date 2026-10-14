@@ -11,6 +11,7 @@ using System.Text;
 //
 // 来源：跨实现架构审查后的空间参考上下文合同。
 // ================================================================
+// English：================================================================ SpatialRefContext.cs — Coordinate System Context DTO ContextManager collects spatial reference information for maps and layers. Detects coordinate system mixing and cross-datum operations, injecting System prompts to reduce LLM-related coordinate system-related errors (the first pitfall in the GIS field). Source: Cross-implementation Architecture Review of Spatial Reference Context Contracts. ================================================================
 namespace SpatialAgent.Runtime.Contracts
 {
     /// <summary>

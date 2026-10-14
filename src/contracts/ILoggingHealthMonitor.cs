@@ -8,6 +8,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// 各日志组件在写入失败时调用 ReportWriteFailure()，
     /// session_end 时通过 Snapshot() 获取聚合健康快照写入 transcript。
     /// </summary>
+    /// <remarks>English：Phase B4 (2026-07-20): Unified query of health status in four-layer logs. Each log component calls ReportWriteFailure() when a write fails, and when session_end, it retrieves an aggregated health snapshot and writes the transcript via Snapshot().</remarks>
     public interface ILoggingHealthMonitor
     {
         /// <summary>获取当前健康快照（不重置计数器）。</summary>
@@ -23,12 +24,14 @@ namespace SpatialAgent.Runtime.Contracts
         void ReportWriteFailure(string layer, string reason);
 
         /// <summary>重置所有计数器（新 session 前调用）。</summary>
+        /// <remarks>English：Reset all counters (called before a new session).</remarks>
         void Reset();
     }
 
     /// <summary>
     /// 四层日志健康快照——写入 session_end 行。
     /// </summary>
+    /// <remarks>English：Four-layer log health snapshot—write session_end lines.</remarks>
     public class LoggingHealthSnapshot
     {
         /// <summary>快照时间戳。</summary>
@@ -68,6 +71,7 @@ namespace SpatialAgent.Runtime.Contracts
             TranscriptOk && LedgerOk && SnapshotOk && AuditOk;
 
         /// <summary>故障摘要（用于 UI 展示）。</summary>
+        /// <remarks>English：Fault summary (for UI display).</remarks>
         public string FaultSummary()
         {
             var faults = new List<string>();

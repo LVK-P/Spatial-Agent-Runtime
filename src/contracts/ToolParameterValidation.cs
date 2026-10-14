@@ -8,6 +8,7 @@ using System.Collections.Generic;
 //
 // 来源：跨实现架构审查后的参数验证合同。
 // ================================================================
+// English：================================================================ ToolParameterValidation.cs — Output of the tool parameter validation result DTO ParameterValidator. Three types of validation actions are defined: Proceed, Corrected, and Rejected. Source: Parameter validation contract after implementation architecture review. ================================================================
 namespace SpatialAgent.Runtime.Contracts
 {
     /// <summary>
@@ -52,6 +53,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// Logged to EventBus for audit + injected into Observation for LLM feedback.
         /// E.g. "selection_type: 'new' → 'NEW_SELECTION' (大小写纠正)"
         /// </summary>
+        /// <remarks>中文：验证过程中已进行了修正。登录EventBus进行审计+注入Observation以获取LLM反馈。例如：“selection_type： 'new' → 'NEW_SELECTION'（大小写纠正）”</remarks>
         public List<string> Corrections { get; set; } = new();
 
         /// <summary>
@@ -65,6 +67,7 @@ namespace SpatialAgent.Runtime.Contracts
         /// Warnings that didn't block execution.
         /// E.g. "空间参考参数的值不像 WKID"
         /// </summary>
+        /// <remarks>中文：警告并未阻止执行。例如 “空间参考参数的值不像 WKID”</remarks>
         public List<string> Warnings { get; set; } = new();
 
         /// <summary>Whether the tool call can proceed (Proceed or Corrected).</summary>

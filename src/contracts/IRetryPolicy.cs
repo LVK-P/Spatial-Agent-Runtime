@@ -9,6 +9,7 @@ using System;
 //
 // 来源：跨实现架构审查后的重试策略合同。
 // ================================================================
+// English：================================================================ IRetryPolicy.cs — Tool executes retry policy interfaces and handles errors separately by error category (Transient/Permanent/Correctable). Correctable is a GIS category: parameters are automatically corrected by the validator and retried directly, avoiding throwing errors back to the LLM and wasting a conversation. Source: Cross-implementation Strategy Retry Strategy Contract after Architecture Review. ================================================================
 namespace SpatialAgent.Runtime.Contracts
 {
     /// <summary>

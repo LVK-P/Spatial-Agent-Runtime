@@ -7,6 +7,7 @@ using System.Linq;
 // ContextManager.GatherAsync() 的输出，汇总了 Agent 做出决策
 // 所需的全部上下文信息。
 // ================================================================
+// English：================================================================ AgentContext.cs — Context-aggregation The output of DTO ContextManager.GatherAsync() aggregates all the contextual information needed for the agent to make decisions. ================================================================
 namespace SpatialAgent.Runtime.Contracts
 {
     /// <summary>

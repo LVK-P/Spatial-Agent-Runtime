@@ -38,12 +38,14 @@ namespace SpatialAgent.Runtime.Contracts
         /// Bare names already containing a path separator, ".gdb" or "in_memory"
         /// are returned as-is; unconfigured workspace returns the name unchanged.
         /// </summary>
+        /// <remarks>中文：在agentworkspace.gdb根节点将一个简单的输出名称解析为完整路径。例如：“tmp_道路重叠” → “...\agentworkspace.gdb\tmp_道路重叠”。已包含路径分隔符的裸名称如“.gdb”或“in_memory”会按原样返回;未配置工作区返回名称未更改。</remarks>
         string ResolveOutputPath(string simpleName, string toolName = "", string geometryType = "");
 
         /// <summary>
         /// 从当前地图中移除 agentbackup.gdb 内的图层。备份完成后调用，
         /// 避免 Pro 自动发现备份 GDB 后将其图层加入地图导致套娃循环。
         /// </summary>
+        /// <remarks>English：Remove the layers inside agentbackup.gdb from the current map. Call after backup to prevent Pro from automatically detecting GDB backups and adding their layers to the map, which could cause nesting loops.</remarks>
         Task RemoveFromMapAsync(
             string path,
             CancellationToken cancellation = default);

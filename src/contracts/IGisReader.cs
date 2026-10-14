@@ -7,6 +7,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// by ViewModel. Eliminates the text-line-parsing protocol that coupled the two
     /// layers through hardcoded key names ("家目录："/"项目目录：" etc.).
     /// </summary>
+    /// <remarks>中文：结构化项目上下文——ProjectReader解析一次，直接被ViewModel调用。消除了通过硬编码密钥名（“家目录：”/“项目目录：” 等）将两层连接起来的文本行解析协议。</remarks>
     public sealed class ProjectContext
     {
         public bool IsAvailable { get; init; }

@@ -43,12 +43,14 @@ namespace SpatialAgent.Runtime.Contracts
         /// Key = 上下文源名称（project/map/skills/knowledge/memory/session），
         /// Value = { original_len, budget, cut_len }。
         /// </summary>
+        /// <remarks>中文：C4阶段（2026-07-20）：ContextBudgeter 裁剪明细。Key = 上下文源名称（project/map/skills/knowledge/memory/session），Value = { original_len， budget， cut_len }。</remarks>
         public Dictionary<string, BudgetCutInfo> BudgetCuts { get; set; } = new();
     }
 
     /// <summary>
     /// ★ Phase C4：单个上下文源的裁剪信息。
     /// </summary>
+    /// <remarks>English：Phase C4: Clipping information from a single context source.</remarks>
     public class BudgetCutInfo
     {
         public int OriginalLen { get; set; }

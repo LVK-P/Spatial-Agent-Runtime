@@ -10,6 +10,7 @@ using System.Collections.Generic;
 //
 // 来源：跨实现架构审查后的计划验证合同。
 // ================================================================
+// English：================================================================ IPlanValidator.cs — Schedule CheckUser Interface performs GIS-specific plausibility validation before LLM-generated AgentPlan is executed. It does not replace the general-purpose Planner—only supplementing GIS domain constraints (dependency chains, output collisions, etc.). Current stage: Interface definition and implementation first, detection + alerts, then automatic correction later. Source: Plan validation contract after implementation architecture review. ================================================================
 namespace SpatialAgent.Runtime.Contracts
 {
     /// <summary>

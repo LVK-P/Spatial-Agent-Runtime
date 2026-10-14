@@ -74,6 +74,7 @@ namespace SpatialAgent.Runtime.Contracts
         // ── 校验元数据（可从本地 tools_manifest.json 生成）──
         // Phase 1: data_type, is_spatial_ref, is_path are populated from manifest.
         // Phase 2: min_value, max_value, pattern from tools_constraints.json (manual curation).
+        // 中文：校验元数据（可从本地 tools_manifest.json 生成） 第一阶段：data_type、is_spatial_ref、is_path 从清单填充。第二阶段：min_value、max_value、tools_constraints.json的图案（手工策展）。
 
         /// <summary>ArcGIS GP parameter data type: GPString, GPLong, GPDouble, GPFeatureLayer…</summary>
         /// <remarks>中文：ArcGIS GP 参数数据类型：GPString、GPLong、GPDouble、GPFeatureLayer......</remarks>

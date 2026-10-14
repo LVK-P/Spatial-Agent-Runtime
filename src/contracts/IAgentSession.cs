@@ -61,7 +61,7 @@ namespace SpatialAgent.Runtime.Contracts
 
     public class Message
     {
-        public string Role { get; set; } = ""; // "user" | "assistant" | "system" | "tool"
+        public string Role { get; set; } = ""; // “用户”|“助手”|“系统”|“工具”。 / "user" | "assistant" | "system" | "tool".
         public string Content { get; set; } = "";
         /// <summary>
         /// Opaque provider reasoning state. Thinking-mode tool calls can
@@ -70,8 +70,8 @@ namespace SpatialAgent.Runtime.Contracts
         /// </summary>
         /// <remarks>中文：不透明的提供程序推理状态。思考模式下的工具调用可能要求在续传请求中回传此值。绝不能将其呈现为助手答复。</remarks>
         public string? ReasoningContent { get; set; }
-        public string? ToolCallId { get; set; } // required for role="tool"
-        public List<ToolCall>? ToolCalls { get; set; } // for role="assistant" with function calls
+        public string? ToolCallId { get; set; } // role="tool" 时必需。 / Required for role="tool".
+        public List<ToolCall>? ToolCalls { get; set; } // 用于带函数调用的 role="assistant"。 / Used for role="assistant" with function calls.
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 
