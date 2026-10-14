@@ -15,6 +15,7 @@ namespace SpatialAgent.Services
     /// Local project memory store backed by <project>/.agent/memory.json.
     /// Implements IProjectMemoryService for consumption by the Runtime layer.
     /// </summary>
+    /// <remarks>中文：本地项目内存存储，由 /.agent/memory.json 支持。实现了 IProjectMemoryService，供运行时层调用。</remarks>
     public class ProjectMemoryStore : IProjectMemoryService, IProjectLineageStore
     {
         private readonly object _lock = new();
@@ -331,6 +332,7 @@ namespace SpatialAgent.Services
             // Repair legacy snapshots written with a mojibake literal. The
             // stable suffix and two counters let us recover without depending
             // on the exact corrupted byte sequence.
+            // 中文：修复用mojibake字面写成的遗留快照。稳定后缀和两个计数器让我们能够在不依赖精确损坏字节序列的情况下恢复。
             if (text.Contains("次工具调用", StringComparison.Ordinal))
             {
                 var numbers = Regex.Matches(text, @"\d+")

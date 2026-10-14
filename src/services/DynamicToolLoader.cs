@@ -15,6 +15,7 @@ using SpatialAgent.Tools.Core;
 // ArcGIS workstation and registers each local tool as a SchemaGPToolAdapter.
 // Called during ViewModel initialization (LoadAndRegister).
 // ────────────────────────────────────────────────────────────────
+// 中文：DynamicToolLoader.cs — Runtime tool registration from manifest JSON.读取用户授权的ArcGIS工作站生成的可选tools_manifest.json，并将每个本地工具注册为SchemaGPToolAdapter。在 ViewModel 初始化（LoadAndRegister）时调用。
 namespace SpatialAgent.Services
 {
     public class ToolManifestEntry
@@ -41,6 +42,7 @@ namespace SpatialAgent.Services
     /// Manifest transport shape. Keep snake_case concerns in Services instead
     /// of coupling the pure Contracts DTO to a JSON implementation.
     /// </summary>
+    /// <remarks>中文：显现运输形态。把snake_case关注点放在服务中，而不是把纯合同的DTO绑定到JSON实现上。</remarks>
     public sealed class ToolManifestCapabilityClaim
     {
         [JsonProperty("capability_id")]
@@ -130,6 +132,7 @@ namespace SpatialAgent.Services
         /// <param name="manifestPath">Path to tools_manifest.json</param>
         /// <param name="registry">Target ToolRegistry</param>
         /// <returns>Number of tools registered</returns>
+        /// <remarks>中文：从manifest JSON加载工具并注册到ToolRegistry。路径tools_manifest.json目标工具注册表注册工具数量</remarks>
         public static int LoadAndRegister(string manifestPath, ToolRegistry registry, IWorkspaceService? workspace = null)
         {
             if (!File.Exists(manifestPath))
@@ -138,6 +141,7 @@ namespace SpatialAgent.Services
             var riskCatalog = ToolRiskCatalog.Instance;
             var schemaReg = new ToolSchemaRegistry();
             // Register core definitions for contracts (needed for verification lookup)
+            // 中文：注册合同的核心定义（用于验证查找）
             schemaReg.RegisterAllDefaults();
 
             Dictionary<string, List<ToolManifestEntry>>? manifest;
@@ -248,6 +252,7 @@ namespace SpatialAgent.Services
             // Preserve explicit parameter order from manifest. New manifests write
             // parameter_order from arcpy.GetParameterInfo(); old manifests fall
             // back to their current order.
+            // 中文：从manifest中保持显式参数顺序。新清单从Arcpy写parameter_order。GetParameterInfo（）;旧的清单会退回到当前的秩序。
             var paramOrder = entry.ParameterOrder?.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
             if (paramOrder == null || paramOrder.Count == 0)
                 paramOrder = orderedParams.Select(p => p.Name).ToList();
@@ -263,10 +268,12 @@ namespace SpatialAgent.Services
                 ?? InferRiskLevel(entry, outputParams);
 
             // Read pre-computed identities from manifest (generated at build time)
+            // 中文：从构建时生成的manifest读取预计算的身份
             string funcName = entry.FunctionName ?? SanitizeFunctionName($"{alias}_{entry.Name}");
             string displayName = entry.DisplayName ?? entry.Name;
             string execName = entry.ExecutionName ?? $"{alias}.{entry.Name.Replace(" ", "")}";
             // Fallback: sanitize for safety if manifest fields are missing
+            // 中文：备选方案：如果清单字段缺失，则为安全进行消毒
             if (string.IsNullOrEmpty(funcName))
                 funcName = SanitizeFunctionName($"{alias}_{entry.Name}");
 
@@ -290,7 +297,7 @@ namespace SpatialAgent.Services
                 FunctionName = funcName,
                 DisplayName = displayName,
                 ExecutionName = execName,
-                Name = funcName, // Use safe FunctionName for IToolDescriptor.Name
+                Name = funcName, // IToolDescriptor.Name 使用安全的 FunctionName。 / Use the safe FunctionName for IToolDescriptor.Name.
                 Description = (entry.Summary ?? entry.Description ?? entry.Name).Length > 300
                     ? (entry.Summary ?? entry.Description ?? entry.Name)[..300]
                     : (entry.Summary ?? entry.Description ?? entry.Name),
@@ -566,6 +573,7 @@ namespace SpatialAgent.Services
         /// 原关键词启发式（LooksDestructive/LooksModifying）已删除——它们与 catalog 分类
         /// 不一致，且作为死代码无法被测试覆盖。
         /// </summary>
+        /// <remarks>English：Secure Gate Consistency (2026-07-24): This method is called as a defensive rollback when the local manifest entry lacks risk_level. Rollback strategy: Unknown tools are classified as Destructive (fail-safe) to prevent unevaluated tools from being silently released. The original keyword heuristics (LooksDestructive/LooksModifying) have been removed—they do not match the catalog category and cannot be covered by testing as dead code.</remarks>
         private static ToolRiskLevel InferRiskLevel(ToolManifestEntry entry, IReadOnlyList<string> outputParams)
         {
             AgentDiagnostics.Warn("DynamicToolLoader.InferRiskLevel",
@@ -627,6 +635,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Sanitize a tool name to alphanumeric + underscore for Function Calling.</summary>
+        /// <remarks>中文：将工具名称净化为字母数字+下划线，用于功能调用。</remarks>
         private static string SanitizeFunctionName(string name)
         {
             if (string.IsNullOrEmpty(name)) return "unknown_tool";
@@ -647,6 +656,7 @@ namespace SpatialAgent.Services
             }
             string result = sb.ToString().Trim('_');
             // Prepend underscore if starts with digit
+            // 中文：如果以数字开头，则前加划线
             if (result.Length > 0 && char.IsDigit(result[0]))
                 result = "_" + result;
             return string.IsNullOrEmpty(result) ? "unknown_tool" : result;

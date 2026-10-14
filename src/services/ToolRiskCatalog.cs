@@ -11,6 +11,7 @@ namespace SpatialAgent.Services
     /// Loads an optional, locally maintained risk catalog and exposes
     /// exact-name lookups for runtime safety classification.
     /// </summary>
+    /// <remarks>中文：加载可选的本地维护风险目录，并公开精确名称查询以进行运行时安全分类。</remarks>
     internal sealed class ToolRiskCatalog
     {
         private const string CatalogFileName = "tool_risk_catalog.json";

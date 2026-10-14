@@ -5,6 +5,7 @@ namespace SpatialAgent.Services
     /// transaction. The persistent lease remains the cross-process commit
     /// marker and is deliberately released last.
     /// </summary>
+    /// <remarks>中文：处理本地正好一次的围栏用于订购的持久会话关闭交易。持久租约仍然是跨进程提交标记，并且被有意地最后释放。</remarks>
     public sealed class DurableSessionFinalizer
     {
         private readonly object _gate = new();

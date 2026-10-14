@@ -13,6 +13,7 @@ namespace SpatialAgent.Services
     /// Completes the durable half of a stale-lease recovery transaction. Lease
     /// claiming happens first, so repeated startup cannot replay the recovery.
     /// </summary>
+    /// <remarks>中文：完成过期租约恢复事务的持久化部分。租约申领先执行，因此重复启动不会重放恢复流程。</remarks>
     public sealed class StaleSessionRecoveryCoordinator
     {
         private readonly IRunCheckpointStore _checkpoints;
@@ -57,6 +58,7 @@ namespace SpatialAgent.Services
                 // finalization transaction. Even if the terminal checkpoint
                 // was written before a crash, absence of lease release means
                 // the remaining terminal artifacts were not committed.
+                // 中文：有效租赁是未完成的正常终结交易的授权。即使终端检查点是在崩溃前编写的，缺乏租约解除意味着剩余的终端文值未被提交。
                 if (state != null && !alreadyRecovered)
                 {
                     state.Status = SessionStatus.Interrupted;

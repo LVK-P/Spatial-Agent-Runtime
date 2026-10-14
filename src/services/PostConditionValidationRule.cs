@@ -17,6 +17,7 @@ using SpatialAgent.Tools.Core;
 //   4. Publish detailed verification event to EventBus (expected/actual/sample).
 //   5. Record to VerificationLedger (independent audit file).
 //   6. Return PASS / WARN / FAIL verdict.
+// 中文：PostConditionValidationRule.cs — 用于后置条件检查的 IValidationRule 适配器。每次工具执行后：1. 查找工具的 GPToolContract 并获取默认验证规则；2. 从输入参数提取验证目标（图层名、字段名）；3. 调用 PostConditionVerifier 运行实际 GIS 状态探测；4. 向事件总线发布详细验证事件（预期值/实际值/样本）；5. 写入 VerificationLedger（独立审计文件）；6. 返回通过/警告/失败结论。
 namespace SpatialAgent.Services
 {
     public class PostConditionValidationRule : IValidationRule
@@ -30,6 +31,7 @@ namespace SpatialAgent.Services
         public string Description => "后置条件验证：检查字段存在、要素数量、坐标系等";
 
         /// <summary>Current turn number (set by AgentRuntime before each turn).</summary>
+        /// <remarks>中文：当前回合数（由AgentRuntime在每回合前设定）。</remarks>
         public int CurrentTurn { get; set; }
 
         public PostConditionValidationRule(
@@ -47,11 +49,13 @@ namespace SpatialAgent.Services
         public bool AppliesTo(string toolName, IObservation observation)
         {
             // 1. Check GPToolContract (core tools with fine-grained verification)
+            // 中文：1. 查看GPToolContract（带有细粒度验证的核心工具）
             var contract = GPToolContract.Get(toolName);
             if (contract != null && contract.DefaultVerifications.Count > 0)
                 return true;
 
             // 2. Fallback: check tool's own Verification rule (dynamic tools from manifest)
+            // 中文：2. 备用：检查工具自身的验证规则（动态工具来自清单）
             if (observation is Observation concrete && concrete.ToolVerification != null)
                 return true;
 
@@ -68,6 +72,7 @@ namespace SpatialAgent.Services
             bool hasContractRules = contract != null && contract.DefaultVerifications.Count > 0;
 
             // Fallback: use tool verification from ToolDefinition (dynamic tools)
+            // 中文：备选：使用ToolDefinition（动态工具）中的工具验证
             var toolVerification = (observation is Observation obsConcrete) ? obsConcrete.ToolVerification : null;
             bool hasToolRule = toolVerification != null;
             var proofRequirements = (observation as Observation)?
@@ -95,6 +100,7 @@ namespace SpatialAgent.Services
             int stepNumber = concreteObservation?.StepId ?? 0;
 
             // Build rule list: contract rules first, fall back to tool own rule
+            // 中文：构建规则列表：先用合同规则，回归工具自有规则
             var rules = hasContractRules
                 ? contract!.DefaultVerifications
                 : (hasToolRule ? new List<VerificationRule> { toolVerification! } : new List<VerificationRule>());
@@ -102,6 +108,7 @@ namespace SpatialAgent.Services
             foreach (var rule in rules)
             {
                 // Pass contract when available so ResolveOutputTarget can use OutputIndex
+                // 中文：有合约时请传递，这样ResolveOutputTarget可以使用OutputIndex
                 string target = ResolveTarget(rule.Type, rule.Target, contract, inputParams, rule.Params);
                 string verifyExpected = ResolveExpected(rule.Type, rule.Expected, contract, inputParams, rule.Params);
                 string humanExpected = DescribeExpected(
@@ -117,7 +124,7 @@ namespace SpatialAgent.Services
                 {
                     Type = rule.Type,
                     Target = target,
-                    Expected = verifyExpected,  // ← The actual verification parameter
+                    Expected = verifyExpected,  // ← 实际验证参数。 / The actual verification parameter.
                     FixHint = rule.FixHint,
                     Invert = rule.Invert
                 };
@@ -145,10 +152,12 @@ namespace SpatialAgent.Services
                     sw.Stop();
 
                     // Describe actual state
+                    // 中文：描述实际状态
                     string actual = passed_check ? detail : detail.Replace("验证通过", "").Replace("验证失败", "").Trim();
                     object? sample = ExtractSample(rule.Type, target, observation);
 
                     // ── Publish rich verification event ──
+                    // 中文：发布富验证事件
                     _eventBus?.Publish(new AgentEvent
                     {
                         EventType = passed_check ? "verification.passed" : "verification.failed",
@@ -171,6 +180,7 @@ namespace SpatialAgent.Services
                     });
 
                     // ── Record to Verification Ledger ──
+                    // 中文：记录至验证账本
                     _ledger?.Record(new VerificationEntry
                     {
                         Turn = CurrentTurn,
@@ -188,6 +198,7 @@ namespace SpatialAgent.Services
                     });
 
                     // ── Record to Transcript ──
+                    // 中文：记录到文字记录
                     _transcript?.WriteVerification(
                         CurrentTurn, stepNumber, observation.ToolName,
                         rule.Type, target, humanExpected, actual,
@@ -347,6 +358,7 @@ namespace SpatialAgent.Services
         // ────────────────────────────────────────────────────────────────
         // Target resolution
         // ────────────────────────────────────────────────────────────────
+        // 中文：目标分辨率
 
         private static string ResolveTarget(string verifyType, string existingTarget,
             GPToolContract? contract, Dictionary<string, object?> inputParams, string? ruleParams)
@@ -376,6 +388,7 @@ namespace SpatialAgent.Services
         /// <summary>
         /// Describe what we expect to find — used in verification ledger for expected/actual diff.
         /// </summary>
+        /// <remarks>中文：描述我们期望发现的内容——用于验证账本中用于预期/实际差值。</remarks>
         private static string DescribeExpected(string verifyType, string existingExpected,
             Dictionary<string, object?> inputParams, GPToolContract? contract,
             string? ruleParams, bool invert)
@@ -411,6 +424,7 @@ namespace SpatialAgent.Services
         /// Returns empty string for verify_field (skip type check),
         /// WKID for verify_spatial_ref, "1" for verify_count_min.
         /// </summary>
+        /// <remarks>中文：解决实际验证参数（非人类可读）。返回空字符串表示verify_field（跳过类型检查），返回 WKID 表示verify_spatial_ref，“1” 返回verify_count_min。</remarks>
         private static string ResolveExpected(string verifyType, string existingExpected,
             GPToolContract? contract, Dictionary<string, object?> inputParams, string? ruleParams)
         {
@@ -424,9 +438,9 @@ namespace SpatialAgent.Services
 
             return verifyType switch
             {
-                "verify_field" => "",           // Empty = skip type check, just verify field exists
-                "verify_field_populated" => "", // Value sampling needs no expected parameter
-                "verify_count_min" => "1",      // At least 1 feature
+                "verify_field" => "",           // 空值表示跳过类型检查，仅验证字段存在。 / Empty means skip the type check and only verify existence.
+                "verify_field_populated" => "", // 值采样不需要期望参数。 / Value sampling needs no expected parameter.
+                "verify_count_min" => "1",      // 至少一个要素。 / At least one feature.
                 "verify_count_zero" => "0",
                 "verify_empty" => "0",
                 "verify_spatial_ref" =>
@@ -446,6 +460,7 @@ namespace SpatialAgent.Services
         /// <summary>
         /// Extract sample data from the observation output for evidence.
         /// </summary>
+        /// <remarks>中文：从观测输出中提取样本数据以获取证据。</remarks>
         private static object? ExtractSample(string verifyType, string target, IObservation observation)
         {
             try
@@ -480,6 +495,7 @@ namespace SpatialAgent.Services
         }
 
         // ── Helpers ──
+        // 中文：助手
 
         private static string ResolveFieldTarget(GPToolContract? contract, Dictionary<string, object?> inputParams, string? ruleParams = null)
         {
@@ -489,6 +505,7 @@ namespace SpatialAgent.Services
             // Tool-declared default (rule Params "field_default=XXX") — for composite
             // tools like cc_calculate_area whose written field is implicit when the
             // caller omits field_name.
+            // 中文：工具声明默认（规则参数“field_default=XXX”）——适用于复合工具，如cc_calculate_area，其写入字段在调用者省略时隐含field_name。
             if (string.IsNullOrEmpty(fieldName))
             {
                 var parsed = ParseRuleParams(ruleParams);
@@ -504,6 +521,7 @@ namespace SpatialAgent.Services
             // Never fabricate "first-two-args" targets: that produced false FAILs
             // (area_type value treated as a field name) — a wrong verdict is worse
             // than an honest skip.
+            // 中文：目标未知时返回空值，以便跳过该规则并发出警告。切勿根据“前两个参数”臆造目标，否则会产生错误失败（例如把 area_type 值当成字段名）；错误结论比诚实跳过更糟。
             return "";
         }
 
@@ -671,6 +689,7 @@ namespace SpatialAgent.Services
                 catch
                 {
                     // Fall through to key=value parsing for permissive legacy params.
+                    // 中文：对于允许的遗留参数，切换到 key=value 解析。
                 }
             }
 

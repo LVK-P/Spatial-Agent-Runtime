@@ -147,6 +147,7 @@ namespace SpatialAgent.Services
                 {
                     // Fall back to checkpoint scan. A damaged index must not
                     // make otherwise valid atomic checkpoints unreachable.
+                    // 中文：退回检查点扫描。损坏的索引不应使本应有效的原子检查点无法到达。
                 }
             }
 

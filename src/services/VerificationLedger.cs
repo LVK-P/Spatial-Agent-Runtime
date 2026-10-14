@@ -15,6 +15,7 @@ using SpatialAgent.Core;
 //
 // Output: {project}/agent_logs/verification_{timestamp}.jsonl
 // ────────────────────────────────────────────────────────────────
+// 中文：VerificationLedger.cs — 事后状态验证审计跟踪。每次核实检查的记录与实际证据与样本证据的对比。为回答“你怎么知道这个工具实际上产生了预期结果？”提供了可审计的基础。输出：{project}/agent_logs/verification_{timestamp}.jsonl
 namespace SpatialAgent.Services
 {
     public class VerificationLedger : IDisposable, Runtime.Contracts.IVerificationLedger
@@ -32,6 +33,7 @@ namespace SpatialAgent.Services
         public int WriteFailures => _writeFailures;
 
         // ── Statistics ──
+        // 中文：统计数据
         public int TotalChecks { get; private set; }
         public int PassedChecks { get; private set; }
         public int FailedChecks { get; private set; }
@@ -40,6 +42,7 @@ namespace SpatialAgent.Services
         /// <summary>
         /// Initialize ledger file in the given log directory.
         /// </summary>
+        /// <remarks>中文：在给定的日志目录中初始化账本文件。</remarks>
         public void Initialize(string logDir)
         {
             lock (_lock)
@@ -80,6 +83,7 @@ namespace SpatialAgent.Services
         /// Record a verification check with full expected/actual/sample detail.
         /// ★ Phase B2：写入失败上报健康监控 + 自动注入 run_id/span_id。
         /// </summary>
+        /// <remarks>中文：记录一份包含完整预期/实际/样本细节的核查。Phase B2：写入失败上报健康监控 + 自动注入 run_id/span_id。</remarks>
         public void Record(VerificationEntry entry)
         {
             lock (_lock)
@@ -128,6 +132,7 @@ namespace SpatialAgent.Services
                 try
                 {
                     // Write summary footer
+                    // 中文：写摘要页脚
                     var summary = new
                     {
                         type = "ledger_summary",
@@ -149,57 +154,71 @@ namespace SpatialAgent.Services
     /// <summary>
     /// Single verification ledger entry.
     /// </summary>
+    /// <remarks>中文：单一验证账本录入。</remarks>
     public class VerificationEntry
     {
         /// <summary>Event timestamp</summary>
+        /// <remarks>中文：事件时间戳</remarks>
         [JsonProperty("ts")]
         public string Timestamp { get; set; } = DateTime.Now.ToString("HH:mm:ss.fff");
 
         /// <summary>Conversation turn number</summary>
+        /// <remarks>中文：对话回合数</remarks>
         [JsonProperty("turn")]
         public int Turn { get; set; }
 
         /// <summary>Step within the turn</summary>
+        /// <remarks>中文：进入新一轮。</remarks>
         [JsonProperty("step")]
         public int Step { get; set; }
 
         /// <summary>Tool being verified</summary>
+        /// <remarks>中文：工具正在验证</remarks>
         [JsonProperty("tool")]
         public string ToolName { get; set; } = "";
 
         /// <summary>Verification rule type (verify_field, verify_count_min, etc.)</summary>
+        /// <remarks>中文：验证规则类型（verify_field、verify_count_min等）</remarks>
         [JsonProperty("rule")]
         public string RuleType { get; set; } = "";
 
         /// <summary>Verification target (e.g., "highway1.buffer_dist")</summary>
+        /// <remarks>中文：验证目标（例如，“highway1.buffer_dist”）</remarks>
         [JsonProperty("target")]
         public string Target { get; set; } = "";
 
         /// <summary>What we expected to find</summary>
+        /// <remarks>中文：我们预期会发现什么</remarks>
         [JsonProperty("expected")]
         public string Expected { get; set; } = "";
 
         /// <summary>What we actually found</summary>
+        /// <remarks>中文：我们实际发现了什么</remarks>
         [JsonProperty("actual")]
         public string Actual { get; set; } = "";
 
         /// <summary>Sample data from the actual state (e.g., first 3 field values)</summary>
+        /// <remarks>中文：来自实际状态的采样数据（例如前三个字段值）</remarks>
         [JsonProperty("sample")]
         public object? Sample { get; set; }
 
         /// <summary>How we queried the actual state (SDK API used)</summary>
+        /// <remarks>中文：我们如何查询实际状态（使用的 SDK API）</remarks>
         [JsonProperty("query")]
         public string QueryMethod { get; set; } = "";
 
         /// <summary>PASS, FAIL, or WARN</summary>
+        /// <remarks>中文：通过、不通过或警告</remarks>
         [JsonProperty("verdict")]
         public string Verdict { get; set; } = "PASS";
 
         /// <summary>Human-readable detail</summary>
+        /// <remarks>中文：人类可读的细节</remarks>
         [JsonProperty("detail")]
         public string Detail { get; set; } = "";
 
         /// <summary>Elapsed time for this verification check</summary>
+        /// <remarks>中文：此次验证检查的经过时间</remarks>
         [JsonProperty("elapsed_ms")]
         public long ElapsedMs { get; set; }
 

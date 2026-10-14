@@ -20,6 +20,7 @@ using SpatialAgent.Core;
 //
 // Output: {project}/agent_logs/snapshots_{timestamp}.jsonl
 // Sparse sampling — only recorded at critical moments.
+// 中文：ContextSnapshotter.cs — 第4层：上下文快照。捕捉项目/地图/图层状态，关键决策点以回答：“智能体在做出错误判断时看到了什么？”触发点（通过EventBus订阅）：turn.start →每次回合前的基线状态 llm.calling → LLM做出工具调用决策前的上下文 verification.fail → 失败场景（出了什么问题） 输出：{project}/agent_logs/snapshots_{timestamp}.jsonl 稀疏采样——仅在关键时刻记录。
 namespace SpatialAgent.Services
 {
     public class ContextSnapshotter : IDisposable, Runtime.Contracts.IContextSnapshotter
@@ -42,6 +43,7 @@ namespace SpatialAgent.Services
         public int SnapshotCount { get; private set; }
 
         /// <summary>Last snapshot for delta comparison.</summary>
+        /// <remarks>中文：最后一张用于差异比较的快照。</remarks>
         private SnapshotEntry? _lastSnapshot;
 
         public ContextSnapshotter(IMapReader? mapReader = null, IProjectReader? projectReader = null)
@@ -90,6 +92,7 @@ namespace SpatialAgent.Services
         /// Take a snapshot of current project/map state.
         /// Called from EventBus subscribers or directly.
         /// </summary>
+        /// <remarks>中文：对当前项目和地图状态做个快照。无论是EventBus订阅者还是直接拨打。</remarks>
         public async Task SnapshotAsync(string trigger, int turn, string? detail = null)
         {
             lock (_lock)
@@ -108,6 +111,7 @@ namespace SpatialAgent.Services
                 };
 
                 // Capture map and layer state through one typed host snapshot.
+                // 中文：通过一个类型的主机快照捕获地图和层状态。
                 try
                 {
                     MapContextSnapshot map = await _mapReader.GetMapContextAsync();
@@ -130,6 +134,7 @@ namespace SpatialAgent.Services
                 }
 
                 // Capture project info
+                // 中文：捕获项目信息
                 try
                 {
                     string projJson = await _projectReader.GetProjectInfoAsync();
@@ -140,6 +145,7 @@ namespace SpatialAgent.Services
                 catch { entry.project_name = "(unavailable)"; }
 
                 // Compute delta from last snapshot
+                // 中文：从上次快照计算 delta
                 if (_lastSnapshot != null)
                 {
                     var delta = new List<string>();
@@ -197,6 +203,7 @@ namespace SpatialAgent.Services
     /// <summary>
     /// Single snapshot entry — written to snapshots.jsonl.
     /// </summary>
+    /// <remarks>中文：单一快照条目——写入snapshots.jsonl。</remarks>
     internal class SnapshotEntry
     {
         [JsonProperty("ts")]

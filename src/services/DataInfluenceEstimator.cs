@@ -12,6 +12,7 @@ namespace SpatialAgent.Services
     /// Pre-execution probe for Modify tools. It estimates overwrite risk from
     /// real ArcGIS Pro layer state instead of relying only on tool names.
     /// </summary>
+    /// <remarks>中文：Modify 工具的预执行探针。它根据真实的ArcGIS Pro图层状态估算覆盖风险，而不仅仅是依赖工具名称。</remarks>
     public class DataInfluenceEstimator : IDataInfluenceEstimator
     {
         private const int ExactProbeRowLimit = 200;
@@ -308,6 +309,7 @@ namespace SpatialAgent.Services
             catch
             {
                 // Best-effort only. Quantity gate can still run without selection scope.
+                // 中文：只能尽力而为。数量门仍然可以在没有选择范围的情况下运行。
             }
 
             _selectionCache = counts;
@@ -555,6 +557,7 @@ namespace SpatialAgent.Services
         /// ExistingNonEmptyTargetCount 设为极大值强制触发数量门审批——
         /// "不知道会影响多少数据"是最坏情况，不应静默放行。
         /// </summary>
+        /// <remarks>English：When the data source is completely unavailable (level name cannot be extracted, describe fails), setting ExistingNonEmptyTargetCount to maximum forcibly triggers quantity gate approval—"unknown how much data will be affected" is the worst-case scenario and should not be silently released.</remarks>
         private static DataInfluenceEstimate Unknown(string reason, ToolModifySubtype subtype = ToolModifySubtype.Unknown, string? layerName = null) => new()
         {
             LayerName = layerName ?? "",
@@ -562,7 +565,7 @@ namespace SpatialAgent.Services
             FeatureCount = -1,
             ScopeObjectCount = -1,
             ScopeValueCount = -1,
-            ExistingNonEmptyTargetCount = int.MaxValue,  // 保守：没有信息 → 假设最坏
+            ExistingNonEmptyTargetCount = int.MaxValue,  // 保守处理：没有信息时假设最坏情况。 / Conservatively assume the worst when information is unavailable.
             ModifySubtype = subtype,
             IsReliable = false,
             Source = EvidenceSource.Unknown,

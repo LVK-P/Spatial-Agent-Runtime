@@ -21,6 +21,7 @@ namespace SpatialAgent.Services
         public string WorkspaceGdb { get; private set; } = "";
 
         /// <summary>Inject a custom GIS dispatcher (optional; defaults to ProGisDispatcher).</summary>
+        /// <remarks>中文：注入一个自定义的 GIS 调度器（可选，默认为 ProGisDispatcher）。</remarks>
         public void SetDispatcher(IGisDispatcher? dispatcher)
         {
             _dispatcher = dispatcher ?? new ProGisDispatcher();
@@ -30,6 +31,7 @@ namespace SpatialAgent.Services
         /// Set workspace paths without touching the GIS (sync, testable).
         /// InitializeAsync calls this before creating the GDBs.
         /// </summary>
+        /// <remarks>中文：设置工作区路径时不动GIS（同步，可测试）。InitializeAsync 在创建 GDB 之前调用了它。</remarks>
         public void Configure(string projectFolder)
         {
             WorkspaceRoot = projectFolder;
@@ -44,10 +46,11 @@ namespace SpatialAgent.Services
         /// spatial reference at creation time (breaks reprojection outputs)
         /// and cannot hold standalone tables (breaks Statistics outputs).
         /// </summary>
+        /// <remarks>中文：在项目根节点初始化工作区：agentbackup.gdb 和 agentworkspace.gdb。输出在GDB根节点上保持平坦——特征数据集是有意移除的（ADR 0044）：数据集在创建时固定一个空间参考（中断重投影输出），无法保存独立表（中断统计输出）。</remarks>
         public async Task<string> InitializeAsync(string projectFolder, int spatialRefWkid = 0)
         {
             Configure(projectFolder);
-            _ = spatialRefWkid; // kept for interface compatibility; no dataset needs it now
+            _ = spatialRefWkid; // 为接口兼容保留；当前没有数据集需要它。 / Kept for interface compatibility; no dataset currently needs it.
 
             var log = new StringBuilder();
             try
@@ -79,6 +82,7 @@ namespace SpatialAgent.Services
         /// Copy is used instead of CopyFeatures so standalone tables, feature
         /// classes and other geodatabase datasets share one fail-closed path.
         /// </summary>
+        /// <remarks>中文：在进行破坏性操作之前，先将源数据集备份到 agentbackup.gdb。srcPath 可以是完整路径（如 G：\proj\data.gdb\roads）或图层简称（如 乡镇边界_420300）。简称会通过活动地图解析为完整数据源路径后再执行 Copy_management。采用复制功能代替复制功能，因此独立表、特征类和其他地理数据库数据集共享一个失败封闭路径。</remarks>
         public async Task<string?> BackupAsync(
             string srcPath,
             string opName,
@@ -96,6 +100,7 @@ namespace SpatialAgent.Services
                 }
 
                 // ★ 确保备份 GDB 存在（初始化时可能创建失败，此处兜底）
+                // English：Ensure the backup GDB exists (initialization may fail, here's a catch)
                 if (!Directory.Exists(BackupGdb))
                 {
                     System.Diagnostics.Debug.WriteLine($"[WorkspaceTool.BackupAsync] BackupGdb missing, creating: {BackupGdb}");
@@ -109,6 +114,7 @@ namespace SpatialAgent.Services
                 }
 
                 // 不是完整路径 → 尝试从当前活动地图解析层名
+                // English：Not a complete path → Try parsing the layer name from the current active map
                 string? resolvedPath = srcPath;
                 if (!LooksLikeFilePath(srcPath))
                 {
@@ -145,6 +151,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>包含 \ 或 .gdb → 认为是完整路径而非图层简称。</summary>
+        /// <remarks>English：Contains \ or .gdb → considered the complete path rather than the layer abbreviation.</remarks>
         private static bool LooksLikeFilePath(string value) =>
             value.Contains('\\') || value.Contains('/') || value.Contains(".gdb", StringComparison.OrdinalIgnoreCase);
 
@@ -154,18 +161,20 @@ namespace SpatialAgent.Services
         /// reference and reject standalone tables — both broke real tasks
         /// (ERROR 000210 on Statistics, silent loss of reprojected outputs).
         /// </summary>
+        /// <remarks>中文：将一个简单的输出名称解析为agentworkspace.gdb/（GDB根节点为flat）。无特征数据集路由：数据集钉住空间参考并拒绝独立表——这两种方法都破坏了真实任务（统计学错误000210，重投影输出无声丢失）。</remarks>
         public string ResolveOutputPath(string simpleName, string toolName = "", string geometryType = "")
         {
             if (string.IsNullOrWhiteSpace(simpleName))
                 return simpleName;
 
             // Already a full path or in-memory — leave unchanged.
+            // 中文：已经有完整路径或内存中的路径——保持不变。
             if (simpleName.Contains('\\') || simpleName.Contains('/')
                 || simpleName.Contains(".gdb") || simpleName.StartsWith("in_memory"))
                 return simpleName;
 
             if (string.IsNullOrWhiteSpace(WorkspaceGdb))
-                return simpleName; // workspace not configured — let GP use its default
+                return simpleName; // 未配置工作区时让 GP 使用默认值。 / Let GP use its default when the workspace is not configured.
 
             return Path.Combine(WorkspaceGdb, simpleName);
         }
@@ -174,6 +183,7 @@ namespace SpatialAgent.Services
         {
             // ★ 备份 GDB 内的数据不加入地图——否则 LLM 会把备份图层也当作
             // 待处理目标，形成"备份→加入地图→LLM 看到备份→再次备份备份"的套娃循环。
+            // English：Backing up data in the GDB without adding the map — otherwise, the LLM will treat the backup layer as pending targets, creating a nesting loop of "backup → added to the map→ LLM sees the backup →back up again."
             if (!string.IsNullOrWhiteSpace(BackupGdb) &&
                 path.StartsWith(BackupGdb, StringComparison.OrdinalIgnoreCase))
                 return;
@@ -191,13 +201,14 @@ namespace SpatialAgent.Services
                     return Task.CompletedTask;
                 });
             }
-            catch { /* non-critical — map display is best-effort */ }
+            catch { /* 非关键操作；地图显示为尽力而为。 / Non-critical; map display is best-effort. */ }
         }
 
         /// <summary>
         /// 从当前地图中移除指定路径的图层。备份完成后调用，避免 Pro 自动
         /// 发现 agentbackup.gdb 后将其图层加入地图。
         /// </summary>
+        /// <remarks>English：Remove the specified path layer from the current map. Call after backup to prevent Pro from automatically discovering agentbackup.gdb and adding its layers to the map.</remarks>
         public async Task RemoveFromMapAsync(
             string path,
             CancellationToken cancellation = default)
@@ -222,7 +233,7 @@ namespace SpatialAgent.Services
                 }, cancellation);
             }
             catch (OperationCanceledException) { throw; }
-            catch { /* best-effort */ }
+            catch { /* 尽力而为。 / Best-effort. */ }
         }
 
         private async Task<bool> CreateGdbAsync(

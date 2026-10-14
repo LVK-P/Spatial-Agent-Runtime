@@ -10,6 +10,7 @@ namespace SpatialAgent.Services
     /// process-wide single-session assumption; a cross-process lock protects
     /// claim/heartbeat/release transitions.
     /// </summary>
+    /// <remarks>中文：项目范围的持久会话租赁。每个租约一个文件避免了整个进程的单会话假设;跨进程锁保护了权利要求/心跳/释放的过渡。</remarks>
     public sealed class FileSessionLeaseStore : ISessionLeaseStore
     {
         private static readonly TimeSpan RecoveryClaimTtl =

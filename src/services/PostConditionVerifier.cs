@@ -5,6 +5,7 @@ namespace SpatialAgent.Services
     /// <summary>
     /// Post-condition verifier. Rule logic lives here; GIS state probing is injected.
     /// </summary>
+    /// <remarks>中文：后条件验证器。规则逻辑存在于此;GIS状态探测被注入。</remarks>
     public class PostConditionVerifier
     {
         private readonly IPostConditionProbe _probe;
@@ -114,6 +115,7 @@ namespace SpatialAgent.Services
         /// None on every row "succeeds" at GP level, keeps the field in schema,
         /// and silently wipes the data. Sampling values closes that gap.
         /// </summary>
+        /// <remarks>中文：CalculateField 类工具的字段值验证。单纯场存在本身就是一个盲点：一个在每行都评估为无的表达式在GP级别“成功”，保持场处于模式状态，并悄无声息地清除数据。抽样值可以弥补这个差距。</remarks>
         private async Task<(bool, string)> VerifyFieldPopulatedAsync(string target)
         {
             int sep = target.IndexOf('.');

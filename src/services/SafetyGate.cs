@@ -16,11 +16,13 @@ using SpatialAgent.Runtime.Contracts;
 //
 // Evaluate() enforces the session permission level.
 // ────────────────────────────────────────────────────────────────
+// 中文：SafetyGate.cs — 工具风险分类与许可执行。根据 ADR 0051，所有工具被分为四个风险等级：ReadOnly — 无需确认，直接执行 Increment — 创建型 Modify（Buffer/Clip/Statistics 等），直接执行，不备份 Modify — 覆写型 Modify（CalculateField/cc_calculate_area 重算等），直接执行，不备份 Destructive — 默认阻止;批准后先自动备份再执行，备份失败则拒绝执行 Evaluate（） 强制执行会话权限级别。
 namespace SpatialAgent.Services
 {
     /// <summary>
     /// Approval request sent to the UI.
     /// </summary>
+    /// <remarks>中文：批准请求已发送到界面。</remarks>
     public class ApprovalRequest
     {
         public string Operation { get; set; } = "";
@@ -34,6 +36,7 @@ namespace SpatialAgent.Services
     /// <summary>
     /// SafetyGate — 分类工具安全级别，生成审批请求，触发备份。
     /// </summary>
+    /// <remarks>English：SafetyGate — Classification tool for security levels, generates approval requests, and triggers backups.</remarks>
     public class SafetyGate : SpatialAgent.Runtime.Contracts.ISafetyGate
     {
         private readonly Dictionary<string, ToolRiskLevel> _classifications = new(StringComparer.OrdinalIgnoreCase);
@@ -46,11 +49,13 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Inject ToolRegistry for descriptor-based risk lookup (fallback for dynamic tools).</summary>
+        /// <remarks>中文：注入 ToolRegistry 用于基于描述符的风险查询（动态工具的备用）。</remarks>
         public void SetToolRegistry(ToolRegistry registry) => _toolRegistry = registry;
 
         /// <summary>
         /// Register tool safety classification (supports wildcard prefix matching).
         /// </summary>
+        /// <remarks>中文：注册工具安全分类（支持通配符前缀匹配）。</remarks>
         public void RegisterClassification(string toolNamePattern, ToolRiskLevel level)
         {
             _classifications[toolNamePattern] = level;
@@ -59,9 +64,11 @@ namespace SpatialAgent.Services
         /// <summary>
         /// Classify a tool into its safety level.
         /// </summary>
+        /// <remarks>中文：将工具按安全级别分类。</remarks>
         public ToolRiskLevel Classify(string toolName)
         {
             // Normalize through resolver for consistent matching
+            // 中文：通过解析器进行归一化以实现一致匹配
             string schemaName = ToolNameResolver.NormalizeSchemaName(toolName);
             string shortName = ToolNameResolver.ExtractShortName(toolName);
 
@@ -83,6 +90,7 @@ namespace SpatialAgent.Services
             //   4. 2026 年安全实践：unknown → deny/require-approval，不是 unknown → allow
             // 原逻辑为 "fail closed as Modify so ReadOnly mode cannot execute them" ——
             //   这在 ReadOnly 模式下有效，但在 FullAccess 模式下 Modify = 直接放行。
+            // English：P0-3 Fix (2026-07-20): Unknown tool = unverified → Strictest category (Destructive), user approval required. Reason: 1. "Unknown" may be a tool name fabricated by LLM hallucinations, or it could come from unaudited local manifest 2. New tools must be explicitly registered for risk level before release. In vertical GIS scenarios, the cost of misapplying a single tool far exceeds the cost of multiple approvals and confirmations. 2026 Security Practice: unknown → deny/require-approval, not unknown → allow. The original logic is "fail closed as Modify so ReadOnly mode cannot execute them" — this works in ReadOnly mode, but Modify = direct release in FullAccess mode.
             AgentDiagnostics.Warn("SafetyGate.Classify",
                 $"工具「{toolName}」未在安全分类表中注册。" +
                 "默认归类为 Destructive——需要用户审批才能执行。" +
@@ -176,6 +184,7 @@ namespace SpatialAgent.Services
             // ★ ADR 0055：IToolSafetyDescriptor.SafetyProfile 优先于 Annotation。
             // ToolSafetySemantics.ResolveRisk() 会取 DeclaredRisk 和 MaxInternalRisk
             // 的高值，再回退到 FromAnnotation（未实现 IToolSafetyDescriptor 时）。
+            // 中文：ADR 0055：IToolSafetyDescriptor.SafetyProfile 优先于 Annotation。ToolSafetySemantics.ResolveRisk（） 会取 DeclaredRisk 和 MaxInternalRisk 的高值，再回退到 FromAnnotation（未实现 IToolSafetyDescriptor 时）。
             level = ToolSafetySemantics.ResolveRisk(desc);
             return true;
         }
@@ -183,6 +192,7 @@ namespace SpatialAgent.Services
         /// <summary>
         /// Whether user confirmation is needed.
         /// </summary>
+        /// <remarks>中文：是否需要用户确认。</remarks>
         public bool NeedsApproval(string toolName, out ApprovalRequest request)
         {
             ToolRiskLevel level = Classify(toolName);
@@ -199,11 +209,13 @@ namespace SpatialAgent.Services
         /// <summary>
         /// Whether this is a destructive operation.
         /// </summary>
+        /// <remarks>中文：这是否是一个破坏性的行动。</remarks>
         public bool IsDestructive(string toolName) => Classify(toolName) == ToolRiskLevel.Destructive;
 
         /// <summary>
         /// Whether a backup is needed before execution.
         /// </summary>
+        /// <remarks>中文：执行前是否需要备份。</remarks>
         public bool NeedsBackup(string toolName) => Classify(toolName) == ToolRiskLevel.Destructive;
 
         private string GetWarningMessage(string toolName, ToolRiskLevel level)
@@ -238,6 +250,7 @@ namespace SpatialAgent.Services
         // ────────────────────────────────────────────────────────────────
         // Default safety classification
         // ────────────────────────────────────────────────────────────────
+        // 中文：默认安全分类
 
         /// <summary>
         /// ★ 安全门一致性（2026-07-24）：
@@ -245,9 +258,11 @@ namespace SpatialAgent.Services
         /// - GP 工具可由 RegisterCatalogClassifications() 从本地 catalog 加载并覆盖默认注册。
         /// - 此处保留 GP 工具条目作为 catalog 加载失败时的 fallback，其值与 catalog 保持一致。
         /// </summary>
+        /// <remarks>English：Security Gate Consistency (2026-07-24): - Non-GP advanced tools (get_map_info, etc.) are registered here. - The GP tool can be loaded from the local catalog by RegisterCatalogClassifications() and overrides the default registration. - Here, the GP tool entry is kept as a fallback when the catalog fails to load, with values consistent with the catalog.</remarks>
         private void RegisterDefaults()
         {
             // ── ReadOnly ──
+            // 中文：只读
             foreach (string tool in new[] {
                 "get_map_info", "list_layers", "describe_layer", "get_selection",
                 "get_project_info", "SelectLayerByAttribute", "MakeFeatureLayer",
@@ -255,6 +270,7 @@ namespace SpatialAgent.Services
             }) RegisterClassification(tool, ToolRiskLevel.ReadOnly);
 
             // ── Increment — 创建新数据/新结构，不覆写既有字段值 ──
+            // English：Increment — Creates new data/structures without overwriting existing field values
             foreach (string tool in new[] {
                 "Buffer", "Clip", "Intersect", "Union", "Merge", "Dissolve",
                 "Near", "SpatialJoin", "Project", "CopyFeatures", "Append",
@@ -268,6 +284,7 @@ namespace SpatialAgent.Services
             }) RegisterClassification(tool, ToolRiskLevel.Modify);
 
             // ── Destructive — 删除数据/结构，不可逆 ──
+            // English：Destructive — Deletes data/structures, irreversible
             foreach (string tool in new[] {
                 "DeleteField", "DeleteFeatures", "DeleteRows", "Delete",
                 "TruncateTable", "AlterField"

@@ -22,11 +22,13 @@ using SpatialAgent.Runtime.Contracts;
 // 模型的自由度收敛为填参数：忘调查表、手写表达式出错、空值兜底
 // 清数据三类事故在工具内部被结构性消灭。
 // ────────────────────────────────────────────────────────────────
+// English：MapFieldValuesTool.cs — cc_map_field_values: Field→ field mapping assignment. Follow the standard form of ArcGIS Pro's "computed fields" (user review on 2026-07-19): expression calls the mapping function defined in code_block, fully isomorphic with the planner's manual operation—rather than having the model read the attribute table line by line (not feasible for millions of data). Trusted route: "Merge similar items" — only scan the unique value of the source field (with an upper limit), check the official reference table to create a mapping, keep the original value of the target field for missing mappings, and include unmapped/ambiguous items truthfully in the list. The model's degrees of freedom converge to fill in parameters: forgetting survey tables, handwritten expression errors, and empty value backup data clearing incidents—three types of accidents are structurally eliminated within the tool.
 namespace SpatialAgent.Services
 {
     public class MapFieldValuesTool : ITool, IToolSafetyDescriptor
     {
         /// <summary>唯一值上限：类别字段的取值数在标准数量级内，超限即判定不具映射意义。</summary>
+        /// <remarks>English：Unique value limit: If the value of a category field falls within the standard order of magnitude, exceeding the limit means no mapping.</remarks>
         public const int MaxDistinctValues = 200;
 
         private readonly MapReader _reader = new();
@@ -100,6 +102,7 @@ namespace SpatialAgent.Services
                 }
 
                 // 1. 合并同类项：只扫唯一值，绝不逐行搬运数据
+                // English：1. Merge similar items: only scan unique values; never move data line by line
                 string distinctJson = await _reader.GetDistinctValuesAsync(inTable, sourceField, MaxDistinctValues);
                 var distinctInfo = JObject.Parse(distinctJson);
                 if (distinctInfo["error"] != null)
@@ -129,6 +132,7 @@ namespace SpatialAgent.Services
                 }
 
                 // 2. 构建映射（显式 mapping 优先；否则查官方对照表）——纯逻辑，可单测
+                // English：2. Build mappings (explicit mapping first; Otherwise, check the official comparison table)—pure logic, can be tested separately
                 var build = BuildMapping(sourceValues, mappingSource, explicitMapping);
                 if (build.Error != null)
                 {
@@ -147,6 +151,7 @@ namespace SpatialAgent.Services
                 }
 
                 // 3. 生成 Pro 计算字段标准形态：expression + code_block（缺失保原值）
+                // English：3. Generate the standard form of the Pro calculation field: expression + code_block (missing preserved value)
                 string codeBlock = BuildCodeBlock(build.Matched);
                 string expression = $"_sa_map(!{sourceField}!, !{targetField}!)";
 
@@ -163,7 +168,7 @@ namespace SpatialAgent.Services
                     source_field = sourceField,
                     field = targetField,
                     mapped_pairs = build.Matched.Count,
-                    unmatched = build.Unmatched,       // 如实：这些源值没有官方对应，对应行保留原值
+                    unmatched = build.Unmatched,       // 如实记录：这些源值没有官方映射，对应行保留原值。 / Report honestly: these source values lack official mappings, so their rows keep the original values.
                     ambiguous = build.Ambiguous.Select(a => new { value = a.Key, candidates = a.Value }),
                     expression,
                     summary = ok
@@ -183,6 +188,7 @@ namespace SpatialAgent.Services
         }
 
         // ── 纯逻辑（可单测）──
+        // English：Pure Logic (can be tested individually)
 
         public sealed class MappingBuildResult
         {
@@ -196,6 +202,7 @@ namespace SpatialAgent.Services
         /// 为源字段唯一值建立映射。显式 mapping 优先；否则按 mapping_source
         /// 查 LandClassificationData。一名多码不猜（入 Ambiguous），查不到不编（入 Unmatched）。
         /// </summary>
+        /// <remarks>English：Creates a mapping for the unique value of the source field. Explicit mapping takes priority; Otherwise, press mapping_source to look up LandClassificationData. A multi-code is not guessed (entered Ambiguous); if not found, no compilation is done (included in Unmatched).</remarks>
         public static MappingBuildResult BuildMapping(
             IReadOnlyList<string> sourceValues, string mappingSource, string? explicitMappingJson)
         {
@@ -216,6 +223,7 @@ namespace SpatialAgent.Services
             }
 
             // 官方表：code→name 正查；name→code 反转（同名多码 → 歧义列表）
+            // English：Official table: code→name Correct Lookup; name→code reversal (multiple codes with the same name → ambiguity list)
             Dictionary<string, string> codeToName = mappingSource.StartsWith("sd", StringComparison.OrdinalIgnoreCase)
                 ? LandClassificationData.SdCodeToName
                 : LandClassificationData.YhCodeToName;
@@ -271,6 +279,7 @@ namespace SpatialAgent.Services
         /// 生成 Pro 计算字段的 code_block：映射缺失时返回目标字段当前值（保值），
         /// 键值经 JSON 转义防引号/反斜杠注入。
         /// </summary>
+        /// <remarks>English：Generate the code_block of the pro calculation field: If the mapping is missing, return the current value of the target field (preserved), and the key value is injected using JSON escape quotes/backslash.</remarks>
         public static string BuildCodeBlock(IReadOnlyDictionary<string, string> matched)
         {
             var sb = new StringBuilder();
@@ -286,6 +295,6 @@ namespace SpatialAgent.Services
         }
 
         private static string ToPyString(string value) =>
-            JsonConvert.ToString(value); // JSON 字符串字面量与 Python 兼容（双引号+转义）
+            JsonConvert.ToString(value); // JSON 字符串字面量与 Python 兼容（双引号和转义）。 / JSON string literals are Python-compatible (double quotes and escaping).
     }
 }

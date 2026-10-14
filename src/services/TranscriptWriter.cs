@@ -28,6 +28,7 @@ using SpatialAgent.Core;
 // llm_request, llm_response, tool_start, tool_end, verification,
 // synth_input, synth_output, session_end, diagnostics, tool_exposure.
 // ================================================================
+// 中文：================================================================ TranscriptWriter.cs — 仅附加的JSONL对话文字记录。订阅EventBus，自动记录工具执行、安全决策、验证结果及诊断事件。支持两阶段路径：初始写入发送给 AppData;一旦知道项目路径，MigrateTo（） 会将它们移到项目目录。Phase A（2026-07-20）：订阅 diagnostics.* 事件、自动附加 CorrelationContext 的 run_id/span_id、WriteContext 全量写入。JSONL事件类型：session_start、user_msg、context_gathered、llm_request、llm_response、tool_start、tool_end、验证、synth_input、synth_output、session_end、诊断、tool_exposure。================================================================
 namespace SpatialAgent.Services
 {
     public class TranscriptWriter : IDisposable,
@@ -35,7 +36,7 @@ namespace SpatialAgent.Services
         ITranscriptToolWriter, ITranscriptHealth
     {
         private readonly object _lock = new();
-        private readonly object _directWriteLock = new();  // ★ P0-2 fix：关键事件同步写锁
+        private readonly object _directWriteLock = new();  // ★ P0-2 修复：关键事件同步写锁。 / Synchronous write lock for critical events.
         private string? _filePath;
         private StreamWriter? _writer;
         private bool _disposed;
@@ -44,18 +45,23 @@ namespace SpatialAgent.Services
 
         // ── S5（Phase 3）：路径脱敏 Layer 2 锚点 ──
         /// <summary>项目根目录路径锚点（如 G:\Projects\MyMap）→ 脱敏为 {PROJECT}。</summary>
+        /// <remarks>English：The root directory path anchor (e.g., G:\Projects\MyMap) → anxious to {PROJECT}.</remarks>
         public string? ProjectRoot { get; set; }
         /// <summary>工作空间根目录路径锚点 → 脱敏为 {WORKSPACE}。</summary>
+        /// <remarks>English：The root directory path anchor point → is anonymized as {WORKSPACE}.</remarks>
         public string? WorkspaceRoot { get; set; }
         /// <summary>用户主目录路径锚点 → 脱敏为 {HOME}。</summary>
+        /// <remarks>English：The user's home directory path anchor point → is anonymized as {HOME}.</remarks>
         public string? HomeFolder { get; set; }
 
         // ── P1-C（2026-07-20）：EventBus 接收计数器，用于一致性校验 ──
+        // English：P1-C (2026-07-20): EventBus receive counter for consistency verification
         private long _toolStartReceived;
-        private long _toolEndReceived;  // tool.completed + tool.failed
+        private long _toolEndReceived;  // tool.completed 与 tool.failed 的总数。 / Total tool.completed plus tool.failed events.
         private long _submissionSequence;
 
         // ── 4A（Phase 4）：一致性校验 —— 依赖 IEventCounters 抽象而非 EventBus 具体类型 ──
+        // English：4A (Phase 4): Consistency Check — Relies on IEventCounters abstraction rather than EventBus concrete types
         /// <summary>
         /// 使用发布端计数器进行交叉校验。通过 IEventCounters 解耦——
         /// 不再依赖 EventBus 具体实现（ADR 0056 / Phase 4A）。
@@ -100,6 +106,7 @@ namespace SpatialAgent.Services
 
         public string? FilePath => _filePath;
         // ★ P0-2：EventCount 的原子递增——Channel 消费者在独立线程中写入
+        // English：P0-2: EventCount's atomic increase—Channel consumers write in independent threads
         private int _eventCountBacking;
         public int EventCount => _eventCountBacking;
         private void IncrementEventCount() => Interlocked.Increment(ref _eventCountBacking);
@@ -109,11 +116,13 @@ namespace SpatialAgent.Services
         /// ★ P0-2：返回自上次 ResetLossCounter（或创建）以来丢失的事件数量。
         /// WriteSessionEnd 自动包含此统计。
         /// </summary>
+        /// <remarks>English：P0-2: Returns the number of events lost since the last ResetLossCounter (or creation). WriteSessionEnd automatically includes this statistic.</remarks>
         public long LostEventCount => Interlocked.Read(ref _lostEventCount);
         public DateTime? FirstLossAt => _firstLossAt;
         public string? FirstLossReason => _firstLossReason;
 
         /// <summary>重置丢失计数器（用于新的 session 开始前）。</summary>
+        /// <remarks>English：Reset the loss counter (used before a new session starts).</remarks>
         public void ResetLossCounter()
         {
             Interlocked.Exchange(ref _lostEventCount, 0);
@@ -137,6 +146,7 @@ namespace SpatialAgent.Services
                 _writer = OpenWriter(_filePath);
 
                 // ★ P0-2：创建有界 Channel（10000 条缓冲，满时丢弃最旧的）
+                // English：P0-2: Create a Bounded Channel (10,000 buffers, discard the oldest one when full)
                 _channel = Channel.CreateBounded<object>(
                     new BoundedChannelOptions(10000)
                     {
@@ -144,10 +154,12 @@ namespace SpatialAgent.Services
                     });
 
                 // 启动异步消费者
+                // English：Launch asynchronous consumers
                 _consumerCts = new CancellationTokenSource();
                 _consumerTask = Task.Run(() => ConsumeLoopAsync(_consumerCts.Token));
 
                 // 重置丢失计数器（新 session）
+                // English：Reset the Lost Counter (New Session)
                 ResetLossCounter();
 
                 WriteCritical(new { type = "log_initialized", ts = DateTime.Now.ToString("O"), path = _filePath });
@@ -159,13 +171,15 @@ namespace SpatialAgent.Services
         /// I/O 异常（磁盘满/文件锁定/网络断开）被隔离在此线程中，
         /// 不会阻塞 EventBus 的同步发布线程。
         /// </summary>
+        /// <remarks>English：P0-2: Backend Consumer — Reads events from Channel and writes them to StreamWriter. I/O exceptions (disk full/file lock/network disconnection) are isolated in this thread and will not block the EventBus synchronous publishing thread.</remarks>
         private async Task ConsumeLoopAsync(CancellationToken ct)
         {
-            if (_writer == null) return;  // 防御：不应被调用但消除 CS8602
-            var writer = _writer;         // 捕获非 null 引用，后续不再报警
+            if (_writer == null) return;  // 防御：不应被调用，同时消除 CS8602。 / Defensive guard; should not be called and avoids CS8602.
+            var writer = _writer;         // 捕获非 null 引用，避免后续警告。 / Capture the non-null reference to avoid later warnings.
 
             // 累积缓冲：减少 StreamWriter 系统调用频率
-            const int flushInterval = 50;  // 每 50 条 flush 一次
+            // English：Cumulative buffering: Reduces the frequency of StreamWriter system calls
+            const int flushInterval = 50;  // 每 50 条刷新一次。 / Flush every 50 entries.
             int countSinceFlush = 0;
 
             while (await _channel!.Reader.WaitToReadAsync(ct).ConfigureAwait(false))
@@ -177,6 +191,7 @@ namespace SpatialAgent.Services
                         string json = SerializeSanitized(entry);
                         // ★ P0-2 fix（2026-07-22）：与 WriteCritical 共享 _directWriteLock，
                         // 防止 channel 消费者和关键事件同步写产生 StreamWriter 竞态。
+                        // English：P0-2 fix (2026-07-22): Shares _directWriteLock with WriteCritical to prevent StreamWriter contention from occurring when channel consumers and critical events write simultaneously.
                         lock (_directWriteLock)
                         {
                             writer.WriteLine(json);
@@ -185,6 +200,7 @@ namespace SpatialAgent.Services
                         countSinceFlush++;
 
                         // 如果之前有丢失，现在恢复了——写恢复事件
+                        // English：If there was a loss before, it has now been restored—write about the recovery event
                         if (_firstLossAt != null)
                         {
                             var recovered = Interlocked.Exchange(ref _lostEventCount, 0);
@@ -205,7 +221,7 @@ namespace SpatialAgent.Services
                                     writer.WriteLine(recoveryJson);
                                 }
                             }
-                            catch { /* 恢复事件的写入失败——已是最坏情况 */ }
+                            catch { /* 恢复事件写入失败，已是最坏情况。 / Recovery-event write failed; this is already the worst case. */ }
                         }
 
                         if (countSinceFlush >= flushInterval)
@@ -220,6 +236,7 @@ namespace SpatialAgent.Services
                     catch (IOException) when (!ct.IsCancellationRequested)
                     {
                         // ArcGIS Pro 文件锁定或网络断开 → 回退到同步计数模式
+                        // English：ArcGIS Pro file lock or network disconnection → revert to synchronous counting mode
                         RecordLoss("IOException (file locked or network disconnected)");
                         await Task.Delay(1000, ct).ConfigureAwait(false);
                     }
@@ -230,6 +247,7 @@ namespace SpatialAgent.Services
                 }
 
                 // 最后 flush 剩余事件（★ P0-2 fix：与 WriteCritical 共享锁）
+                // English：Final flush remaining event (P0-2 fix: shared lock with WriteCritical)
                 try { lock (_directWriteLock) { writer.Flush(); } countSinceFlush = 0; }
                 catch { RecordLoss("Flush failed"); }
             }
@@ -239,6 +257,7 @@ namespace SpatialAgent.Services
         /// ★ P0-2：记录一次写入丢失，并发送诊断信号。
         /// ★ Phase B2（2026-07-20）：同步上报 LoggingHealthMonitor。
         /// </summary>
+        /// <remarks>English：P0-2: Records a single write loss and sends a diagnostic signal. Phase B2 (2026-07-20): Simultaneously reported to LoggingHealthMonitor.</remarks>
         public void RecordLoss(string reason)
         {
             Interlocked.Increment(ref _lostEventCount);
@@ -254,6 +273,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Subscribe to EventBus tool events for automatic recording.</summary>
+        /// <remarks>中文：订阅EventBus工具事件，自动录制。</remarks>
         public void SubscribeTo(IEventBus eventBus)
         {
             eventBus.Subscribe("tool.started", e =>
@@ -541,6 +561,7 @@ namespace SpatialAgent.Services
             });
 
             // ── ★ Phase A1（2026-07-20）：订阅 diagnostics 事件，确保诊断告警落盘 ──
+            // English：Phase A1 (2026-07-20): Subscribe to diagnostics events to ensure diagnostic alerts are triggered
             eventBus.Subscribe("diagnostics.warning", e =>
             {
                 WriteCritical(new
@@ -708,6 +729,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Parameter names that contain sensitive values and must be scrubbed from logs.</summary>
+        /// <remarks>中文：包含敏感值的参数名称，必须从日志中清除。</remarks>
         private static readonly HashSet<string> SensitiveParamKeys = new(StringComparer.OrdinalIgnoreCase)
         {
             "api_key", "apikey", "key", "password", "passwd", "secret",
@@ -723,6 +745,7 @@ namespace SpatialAgent.Services
         /// Recursively scrub sensitive values from an object graph before logging.
         /// Replaces known sensitive field values with "[REDACTED]".
         /// </summary>
+        /// <remarks>中文：在日志记录前递归地从对象图中擦除敏感值。将已知的敏感场值替换为“[已编辑]”。</remarks>
         private object? SanitizeArgs(object? value)
         {
             if (value == null) return null;
@@ -757,6 +780,7 @@ namespace SpatialAgent.Services
             }
 
             // ★ S5（Phase 3）：Layer 2 路径脱敏——递归时检测字符串值中的绝对路径
+            // English：S5 (Phase 3): Layer 2 path anonymization—detects absolute paths in string values during recursion
             if (value is string strValue)
                 return SanitizePathInString(strValue);
 
@@ -825,6 +849,7 @@ namespace SpatialAgent.Services
         ///
         /// Layer 2（后续）可改为预序列化递归清洗 + 可配置锚点。
         /// </summary>
+        /// <remarks>English：Path Anonymization Layer 1 (2026-07-20): Replace user/project information in Windows absolute paths with serialized JSON strings. Handles escaped backslashes in JSON (\\ → regex matching \\\\). Rules: 1. C:\Users\ \ → %USERPROFILE%\ 2. Drive letter: \...\.gdb → {GDB} 3. UNC path→ {UNC} Layer 2 (later) can be changed to pre-serialized recursive cleaning + configurable anchors.</remarks>
         private string SerializeSanitized(object entry)
         {
             var serializer = JsonSerializer.Create(new JsonSerializerSettings
@@ -863,6 +888,7 @@ namespace SpatialAgent.Services
         /// <summary>
         /// Move transcript to a new directory (called when project path becomes known).
         /// </summary>
+        /// <remarks>中文：将转录文件移到新目录（项目路径已知时调用）。</remarks>
         public void MigrateTo(string newLogDir)
         {
             lock (_lock)
@@ -877,6 +903,7 @@ namespace SpatialAgent.Services
                     return;
 
                 // ★ P0-2：暂停消费者，flush 排空，然后迁移
+                // English：P0-2: Pause the consumer, flush empty, then migrate
                 _channel?.Writer.TryComplete();
                 try { _consumerTask?.Wait(TimeSpan.FromSeconds(5)); } catch { }
                 _writer.Flush();
@@ -890,6 +917,7 @@ namespace SpatialAgent.Services
                     if (File.Exists(newPath))
                     {
                         // Merge: append old content to new file
+                        // 中文：合并：将旧内容附加到新文件中
                         File.AppendAllText(newPath, File.ReadAllText(oldPath));
                         File.Delete(oldPath);
                     }
@@ -903,6 +931,7 @@ namespace SpatialAgent.Services
                 _writer = OpenWriter(_filePath);
 
                 // ★ P0-2：重新创建 Channel 和消费者
+                // English：P0-2: Recreate Channels and Consumers
                 _channel = Channel.CreateBounded<object>(
                     new BoundedChannelOptions(10000)
                     {
@@ -936,6 +965,7 @@ namespace SpatialAgent.Services
         /// 绕过异步 Channel 直接同步落盘——这些事件不可丢，丢了就无法独立复盘审批链路。
         /// 安全事件频率极低（每会话 &lt; 100），同步 I/O 不影响性能。
         /// </summary>
+        /// <remarks>English：P0-2 fix (2026-07-22): Key events (security approval, diagnostic errors, session boundaries) bypass asynchronous channels and synchronize directly—these events must not be lost; if lost, the approval chain cannot be independently reviewed. Security incidents are extremely low (&amp;lt; 100 per session), and synchronous I/O does not affect performance.</remarks>
         private void WriteCritical(object entry)
         {
             if (_writer == null) return;
@@ -947,7 +977,7 @@ namespace SpatialAgent.Services
                     object enriched = EnrichForWrite(entry);
                     string json = SerializeSanitized(enriched);
                     _writer.WriteLine(json);
-                    _writer.Flush(); // 关键事件立即刷盘
+                    _writer.Flush(); // 关键事件立即刷盘。 / Flush critical events to disk immediately.
                     IncrementEventCount();
                 }
                 catch (Exception ex)
@@ -966,17 +996,20 @@ namespace SpatialAgent.Services
         /// ★ Phase A4（2026-07-20）：如果 entry 是匿名对象/Dictionary，
         /// 自动注入 CorrelationContext 的 run_id 和 span_id。
         /// </summary>
+        /// <remarks>中文：可以把任意对象写成 JSONL 行。没有截断。P0-2（2026-07-20）：改为 Channel 异步生产—— 不再在调用线程上执行 StreamWriter I/O。频道对制片人来说是无阻塞的;满缓冲区会拒绝新事件，因此损失核算保持准确且可观察。Phase A4（2026-07-20）：如果 entry 是匿名对象/Dictionary， 自动注入 CorrelationContext 的 run_id 和 span_id。</remarks>
         public void Write(object entry)
         {
             if (_writer == null || _channel == null) return;
 
             // ★ Phase A4：自动注入关联 ID（仅在 entry 支持动态扩展时）
+            // English：Phase A4: Automatically inject associated IDs (only when entry supports dynamic expansion)
             object enriched = EnrichForWrite(entry);
 
             // 非阻塞写入 Channel——Channel 满时 TryWrite 返回 false
             if (!_channel.Writer.TryWrite(enriched))
             {
                 // Channel 满了（消费者跟不上生产者）→ 丢弃此事件
+                // English：Channels are full (consumers can't keep up with producers) → discard this event
                 RecordLoss("Channel full — consumer too slow. Event dropped.");
             }
         }
@@ -1008,6 +1041,7 @@ namespace SpatialAgent.Services
                 }
 
                 // 匿名对象 → 序列化为 JObject → 附加字段
+                // English：Anonymous object → serialized as JObject → additional fields
                 string json = JsonConvert.SerializeObject(entry, Formatting.None,
                     new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
                 var jobj = JsonConvert.DeserializeObject<JObject>(json);
@@ -1021,6 +1055,7 @@ namespace SpatialAgent.Services
             catch
             {
                 // 注入失败不影响事件写入——用原始 entry
+                // English：Injection failure does not affect event write—using the original entry
             }
 
             return entry;
@@ -1063,6 +1098,7 @@ namespace SpatialAgent.Services
         /// <summary>
         /// Write a raw JSONL line (for pre-serialized content).
         /// </summary>
+        /// <remarks>中文：写一行原始的 JSONL（用于预序列化内容）。</remarks>
         public void WriteLine(object entry)
         {
             Write(entry);
@@ -1071,6 +1107,7 @@ namespace SpatialAgent.Services
         /// <summary>
         /// Convert an AgentEvent to transcript entry and write it.
         /// </summary>
+        /// <remarks>中文：把AgentEvent转换成文字记录并写入。</remarks>
         public void WriteEvent(AgentEvent evt)
         {
             var entry = new Dictionary<string, object?>
@@ -1084,6 +1121,7 @@ namespace SpatialAgent.Services
                 entry["turn"] = evt.Turn.Value;
 
             // Flatten metadata into entry
+            // 中文：将元数据扁平化为条目
             if (evt.Metadata != null)
             {
                 foreach (var kv in evt.Metadata)
@@ -1091,6 +1129,7 @@ namespace SpatialAgent.Services
             }
 
             // Attach structured data
+            // 中文：附加结构化数据
             if (evt.Data != null)
             {
                 foreach (var kv in evt.Data)
@@ -1105,6 +1144,7 @@ namespace SpatialAgent.Services
             // ★ P0-2 fix（2026-07-22）：排空 Channel → 等待消费者完成 → 明确成功或失败。
             // 关键事件已通过 WriteCritical 同步落盘，Channel 中仅剩非关键事件。
             // 固定 500ms 超时改为更长超时（5s），并在超时时记录诊断告警。
+            // English：P0-2 fix (2026-07-22): Empty the channel → wait for consumers to complete → clarify success or failure. Critical events have been synchronously executed via WriteCritical to determine the order, leaving only non-critical events in the Channel. The fixed 500ms timeout is changed to a longer timeout (5 seconds), and diagnostic alerts are recorded during the timeout.
             int remaining = _channel?.Reader.Count ?? 0;
             try
             {
@@ -1127,6 +1167,7 @@ namespace SpatialAgent.Services
             }
 
             // 重新创建 Channel 和消费者——允许后续写入
+            // English：Recreate Channels and consumers—allowing subsequent writes
             lock (_lock)
             {
                 if (_writer != null && !_disposed)
@@ -1155,6 +1196,7 @@ namespace SpatialAgent.Services
                 // Drain all previously accepted events first so log_closed is
                 // physically the final lifecycle record, not merely the final
                 // record submitted by a producer.
+                // 中文：先提取所有先前接受的事件，使log_closed物理上成为最终生命周期记录，而不仅仅是制作者提交的最终记录。
                 try { Flush(); }
                 catch { }
 
@@ -1165,6 +1207,7 @@ namespace SpatialAgent.Services
                 catch { }
 
                 // 停止刚重建的 Channel 消费者
+                // English：Stop the newly rebuilt Channel consumers
                 try
                 {
                     _channel?.Writer.TryComplete();
@@ -1187,8 +1230,10 @@ namespace SpatialAgent.Services
         // ================================================================
         // Convenience methods for structured entries
         // ================================================================
+        // 中文：================================================================ 结构化条目的便利方法 ================================================================
 
         /// <summary>Record session start with model info.</summary>
+        /// <remarks>中文：录制会话开始时有模型信息。</remarks>
         public void WriteSessionStart(string sessionId, string model, string thinkingEffort, string? projectPath)
         {
             WriteCritical(new
@@ -1271,6 +1316,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Record a model / thinking-effort switch (provider-actual values).</summary>
+        /// <remarks>中文：记录一个模型/思维-努力的切换（提供者-实际值）。</remarks>
         public void WriteModelSwitch(string reason, string model, string thinking)
         {
             Write(new
@@ -1284,6 +1330,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Record user message (complete, untruncated).</summary>
+        /// <remarks>中文：录制用户消息（完整且未截断）。</remarks>
         public void WriteUserMessage(int turn, string content)
         {
             WriteCritical(new { type = "user_msg", turn, ts = DateTime.Now.ToString("HH:mm:ss.fff"), content });
@@ -1294,6 +1341,7 @@ namespace SpatialAgent.Services
         /// ★ Phase A5（2026-07-20）：不再截断 project/map 信息。
         /// 全量写入 + 附带截断标注标记（供分析脚本快速过滤）。
         /// </summary>
+        /// <remarks>English：Record context gathered for this turn. Phase A5 (2026-07-20): No longer truncating project/map information. Full write + includes truncated annotation (for quick filtering by analysis scripts).</remarks>
         public void WriteContext(int turn, string projectInfo, string mapInfo, int ragHits, int skillsMatched,
             Dictionary<string, object>? budgetCuts = null)
         {
@@ -1324,6 +1372,7 @@ namespace SpatialAgent.Services
         /// ★ Phase C2（2026-07-20）：记录每轮工具暴露决策。
         /// 回答"模型当时能调什么工具"——排查"为什么没调 X 工具"的关键信息。
         /// </summary>
+        /// <remarks>English：Phase C2 (2026-07-20): Records each round of tool exposure decisions. Answer "What tools could the model use at the time?" — Identify key information about "Why didn't you use tool X?"</remarks>
         public void WriteToolExposure(int turn, int tier1Count, int tier2Count, int alwaysOnCount,
             List<string> tier1Tools, List<string>? chainPredicted, string? chainSource)
         {
@@ -1336,6 +1385,7 @@ namespace SpatialAgent.Services
                 tier2_count = tier2Count,
                 always_on_count = alwaysOnCount,
                 // always-on tools are already part of tier 1.
+                // 中文：始终在线的工具已经是第一层保护的一部分。
                 total_exposed = tier1Count + tier2Count,
                 tier1_tools = tier1Tools,
                 chain_predicted = chainPredicted ?? new List<string>(),
@@ -1347,6 +1397,7 @@ namespace SpatialAgent.Services
         /// model/thinking are the provider's ACTUAL request parameters — link-level
         /// evidence that a UI model switch took effect, not just UI state.
         /// Repeated tool schemas are stored once and referenced by content hash.</summary>
+        /// <remarks>中文：记录LLM请求（完整消息，无截断）。模型/思维是提供者实际的请求参数——链接层面的证据，表明UI模型切换生效，而不仅仅是UI状态。重复的工具模式存储一次，并通过内容哈希引用。</remarks>
         public void WriteLLMRequest(int turn, object messages, object? tools, string systemPromptHash, string model = "", string thinking = "")
         {
             string? toolsHash = null;
@@ -1382,6 +1433,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Record LLM response (complete tool calls + token usage, no truncation).</summary>
+        /// <remarks>中文：记录LLM响应（完成工具调用+令牌使用，不截断）。</remarks>
         public void WriteLLMResponse(int turn, object toolCalls, string? textContent,
             long elapsedMs, int promptTokens = 0, int completionTokens = 0,
             string finishReason = "", int recoveryAttempt = 0)
@@ -1402,6 +1454,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Record tool execution start.</summary>
+        /// <remarks>中文：记录工具执行开始。</remarks>
         public void WriteToolStart(int turn, int step, string toolName, Dictionary<string, object?> args)
         {
             WriteCritical(new
@@ -1416,6 +1469,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Record tool execution result.</summary>
+        /// <remarks>中文：记录工具执行结果。</remarks>
         public void WriteToolEnd(int turn, int step, string toolName, bool success,
             object? output, string? error, long elapsedMs, int retryCount)
         {
@@ -1435,6 +1489,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Record verification result with expected/actual diff.</summary>
+        /// <remarks>中文：记录带有预期/实际差异的验证结果。</remarks>
         public void WriteVerification(int turn, int step, string toolName,
             string ruleType, string target, string expected, string actual,
             string verdict, object? sample, string detail)
@@ -1457,6 +1512,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Record what data was passed to Synthesis.</summary>
+        /// <remarks>中文：记录传递给Synthesis的数据。</remarks>
         public void WriteSynthInput(int turn, object observations, bool hasFailures, List<string>? rulesInjected)
         {
             Write(new
@@ -1471,6 +1527,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Record Synthesis output.</summary>
+        /// <remarks>中文：录制合成输出。</remarks>
         public void WriteSynthOutput(int turn, string reply, long elapsedMs)
         {
             WriteCritical(new
@@ -1484,6 +1541,7 @@ namespace SpatialAgent.Services
         }
 
         /// <summary>Record session end with summary statistics.</summary>
+        /// <remarks>中文：记录会话结束时，附有统计数据摘要。</remarks>
         public void WriteSessionEnd(int totalTurns, int toolCalls, int toolFailures,
             int verificationFailures, long totalElapsedMs)
         {
@@ -1500,6 +1558,7 @@ namespace SpatialAgent.Services
             int verificationFailures, long totalElapsedMs)
         {
             // ★ Phase B5：注入日志健康快照
+            // English：Phase B5: Inject log health snapshots
             LoggingHealthSnapshot? health = _healthMonitor?.Snapshot();
 
             WriteCritical(new
@@ -1513,6 +1572,7 @@ namespace SpatialAgent.Services
                 verification_failures = verificationFailures,
                 total_elapsed_ms = totalElapsedMs,
                 // ★ P0-2：session 结束时自报审计完整性
+                // English：P0-2: Self-reported audit completeness at session end
                 transcript_integrity = new
                 {
                     total_events = _eventCountBacking,
@@ -1521,6 +1581,7 @@ namespace SpatialAgent.Services
                     first_loss_reason = _firstLossReason
                 },
                 // ★ Phase B5：四层日志健康快照
+                // English：Phase B5: Four-layer log health snapshot
                 logging_health = health != null ? new
                 {
                     all_healthy = health.AllHealthy,
@@ -1532,6 +1593,7 @@ namespace SpatialAgent.Services
                 } : null
             });
             // ★ P1-C：session 结束前校验 EventBus→Transcript 事件一致性
+            // English：P1-C: Verify EventBus→Transcript event consistency before session ends
             CheckConsistency();
             Flush();
         }
