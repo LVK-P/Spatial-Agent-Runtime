@@ -6,6 +6,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// ★ ADR 0056 / Phase 4B：Transcript 回合级事件写入接口。
     /// 从 ITranscriptWriter 拆分——记录每个 ReAct 回合的输入、输出和诊断。
     /// </summary>
+    /// <remarks>English：ADR 0056 / Phase 4B: Transcript Turn-level event write interface. Split from ITranscriptWriter—records the input, output, and diagnostics for each ReAct round.</remarks>
     public interface ITranscriptTurnWriter
     {
         void WriteUserMessage(int turn, string content);

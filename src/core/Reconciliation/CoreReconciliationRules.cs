@@ -17,6 +17,7 @@ using Newtonsoft.Json.Linq;
 // Truthfulness 规则："两边都有数据才可声称变化"——空数据 = 无信息，
 // 不是"零图层"。杜绝基于解析失败构造虚假变更声明。
 // ────────────────────────────────────────────────────────────────
+// English：CoreReconciliationRules.cs — Pure session state reconciliation. ADR 0056 / Phase 3: Pure rules extracted from StateReconciler — zero file I/O, zero host dependencies. Content: 1. ParseLayerNames — "· layer:type" line parsing 2. ExtractReferencedLayers — Extracts layer references from JSONL lines in memory 3. ExtractToolChain — Extracts the toolchain from JSONL lines in memory 4. ComputeDiff — Pure diff computation (LINQ set operations) 5. ReconciliationReport + ToPromptInjection — Report model + formatted Truthfulness rule: "Change can only be claimed when there is data on both sides" — empty data = no information, not "zero layer." False change statements based on parsing failures are strictly prohibited.
 namespace SpatialAgent.Core
 {
     public static class CoreReconciliationRules

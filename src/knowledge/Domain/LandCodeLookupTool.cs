@@ -137,7 +137,7 @@ namespace SpatialAgent.Knowledge
                     var fuzzy = table
                         .Where(kv => kv.Value.Contains(token, StringComparison.Ordinal)
                                   || token.Contains(kv.Value, StringComparison.Ordinal))
-                        .OrderBy(kv => kv.Key.Length)   // 上级类目（短码）优先展示
+                        .OrderBy(kv => kv.Key.Length)   // 上级类目（短码）优先展示。 / Show parent classes (shorter codes) first.
                         .ThenBy(kv => kv.Key, StringComparer.Ordinal)
                         .Take(MaxCandidates)
                         .ToList();

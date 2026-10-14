@@ -60,6 +60,7 @@ namespace SpatialAgent.Runtime.Tests
         };
 
         // ── PostConditionVerifier 层 ──
+        // English：PostConditionVerifier layer
 
         [Fact]
         public async Task All_empty_field_values_fail_verification()
@@ -125,6 +126,7 @@ namespace SpatialAgent.Runtime.Tests
         }
 
         // ── PostConditionValidationRule 目标解析层 ──
+        // English：PostConditionValidationRule Target resolution layer
 
         [Fact]
         public async Task CalculateField_contract_fails_when_written_column_is_wiped()

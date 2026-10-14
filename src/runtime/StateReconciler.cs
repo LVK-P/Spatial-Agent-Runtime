@@ -20,6 +20,7 @@ namespace SpatialAgent.Runtime
     /// BOTH sides of the comparison have data. Missing transcript / empty map
     /// info degrade to "no claim", never to a fabricated delta.
     /// </summary>
+    /// <remarks>中文：将上一届会议的预测状态与当前项目现实进行比较。读取转录稿 JSONL →提取层引用 + 工具链→生成可读的 delta 报告，注入系统提示。ADR 0056 / Phase 3：纯逻辑（ParseLayerNames / ExtractReferencedLayers / ExtractToolChain / diff 计算 / ReconciliationReport）已迁入 Core。StateReconciler 仅保留文件 I/O、路径定位和宿主集成。真实性规则：只有当比较双方都有数据时，才会产生差异主张（“已删除”/“新增”）。缺少成绩单/空白地图信息会降级为“无索赔”，绝不会变成伪造的Delta。</remarks>
     public class StateReconciler
     {
         /// <summary>
@@ -98,6 +99,7 @@ namespace SpatialAgent.Runtime
         }
 
         // ★ ADR 0056 / Phase 3：以下方法委托到 Core——纯内存 JSONL 解析
+        // English：ADR 0056 / Phase 3: The following method is delegated to Core—pure memory JSONL parsing
 
         /// <summary>Extract layer names from in-memory transcript lines → Core.</summary>
         /// <remarks>中文：从内存中的转录线中提取层名→核心。</remarks>

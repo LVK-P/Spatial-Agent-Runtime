@@ -578,6 +578,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // ★ P0-1: SafetyGate null → 硬阻断
         // ════════════════════════════════════════════════════════════════
+        // English：P0-1: SafetyGate null → hard block
 
         [Fact]
         public async Task ProcessAsync_without_safety_returns_SafetyUnavailable()
@@ -619,6 +620,7 @@ namespace SpatialAgent.Runtime.Tests
             // English：Key: Do not call SetSafety—recreate the P0-1 scenario
             var runtime = new AgentRuntime(session, llm, tools, ctx, bus: null);
             // 显式不调用：runtime.SetSafety(...);
+            // English：Explicit call: runtime. SetSafety(...);
 
             var resp = await runtime.ProcessAsync(new TaskRequest { UserMessage = "删除这个字段" });
 
@@ -705,6 +707,7 @@ namespace SpatialAgent.Runtime.Tests
             var resp = await h.Runtime.ProcessAsync(new TaskRequest { UserMessage = "做缓冲区和导出" });
 
             // 只有 analysis_Buffer 应该被执行
+            // English：Only analysis_Buffer should be executed
             resp.HadToolCalls.Should().BeTrue();
             resp.StopReason.Should().Be("完成");
             resp.ToolResults.Should().HaveCount(3,

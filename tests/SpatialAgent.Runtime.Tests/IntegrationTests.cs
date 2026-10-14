@@ -24,6 +24,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Transcript 完整链路
         // ════════════════════════════════════════════════════════════════
+        // English：Transcript complete link
 
         [Fact]
         public void Transcript_api_produces_valid_event_count()
@@ -91,6 +92,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Checkpoint 保存/恢复
         // ════════════════════════════════════════════════════════════════
+        // English：Checkpoint Save/Recover
 
         [Fact]
         public async Task Checkpoint_save_and_restore_preserves_state()

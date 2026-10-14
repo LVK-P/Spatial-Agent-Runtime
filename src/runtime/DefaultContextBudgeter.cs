@@ -152,6 +152,7 @@ namespace SpatialAgent.Runtime
             });
 
             // ★ Phase C4：记录裁剪信息
+            // English：Phase C4: Record cutting information
             cuts[evidenceId] = new BudgetCutInfo
             {
                 OriginalLen = origLen,

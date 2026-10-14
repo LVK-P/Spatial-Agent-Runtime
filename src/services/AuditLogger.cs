@@ -54,14 +54,17 @@ namespace SpatialAgent.Services
         public string UserMessage { get; set; } = "";
 
         /// <summary>★ Phase A4：关联 run ID</summary>
+        /// <remarks>中文：A4阶段：关联 run ID</remarks>
         [JsonProperty("run_id")]
         public string? RunId { get; set; }
 
         /// <summary>★ Phase A4：关联 span ID</summary>
+        /// <remarks>中文：A4阶段：关联 span ID</remarks>
         [JsonProperty("span_id")]
         public string? SpanId { get; set; }
 
         /// <summary>★ Phase B3：操作耗时（毫秒）</summary>
+        /// <remarks>English：Phase B3: Operation time (milliseconds)</remarks>
         [JsonProperty("elapsed_ms")]
         public long ElapsedMs { get; set; }
     }
@@ -77,6 +80,7 @@ namespace SpatialAgent.Services
         private int _entryCount;
 
         // ── ★ Phase B3（2026-07-20）：健康监控 ──
+        // English：Phase B3 (2026-07-20): Health monitoring
         private ILoggingHealthMonitor? _healthMonitor;
         private int _writeFailures;
 
@@ -109,6 +113,7 @@ namespace SpatialAgent.Services
             if (string.IsNullOrEmpty(_auditFile)) return;
 
             // ★ Phase A4：自动注入关联 ID
+            // English：Phase A4: Automatically inject associated IDs
             string runId = CorrelationContext.RunId;
             string spanId = CorrelationContext.SpanId;
             if (!string.IsNullOrEmpty(runId)) entry.RunId = runId;

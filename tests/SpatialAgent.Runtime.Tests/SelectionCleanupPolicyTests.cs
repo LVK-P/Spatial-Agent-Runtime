@@ -114,6 +114,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Missing_selection_type_defaults_to_new_selection()
         {
             // GP 缺省 selection_type = NEW_SELECTION，同样要清
+            // English：GP default selection_type = NEW_SELECTION, also clear
             var steps = new[]
             {
                 Step("management_SelectLayerByAttribute",

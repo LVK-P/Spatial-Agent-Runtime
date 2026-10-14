@@ -51,6 +51,7 @@ namespace SpatialAgent.Runtime.Contracts
         public List<LayerInfo> Layers { get; set; } = new();
 
         // ── RAG 知识检索 ──
+        // English：RAG Knowledge Search
         /// <summary>Relevant document chunks retrieved from the knowledge base.</summary>
         /// <remarks>中文：从知识库检索相关文档块。</remarks>
         public List<string> KnowledgeChunks { get; set; } = new();

@@ -172,6 +172,7 @@ namespace SpatialAgent.Runtime.Tests
         /// 5B-3：Destructive 事件使缓存失效。
         /// 发布 tool.completed { risk: Destructive } → 下次 GatherLight 强制全量刷新。
         /// </summary>
+        /// <remarks>English：5B-3: Destructive event causes cache invalidation. Release tool.completed { risk: Destructive } → Next time, GatherLight will force a full refresh.</remarks>
         [Fact]
         public async Task Destructive_event_invalidates_cache()
         {

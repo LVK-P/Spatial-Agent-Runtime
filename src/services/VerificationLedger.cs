@@ -26,6 +26,7 @@ namespace SpatialAgent.Services
         private bool _disposed;
 
         // ── ★ Phase B2（2026-07-20）：健康监控 ──
+        // English：Phase B2 (2026-07-20): Health monitoring
         private Runtime.Contracts.ILoggingHealthMonitor? _healthMonitor;
         private int _writeFailures;
 
@@ -97,6 +98,7 @@ namespace SpatialAgent.Services
                 try
                 {
                     // ★ Phase A4：自动注入关联 ID
+                    // English：Phase A4: Automatically inject associated IDs
                     string runId = CorrelationContext.RunId;
                     string spanId = CorrelationContext.SpanId;
                     if (!string.IsNullOrEmpty(runId)) entry.RunId = runId;
@@ -223,10 +225,12 @@ namespace SpatialAgent.Services
         public long ElapsedMs { get; set; }
 
         /// <summary>★ Phase A4：关联 run ID</summary>
+        /// <remarks>中文：A4阶段：关联 run ID</remarks>
         [JsonProperty("run_id")]
         public string? RunId { get; set; }
 
         /// <summary>★ Phase A4：关联 span ID</summary>
+        /// <remarks>中文：A4阶段：关联 span ID</remarks>
         [JsonProperty("span_id")]
         public string? SpanId { get; set; }
     }

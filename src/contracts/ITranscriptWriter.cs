@@ -10,6 +10,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// 新代码请使用 ITranscriptLifecycle / ITranscriptSessionWriter /
     /// ITranscriptTurnWriter / ITranscriptToolWriter / ITranscriptHealth。
     /// </summary>
+    /// <remarks>English：Transcript writer abstraction. Concrete implementation in Services layer. AgentRuntime depends on this interface, not the concrete TranscriptWriter. ADR 0056 / Phase 4B: This interface has been split into 5-role interfaces and will be removed after retaining compatibility. For new code, please use ITranscriptLifecycle / ITranscriptSessionWriter / ITranscriptTurnWriter / ITranscriptToolWriter / ITranscriptHealth.</remarks>
     [Obsolete("Use ITranscriptLifecycle + ITranscriptSessionWriter + ITranscriptTurnWriter + ITranscriptToolWriter + ITranscriptHealth instead (ADR 0056 Phase 4B)")]
     public interface ITranscriptWriter
     {
@@ -22,6 +23,7 @@ namespace SpatialAgent.Runtime.Contracts
         void Initialize(string logDir);
 
         /// <summary>★ Phase B1：订阅 EventBus 事件（含 diagnostics.*）。</summary>
+        /// <remarks>English：Phase B1: Subscribes to EventBus events (including diagnostics.*).</remarks>
         void SubscribeTo(IEventBus eventBus);
 
         /// <summary>★ Phase B1：配置健康监控回调。</summary>

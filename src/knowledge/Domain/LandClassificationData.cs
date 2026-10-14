@@ -202,6 +202,7 @@ namespace SpatialAgent.Knowledge.Data
         //
         // Source: Land-Sea Use Classification Guide, Appendix F
         // ───────────────────────────────────────────────────────────────────
+        // English：Lookup 3: Third Survey → land-sea classification crosswalk (2023) Mapping rules: One-to-one: direct mapping Split: Third Survey One category applies multiple categories of land and sea use Newly added: No corresponding to the third survey, new addition to land and sea use Source: Land-Sea Use Classification Guide, Appendix F
         private static readonly Dictionary<string, string[]> DefaultSdToYh = new()
         {
             // Third Survey 00 wetland → land-sea use 05 wetland
@@ -466,6 +467,7 @@ namespace SpatialAgent.Knowledge.Data
         // Source: Land-Sea Use Classification (2023) mapping rules
         // HH = 混合用地（Mixed-use）
         // ───────────────────────────────────────────────────────────────────
+        // 中文：建筑用地/其他陆地一级代码 来源：陆海使用分类（2023年）制图规则 HH = 混合用地（混合用途）
 
         /// <summary>建设用地一级类代码（含混合用地HH）</summary>
         /// <remarks>English：Construction Land Category I Code (including mixed land HH)</remarks>

@@ -16,6 +16,7 @@ using SpatialAgent.Runtime.Contracts;
 //   3. StepStatusText — 纯状态→文本映射
 //   4. DefaultContinuationTemplate — 续推指令兜底模板
 // ────────────────────────────────────────────────────────────────
+// English：CoreRuntimeRules.cs — Pure GIS strategy tables and prediction logic. ADR 0056: Pure rules derived from RuntimePolicy—zero I/O, zero host dependency. These rules can be independently verified by Core tests and do not rely on the agent orchestration layer. Content: 1. ChainPredictions + PredictNextTools — GIS Chain Operation Prediction 2. SelectionToolLayerParams + SelectionIntentWords + ResolveSelectionCleanups + BuildSelectionClearCall — End of selection set 3. StepStatusText — Pure State → Text Mapping 4. DefaultContinuationTemplate — Backup template for the push command backing function
 namespace SpatialAgent.Core
 {
     public static class CoreRuntimeRules
@@ -23,6 +24,7 @@ namespace SpatialAgent.Core
         // ════════════════════════════════════════════════════════════════
         // 1. GIS 操作链预测（Chain Predictions）
         // ════════════════════════════════════════════════════════════════
+        // English：1. GIS Chain Predictions
 
         /// <summary>Key = 上回合调用的工具名, Value = 应预提升到 Tier1 的后继工具名</summary>
         /// <remarks>English：Key = Name of the tool called last round, Value = Name of the successor tool that should be promoted to Tier 1</remarks>
@@ -86,6 +88,7 @@ namespace SpatialAgent.Core
         // ════════════════════════════════════════════════════════════════
         // 2. 选择集收尾策略（Selection Cleanup）
         // ════════════════════════════════════════════════════════════════
+        // English：2. Selection Cleanup Strategy
 
         /// <summary>Selection-mutating GP tools and their layer parameter names.</summary>
         /// <remarks>中文：选择会修改状态的 GP 工具及其图层参数名。</remarks>

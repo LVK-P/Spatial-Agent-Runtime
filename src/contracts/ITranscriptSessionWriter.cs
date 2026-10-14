@@ -4,6 +4,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// ★ ADR 0056 / Phase 4B：Transcript 会话边界写入接口。
     /// 从 ITranscriptWriter 拆分——记录 session 开始和结束。
     /// </summary>
+    /// <remarks>English：ADR 0056 / Phase 4B: Transcript session boundary write interface. Split from ITranscriptWriter—recording session starts and ends.</remarks>
     public interface ITranscriptSessionWriter
     {
         void WriteSessionStart(string sessionId, string model, string thinkingEffort, string? projectPath);

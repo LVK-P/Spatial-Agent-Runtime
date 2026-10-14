@@ -44,6 +44,7 @@ namespace SpatialAgent.Adapters.Mcp
         public string Url => $"http://127.0.0.1:{_port}/mcp";
         public bool IsRunning => _app != null;
         /// <summary>P2-C：MCP 认证 Token——供 UI "复制 Token" 按钮使用。</summary>
+        /// <remarks>English：P2-C: MCP Authentication Token—used by the UI "Copy Token" button.</remarks>
         public string AuthToken => _authToken;
 
         public string ConfigJson
@@ -179,6 +180,7 @@ namespace SpatialAgent.Adapters.Mcp
         /// 空 token → fail-closed（未配置认证则拒绝所有请求）。
         /// 使用 CryptographicOperations.FixedTimeEquals 防止时序攻击。
         /// </summary>
+        /// <remarks>English：P2-C / S2 (Phase 3 fix): Constant time comparison checksum for Bearer token. Empty token → fail-closed (all requests are rejected if authentication is not configured). Use CryptographicOperations.FixedTimeEquals to prevent temporal attacks.</remarks>
         private bool IsAuthorized(HttpRequest request)
         {
             // S4：指数退避锁定——连续失败后临时锁定认证
@@ -461,6 +463,7 @@ namespace SpatialAgent.Adapters.Mcp
         /// ★ P1-B：将 IToolDescriptor.Parameters 映射为 MCP JSON Schema。
         /// 所有参数都包含在 schema 中（无 Direction 字段可区分 Input/Output）。
         /// </summary>
+        /// <remarks>English：P1-B: Maps IToolDescriptor.Parameters to MCP JSON Schema. All parameters are included in the schema (without a Direction field, Input/Output can be distinguished).</remarks>
         private static JObject BuildJsonSchema(IToolDescriptor desc)
         {
             var properties = new JObject();
@@ -483,6 +486,7 @@ namespace SpatialAgent.Adapters.Mcp
             }
 
             // Required 参数来自 descriptor.RequiredParameters
+            // English：The Required parameter comes from the descriptor. RequiredParameters
             foreach (var rp in desc.RequiredParameters)
                 required.Add(rp);
 
@@ -495,6 +499,7 @@ namespace SpatialAgent.Adapters.Mcp
         }
 
         /// <summary>将 .NET/GP 类型名映射为 JSON Schema 类型名。</summary>
+        /// <remarks>English：Map the .NET/GP type name to the JSON Schema type name.</remarks>
         private static string MapJsonType(string? type)
         {
             string t = (type ?? "string").ToLowerInvariant();

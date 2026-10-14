@@ -279,6 +279,7 @@ namespace SpatialAgent.Services
             }) RegisterClassification(tool, ToolRiskLevel.Increment);
 
             // ── Modify — 覆写既有字段值 ──
+            // English：Modify — Overrides existing field values
             foreach (string tool in new[] {
                 "CalculateField"
             }) RegisterClassification(tool, ToolRiskLevel.Modify);

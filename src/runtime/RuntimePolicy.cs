@@ -140,11 +140,13 @@ namespace SpatialAgent.Runtime
         // English：GIS Chain of Operation Prediction (Path D Enhancement, 2026-07-19) Tool calls in planning projects have extremely high sequence regularity—"describe→compute→ statistical," "projected → clipped→erase". When the model calls the chain origin tool, it pre-elevates the successor tool to Tier 1 (full parameter), avoiding being in Tier 2 (light parameter) when the next round of the model needs it. Deterministic static tables, no gambling on LLMs. Trigger timing: SelectExposedToolsTiered checks the previous round's tool call record, hits the starting point →, then proceeds to Tier 1. Zero new dependencies, pure RuntimePolicy internal logic.
 
         // ★ ADR 0056 / Phase 3：操作链预测迁入 Core
+        // English：ADR 0056 / Phase 3: Operation chain prediction migration into Core
         public static IReadOnlyList<string> PredictNextTools(
             IReadOnlyList<string>? lastTurnToolCalls)
             => CoreRuntimeRules.PredictNextTools(lastTurnToolCalls);
 
         // ★ ADR 0056 / Phase 3：选择集收尾策略迁入 Core
+        // English：ADR 0056 / Phase 3: Select the set closing strategy to migrate into the core
         public static IReadOnlyList<string> ResolveSelectionCleanups(
             IReadOnlyList<(string ToolName, IReadOnlyDictionary<string, object?>? Args)> executedSteps,
             string userMessage = "")
@@ -229,6 +231,7 @@ namespace SpatialAgent.Runtime
         }
 
         // ★ ADR 0056 / Phase 3：状态文本映射迁入 Core
+        // English：ADR 0056 / Phase 3: Migration of state text mapping into the core
         public static string StepStatusText(StepResultStatus st)
             => CoreRuntimeRules.StepStatusText(st);
 

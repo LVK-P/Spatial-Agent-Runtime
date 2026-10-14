@@ -203,6 +203,7 @@ namespace SpatialAgent.Runtime.Tests
                 tw.Write(new { type = "test", value = 42 });
                 tw.WriteSessionEnd(1, 1, 0, 0, 100);
                 // Dispose → Flush → 排空 Channel → 关闭文件
+                // English：Dispose → Flush → Empty Channel → Close the file
                 tw.Dispose();
 
                 // 验证文件内容
@@ -211,6 +212,7 @@ namespace SpatialAgent.Runtime.Tests
                 content.Should().Contain("\"type\":\"test\"");
                 content.Should().Contain("\"type\":\"session_end\"");
                 // ★ P0-2：session_end 应包含 transcript_integrity 字段
+                // English：P0-2:session_end should include transcript_integrity fields
                 content.Should().Contain("transcript_integrity");
             }
             finally
@@ -299,16 +301,20 @@ namespace SpatialAgent.Runtime.Tests
             // English：The full 600 characters should be fully retained
             content.Should().Contain(new string('A', 600));
             // project_truncated 标记应为 true
+            // English：project_truncated The tag should be true
             content.Should().Contain("\"project_truncated\":true");
             // project_len 应为 600
+            // English：project_len should be 600
             content.Should().Contain("\"project_len\":600");
             // map 未超出限制，map_truncated 应为 false
+            // English：If the map does not exceed the limit, map_truncated should be false
             content.Should().Contain("\"map_truncated\":false");
         }
 
         // ════════════════════════════════════════════════════════════════
         // ★ P0-2：transcript_integrity 在 session_end 中声明
         // ════════════════════════════════════════════════════════════════
+        // English：P0-2: transcript_integrity is declared in session_end
 
         [Fact]
         public void WriteSessionEnd_includes_transcript_integrity_after_flush()
@@ -322,6 +328,7 @@ namespace SpatialAgent.Runtime.Tests
             var content = File.ReadAllText(_filePath!);
 
             // session_end JSONL 行必须包含 transcript_integrity 对象
+            // English：session_end JSONL lines must contain transcript_integrity objects
             content.Should().Contain("transcript_integrity");
             content.Should().Contain("\"total_events\"");
             content.Should().Contain("\"lost_events\"");
@@ -364,6 +371,7 @@ namespace SpatialAgent.Runtime.Tests
             tw.Flush();
 
             // Flush 后应能继续写入
+            // English：After flushing, writing should continue
             tw.Write(new { type = "event_after_flush", n = 2 });
             tw.WriteSessionEnd(1, 2, 0, 0, 1000);
             tw.Dispose();
@@ -377,6 +385,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // ★ Phase A1：diagnostics 事件写入 transcript
         // ════════════════════════════════════════════════════════════════
+        // English：Phase A1: Diagnostics event writes transcript
 
         [Fact]
         public void Diagnostics_warning_events_are_recorded()
@@ -440,6 +449,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Run_id_is_injected_when_correlation_context_active()
         {
             // ★ Phase A4：CorrelationContext 活跃时，Write() 自动注入 run_id/span_id
+            // English：Phase A4: When CorrelationContext is active, Write() automatically injects run_id/span_id
             using (CorrelationContext.BeginRun("test-run-42"))
             {
                 using (CorrelationContext.BeginSpan("test_span"))

@@ -221,6 +221,7 @@ namespace SpatialAgent.Runtime.Validation
         };
 
         // ★ ADR 0056 / Phase 3：纯参数校验规则迁入 Core
+        // English：ADR 0056 / Phase 3: Pure parameter validation rules migrated into the core
         private static string? FuzzySubstringMatch(string input, List<string> validValues)
             => CoreParameterRules.FuzzySubstringMatch(input, validValues);
 

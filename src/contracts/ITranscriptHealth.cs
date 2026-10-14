@@ -4,6 +4,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// ★ ADR 0056 / Phase 4B：Transcript 健康监控接口。
     /// 从 ITranscriptWriter 拆分——记录事件计数、丢失检测和一致性校验。
     /// </summary>
+    /// <remarks>English：ADR 0056 / Phase 4B: Transcript health monitoring interface. Split from ITranscriptWriter—recording event counts, loss detection, and consistency checks.</remarks>
     public interface ITranscriptHealth
     {
         int EventCount { get; }

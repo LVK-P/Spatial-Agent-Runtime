@@ -15,6 +15,7 @@ namespace SpatialAgent.Runtime.Tests
     public class MapFieldValuesToolTests
     {
         // ── BuildMapping：官方对照 ──
+        // English：BuildMapping: Official comparison
 
         [Fact]
         public void Name_to_code_maps_via_official_table()
@@ -65,6 +66,7 @@ namespace SpatialAgent.Runtime.Tests
         }
 
         // ── BuildMapping：显式 mapping ──
+        // English：BuildMapping: Explicit mapping
 
         [Fact]
         public void Explicit_mapping_overrides_official_table()

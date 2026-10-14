@@ -111,6 +111,7 @@ namespace SpatialAgent.Runtime.Tests
                 await Task.Delay(10);
 
                 // AsyncLocal<T> 应在 await 后保持
+                // English：AsyncLocal should be held after await
                 CorrelationContext.RunId.Should().Be("async-test");
             }
         }

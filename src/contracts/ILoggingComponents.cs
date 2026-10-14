@@ -45,9 +45,11 @@ namespace SpatialAgent.Runtime.Contracts
     /// ★ Phase B1（2026-07-20）：日志初始化配置，
     /// 从 ViewModel 传递到 AgentRuntime.InitializeLogging()。
     /// </summary>
+    /// <remarks>English：Phase B1 (2026-07-20): Log initialization configuration, passed from ViewModel to AgentRuntime.InitializeLogging().</remarks>
     public class LoggingConfig
     {
         /// <summary>日志目录（AppData fallback 或项目 agent_logs/）。</summary>
+        /// <remarks>English：Log directory (AppData fallback or Project agent_logs/).</remarks>
         public string LogDir { get; set; } = "";
 
         /// <summary>项目文件夹路径（AuditLogger 需要）。</summary>

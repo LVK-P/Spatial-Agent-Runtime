@@ -8,15 +8,19 @@ namespace SpatialAgent.Runtime.Contracts
     ///
     /// EventBus : IEventBus, IEventCounters 同时实现两个接口。
     /// </summary>
+    /// <remarks>English：ADR 0056 / Phase 4A: Minimum event counting interface, decouples TranscriptWriter and EventBus specific types. Originally, TranscriptWriter.CheckConsistency(EventBus?) was an EventBus class that directly depended on Runtime. Through this interface, TranscriptWriter relies solely on abstract counting and does not bind to specific implementations. EventBus: IEventBus and IEventCounters implement two interfaces simultaneously.</remarks>
     public interface IEventCounters
     {
         /// <summary>已发布 tool_started 事件总数。</summary>
+        /// <remarks>English：tool_started total number of published events.</remarks>
         long ToolStartedCount { get; }
 
         /// <summary>已发布 tool_completed + tool_failed 事件总数。</summary>
+        /// <remarks>English：Total number of tool_completed + tool_failed events published.</remarks>
         long ToolCompletedCount { get; }
 
         /// <summary>已发布 tool_failed 事件总数。</summary>
+        /// <remarks>English：A total of tool_failed events have been published.</remarks>
         long ToolFailedCount { get; }
     }
 }

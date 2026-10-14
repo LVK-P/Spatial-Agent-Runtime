@@ -11,6 +11,7 @@ using System.Linq;
 //   2. ValidateNumericRange — 数值范围校验
 //   3. ValidateNumericType — 数值类型校验
 // ────────────────────────────────────────────────────────────────
+// English：CoreParameterRules.cs — Pure parameter validation helpers. ADR 0056 / Phase 3: Pure rules extracted from ParameterValidator—zero I/O, zero host dependency, can be tested independently. Content: 1. FuzzySubstringMatch — Substring fuzzy matching 2. ValidateNumericRange — Numeric range validation 3. ValidateNumericType — Numeric type validation
 namespace SpatialAgent.Core
 {
     public static class CoreParameterRules

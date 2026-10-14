@@ -4,6 +4,7 @@ namespace SpatialAgent.Runtime.Contracts
     /// ★ ADR 0056 / Phase 4B：Transcript 生命周期管理接口。
     /// 从 ITranscriptWriter 拆分——控制 transcript 的初始化、迁移、订阅和状态。
     /// </summary>
+    /// <remarks>English：ADR 0056 / Phase 4B: Transcript lifecycle management interface. Split from ITranscriptWriter—controls transcript initialization, migration, subscription, and state.</remarks>
     public interface ITranscriptLifecycle
     {
         string? FilePath { get; }

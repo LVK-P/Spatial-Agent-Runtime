@@ -202,6 +202,7 @@ namespace SpatialAgent.Runtime
         private List<string> _lastTurnToolCalls = new();
 
         // ── 审批恢复状态（ADR 0051）──
+        // English：Approval Recovery Status (ADR 0051)
         private List<StepExecutionResult> _allStepResultsThisTurn = new();
         private List<IObservation> _allObsThisTurn = new();
         private HashSet<string> _blockedToolsThisTurn = new(StringComparer.OrdinalIgnoreCase);
@@ -729,6 +730,7 @@ namespace SpatialAgent.Runtime
             // ★ Two-tier tool exposure (Path D + 操作链预测, 2026-07-19):
             //    Tier 1 = always-on + skill-declared + 上回合调用触发链预测（完整参描）
             //    Tier 2 = context top50（轻量：仅名称+类型，剥参描/枚举/标题）
+            // English：Two-tier tool exposure (Path D + operation chain prediction, 2026-07-19): Tier 1 = always-on + skill-declared + last round call trigger chain prediction (full parameter) Tier 2 = context top50 (lightweight: name only + type, strip parameter/enumeration/title)
             var skillTools = ctx.MatchedSkills
                 .SelectMany(s => s.RequiredTools)
                 .Where(t => !string.IsNullOrWhiteSpace(t))
@@ -1180,6 +1182,7 @@ namespace SpatialAgent.Runtime
                 if (hallucinatedTools.Count == responseToolCalls.Count)
                 {
                     // 全部幻觉 → 反馈 LLM
+                    // English：All hallucinations → feedback LLMs
                     _eventBus?.Publish(new AgentEvent { EventType = "llm.hallucinated_tools", Turn = turn,
                         Metadata = new() { ["tools"] = string.Join(",", hallucinatedTools) } });
                     messages.Add(new Message

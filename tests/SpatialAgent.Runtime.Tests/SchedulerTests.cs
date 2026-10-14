@@ -435,6 +435,7 @@ namespace SpatialAgent.Runtime.Tests
             // 为 "management.Erase" 注册 shortName 别名，让 ResolveName 能匹配
             // （ToolNameResolver 会将 "conversion_Erase" → shortName "Erase" → 匹配 "management_Erase"）
             // 这里需要在 registry 中注册短名
+            // English：For "management. Erase" registers shortName aliases so that ResolveName can match (ToolNameResolver will match "conversion_Erase" → shortName "Erase" → "management_Erase") Here, you need to register the shortname in the registry
             registry.Register(
                 new StubDescriptor { Name = "Erase", Annotation = ToolAnnotation.Destructive },
                 new StubExecutor(new ToolResult { ToolName = "management_Erase", Success = true }));

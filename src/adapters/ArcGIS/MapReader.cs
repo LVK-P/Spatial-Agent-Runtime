@@ -611,6 +611,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                 {
                     if (layer is not FeatureLayer fl) continue;
                     // 排除 agentbackup.gdb 内的数据
+                    // English：Exclude data from agentbackup.gdb
                     string ds = fl.GetFeatureClass()?.GetDatastore()?.GetPath()?.ToString() ?? "";
                     if (ds.Contains("agentbackup.gdb", StringComparison.OrdinalIgnoreCase)) continue;
 
@@ -640,6 +641,7 @@ namespace SpatialAgent.Adapters.ArcGIS
                 foreach (var table in map.StandaloneTables)
                 {
                     // 排除 agentbackup.gdb 内的数据
+                    // English：Exclude data from agentbackup.gdb
                     string ds = table.GetTable()?.GetDatastore()?.GetPath()?.ToString() ?? "";
                     if (ds.Contains("agentbackup.gdb", StringComparison.OrdinalIgnoreCase)) continue;
 

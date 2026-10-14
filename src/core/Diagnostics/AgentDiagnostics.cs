@@ -10,6 +10,7 @@ namespace SpatialAgent.Core
     /// Warn/Error 在 ex 为 null 时捕获当前调用栈（Environment.StackTrace），
     /// 确保开发者可以定位到 throw 或 Warn 调用的源位置。
     /// </summary>
+    /// <remarks>English：Lightweight diagnostics helper shared across layers. Phase A2 (2026-07-20): Automatic add-on stack tracking at all levels. Warn/Error captures the current call stack (Environment.StackTrace) when ex is null, ensuring developers can locate the source location of throw or Warn calls.</remarks>
     public static class AgentDiagnostics
     {
         /// <summary>Extract stack trace from exception or capture current call stack.</summary>

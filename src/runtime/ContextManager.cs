@@ -84,6 +84,7 @@ namespace SpatialAgent.Runtime
                     // Modify → 仅当工具可能创建了新图层/新输出时才刷新。
                     // CalculateField / AddField 只改字段内容，上下文无需重载——
                     // 字段变更已在工具输出中可见，全量 re-gather 浪费 I/O 和 token。
+                    // English：Modify → Refresh only when the tool may have created a new layer or new output. CalculateField / AddField only modify the field content, so no context overload is needed — field changes are already visible in the tool output, and full re-gather wastes I/O and tokens.
                     if (risk == "Modify")
                         InvalidateCache();
                 });
