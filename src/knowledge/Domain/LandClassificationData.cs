@@ -20,6 +20,7 @@ using Newtonsoft.Json.Linq;
 //
 // Data sources: MNR 2023-11 + GB/T 21010-2017
 // ────────────────────────────────────────────────────────────────
+// 中文：LandClassificationData.cs — 土地分类查询表。自 2026-07-19 起承担双重角色：1. 构建期资产，作为生成输入供 tools/extract_domain_data.py 使用；2. 运行时查询，通过 LandCodeLookupTool（cc_lookup_land_code）向模型提供官方名称/代码转换，避免编造映射（ADR 0044）。存在 land_classification.json 时加载完整数据；离线或嵌入场景则回退到硬编码内联数据。数据来源：MNR 2023-11 + GB/T 21010-2017。
 namespace SpatialAgent.Knowledge.Data
 {
     public static class LandClassificationData
@@ -59,6 +60,7 @@ namespace SpatialAgent.Knowledge.Data
             var json = LoadJson();
             // 空对象视为"未填充"而非"覆盖为空"——否则空壳 JSON 会静默清空
             // 全部领域数据（2026-07-19 部署接通后由回归测试当场暴露）
+            // English：Empty objects are treated as "unfilled" rather than "overlaid as empty"—otherwise, the empty JSON shell will silently clear all domain data (2026-07-19 exposed on site by regression testing after deployment and connection)
             if (json?[key] is JObject obj && obj.Count > 0)
                 return obj.Properties().ToDictionary(p => p.Name, p => p.Value.ToString());
             return null;
@@ -77,6 +79,7 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         // ── Default inline data (compile-time fallback) ──
+        // 中文：默认内联数据（编译时回退）
 
         private static readonly Dictionary<string, string> DefaultSdCodeToName = new()
         {
@@ -116,6 +119,7 @@ namespace SpatialAgent.Knowledge.Data
         // Lookup 2: land-sea use code → name (2023 edition, 140 entries) — inline fallback
         // Source: MNR 2023-11 Land-Sea Use Classification Guide codes
         // ───────────────────────────────────────────────────────────────────
+        // 中文：查询 2：用地用海代码 → 名称（2023 版，140 条）——内联回退。来源：MNR 2023-11 用地用海分类指南代码
         private static readonly Dictionary<string, string> DefaultYhCodeToName = new()
         {
             {"01","耕地"},{"0101","水田"},{"0102","水浇地"},{"0103","旱地"},
@@ -201,49 +205,62 @@ namespace SpatialAgent.Knowledge.Data
         private static readonly Dictionary<string, string[]> DefaultSdToYh = new()
         {
             // Third Survey 00 wetland → land-sea use 05 wetland
-            {"0303", new[]{"0507"}},   // mangrove
-            {"0304", new[]{"0501"}},   // forest swamp
-            {"0306", new[]{"0502"}},   // shrub swamp
-            {"0402", new[]{"0503"}},   // marsh grassland
-            {"0603", new[]{"1003"}},   // salt pan → industrial/mining land
-            {"1105", new[]{"0505"}},   // coastal mudflat
-            {"1106", new[]{"0506"}},   // inland mudflat
-            {"1108", new[]{"0504"}},   // marshland
+            // 中文：第三次调查 00 湿地→ 陆海利用 05 湿地
+            {"0303", new[]{"0507"}},   // 红树林地。 / Mangrove.
+            {"0304", new[]{"0501"}},   // 森林沼泽。 / Forest swamp.
+            {"0306", new[]{"0502"}},   // 灌丛沼泽。 / Shrub swamp.
+            {"0402", new[]{"0503"}},   // 沼泽草地。 / Marsh grassland.
+            {"0603", new[]{"1003"}},   // 盐田 → 工矿用地。 / Salt pan → industrial/mining land.
+            {"1105", new[]{"0505"}},   // 沿海滩涂。 / Coastal mudflat.
+            {"1106", new[]{"0506"}},   // 内陆滩涂。 / Inland mudflat.
+            {"1108", new[]{"0504"}},   // 沼泽地。 / Marshland.
             // 01耕地 → 01耕地（不变）
+            // English：01 Farmland → 01 Farmland (unchanged)
             {"0101", new[]{"0101"}}, {"0102", new[]{"0102"}}, {"0103", new[]{"0103"}},
             // 02园地
+            // English：02 Garden
             {"0201", new[]{"0201"}}, {"0202", new[]{"0202"}}, {"0203", new[]{"0203"}},
-            {"0204", new[]{"0204","0205"}}, // Third Survey "other garden" → split into oil-bearing + other garden
+            {"0204", new[]{"0204","0205"}}, // 三调“其他园地”拆分为油料园地和其他园地。 / Third Survey "other garden" splits into oil-bearing and other garden.
             // 03林地
+            // English：03 Woodland
             {"0301", new[]{"0301"}}, {"0302", new[]{"0302"}},
-            {"0305", new[]{"0303"}},   // shrubland (Third Survey 0305 → land-sea 0303)
-            {"0307", new[]{"0304"}},   // other forest
+            {"0305", new[]{"0303"}},   // 灌木林地（三调 0305 → 用地用海 0303）。 / Shrubland (Third Survey 0305 → land-sea 0303).
+            {"0307", new[]{"0304"}},   // 其他林地。 / Other forest.
             // 04草地
+            // English：04 Grassland
             {"0401", new[]{"0401"}}, {"0403", new[]{"0402"}}, {"0404", new[]{"0403"}},
             // 05商业服务业 → 拆分
+            // English：05 Commercial Services Industry → Spin-off
             {"05H1", new[]{"0702","0704","0901","0902","0903","0904"}},
-            {"0508", new[]{"1101","1102"}}, // logistics/warehouse → split
+            {"0508", new[]{"1101","1102"}}, // 物流仓储用地拆分。 / Logistics/warehouse splits into two classes.
             // 06工矿用地
+            // English：06 Industrial and mining land
             {"0601", new[]{"1001"}}, {"0602", new[]{"1002"}},
             // 07住宅用地
+            // English：07 Residential land
             {"0701", new[]{"0701"}}, {"0702", new[]{"0703"}},
             // 08公共管理与公共服务 → 大幅拆分
+            // English：08 Public Administration and Public Services → Major Split
             {"08H1", new[]{"0801"}}, {"08H2", new[]{"0802","0803","0804","0805","0806","0807","0702","0704"}},
             {"0809", new[]{"1301","1302","1303","1304","1305","1306","1307","1308","1309","1310","1312"}},
             {"0810", new[]{"1401","1402","1403"}},
             // 09特殊用地
+            // English：09 Special Land Use
             {"09", new[]{"1501","1502","1503","1504","1505","1506","1507"}},
             // 10交通运输
+            // English：10. Transportation
             {"1001", new[]{"1201","1208"}}, {"1002", new[]{"1206"}},
             {"1003", new[]{"1202"}}, {"1004", new[]{"1207"}},
             {"1005", new[]{"1208"}}, {"1006", new[]{"0601"}},
             {"1007", new[]{"1203"}}, {"1008", new[]{"1204"}},
             {"1009", new[]{"1205"}},
             // 11水域
+            // English：11. Water Area
             {"1101", new[]{"1701"}}, {"1102", new[]{"1702"}}, {"1103", new[]{"1703"}},
             {"1104", new[]{"1704"}}, {"1107", new[]{"1705"}},
             {"1109", new[]{"1311"}}, {"1110", new[]{"1706"}},
             // 12其他土地
+            // English：12. Other land
             {"1201", new[]{"2301"}}, {"1202", new[]{"0602"}},
             {"1203", new[]{"2303"}}, {"1204", new[]{"2304"}},
             {"1205", new[]{"2305"}}, {"1206", new[]{"2306"}},
@@ -253,8 +270,10 @@ namespace SpatialAgent.Knowledge.Data
         // ───────────────────────────────────────────────────────────────────
         // Query methods
         // ───────────────────────────────────────────────────────────────────
+        // 中文：查询方法
 
         /// <summary>根据代码获取名称（先查用地用海，再查三调）</summary>
+        /// <remarks>English：Obtain the name based on the code (first check land and sea use, then check the third survey)</remarks>
         public static string? GetName(string code)
         {
             if (YhCodeToName.TryGetValue(code, out var name)) return name;
@@ -263,14 +282,17 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>根据名称反向查代码（模糊匹配）</summary>
+        /// <remarks>English：Reverse code search by name (fuzzy match)</remarks>
         public static string? FindCode(string name)
         {
             // Exact match
+            // 中文：完全匹配
             foreach (var (code, n) in YhCodeToName)
                 if (n == name) return code;
             foreach (var (code, n) in SdCodeToName)
                 if (n == name) return code;
             // Fuzzy match
+            // 中文：模糊匹配
             foreach (var (code, n) in YhCodeToName)
                 if (n.Contains(name) || name.Contains(n)) return code;
             foreach (var (code, n) in SdCodeToName)
@@ -279,6 +301,7 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>获取代码层级：1=一级(2位), 2=二级(4位), 3=三级(6位)</summary>
+        /// <remarks>English：Get code levels: 1 = Level 1 (2 bits), 2 = Level 2 (4 bits), 3 = Level 3 (6 bits)</remarks>
         public static int GetLevel(string code)
         {
             var clean = code.TrimEnd('K', 'A');
@@ -291,6 +314,7 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>展开指定代码的所有直接子类</summary>
+        /// <remarks>English：Expand all direct subclasses of the specified code</remarks>
         public static List<string> GetChildren(string parentCode)
         {
             var clean = parentCode.TrimEnd('K', 'A');
@@ -306,6 +330,7 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>展开指定代码的所有子孙（所有层级）</summary>
+        /// <remarks>English：Expand all descendants of the specified code (all levels)</remarks>
         public static List<string> GetDescendants(string parentCode)
         {
             var clean = parentCode.TrimEnd('K', 'A');
@@ -316,18 +341,20 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>获取父类代码</summary>
+        /// <remarks>English：Get the parent class code</remarks>
         public static string? GetParent(string code)
         {
             var clean = code.TrimEnd('K', 'A');
             return clean.Length switch
             {
-                <= 2 => null,                    // level-1 class has no parent
-                <= 4 => clean[..2],               // level-2 → level-1 (2 digits)
-                _ => clean[..4]                   // level-3 → level-2 (4 digits)
+                <= 2 => null,                     // 一级类没有父级。 / A level-1 class has no parent.
+                <= 4 => clean[..2],               // 二级 → 一级（2 位）。 / Level 2 → level 1 (2 digits).
+                _ => clean[..4]                   // 三级 → 二级（4 位）。 / Level 3 → level 2 (4 digits).
             };
         }
 
         /// <summary>三调代码→用地用海代码</summary>
+        /// <remarks>English：Third, code → land and sea use code</remarks>
         public static string[] ConvertSdToYh(string sdCode)
         {
             return SdToYh.TryGetValue(sdCode, out var yhCodes)
@@ -336,6 +363,7 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>用地用海代码→三调代码（反向查找）</summary>
+        /// <remarks>English：Land and sea use codes → third-tone codes (reverse search)</remarks>
         public static string? ConvertYhToSd(string yhCode)
         {
             foreach (var (sd, yhList) in SdToYh)
@@ -345,6 +373,7 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>获取一级类代码列表（24个）</summary>
+        /// <remarks>English：Get a list of first-level class codes (24 items)</remarks>
         public static List<string> GetLevel1Codes()
         {
             return YhCodeToName.Keys
@@ -354,19 +383,23 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>三调三大类(农用地/建设用地/未利用地)判断</summary>
+        /// <remarks>English：Third, assessment of three major categories (agricultural land, construction land, unused land).</remarks>
         public static string GetSdCategory(string sdCode)
         {
             var clean = sdCode.TrimEnd('K', 'A');
             // Agricultural: 01-04 + partial 05/11/12
+            // 中文：农用地：01–04，加上 11/12 中的部分类型
             if (clean.StartsWith("01") || clean.StartsWith("02") ||
                 clean.StartsWith("03") || clean.StartsWith("04"))
                 return "农用地";
             // Construction: 05-10 + partial 11/12
+            // 中文：建设用地：05–10，加上 11/12 中的部分类型
             if (clean.StartsWith("05") || clean.StartsWith("06") ||
                 clean.StartsWith("07") || clean.StartsWith("08") ||
                 clean.StartsWith("09") || clean.StartsWith("10"))
                 return "建设用地";
             // Reservoirs/ponds/ditches → agricultural; rest → construction or unused
+            // 中文：水库/池塘/沟渠→农业用地;→施工或未使用过
             if (clean == "1103" || clean == "1104" || clean == "1107")
                 return "农用地";
             if (clean == "1109" || clean == "1001" || clean == "1003" ||
@@ -374,6 +407,7 @@ namespace SpatialAgent.Knowledge.Data
                 clean == "1007" || clean == "1008" || clean == "1009")
                 return "建设用地";
             // Other land
+            // 中文：其他土地
             if (clean.StartsWith("12"))
                 return clean switch { "1203" => "农用地", "1202" => "建设用地", _ => "未利用地" };
             return "未利用地";
@@ -382,6 +416,7 @@ namespace SpatialAgent.Knowledge.Data
         // ───────────────────────────────────────────────────────────────────
         // Helpers
         // ───────────────────────────────────────────────────────────────────
+        // 中文：助手
 
         private static int GetLevelStep(int currentLen)
         {
@@ -389,12 +424,15 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>三调条目总数</summary>
+        /// <remarks>English：Third, the total number of entries</remarks>
         public static int SdCount => SdCodeToName.Count;
 
         /// <summary>用地用海条目总数</summary>
+        /// <remarks>English：Total number of land and sea use articles</remarks>
         public static int YhCount => YhCodeToName.Count;
 
         /// <summary>三调→用地用海映射条目数</summary>
+        /// <remarks>English：3. Adjust the number of → land and sea use mapping items</remarks>
         public static int SdToYhCount => SdToYh.Count;
 
         // ───────────────────────────────────────────────────────────────────
@@ -402,6 +440,7 @@ namespace SpatialAgent.Knowledge.Data
         // Source: Third Survey to Land-Sea category mapping rules
         // For precise agricultural/construction/unused classification
         // ───────────────────────────────────────────────────────────────────
+        // 中文：三调三大类 SQL 筛选器。来源：三调到用地用海类别的映射规则，用于准确划分农用地、建设用地和未利用地
 
         private static readonly Dictionary<string, string> DefaultCategorySql = new()
         {
@@ -429,22 +468,27 @@ namespace SpatialAgent.Knowledge.Data
         // ───────────────────────────────────────────────────────────────────
 
         /// <summary>建设用地一级类代码（含混合用地HH）</summary>
+        /// <remarks>English：Construction Land Category I Code (including mixed land HH)</remarks>
         public static readonly List<string> ConstructionLandCodes = new()
             { "07", "08", "HH", "09", "10", "11", "12", "13", "14", "15", "16" };
 
         /// <summary>其他用地（非建设用地）一级类代码</summary>
+        /// <remarks>English：Other land use (non-construction land) first-class code</remarks>
         public static readonly List<string> OtherLandCodes = new()
             { "01", "02", "03", "04", "05", "06", "17", "18", "19", "20", "21", "22", "23", "24" };
 
         /// <summary>建设用地下属一级类（用于占比计算）</summary>
+        /// <remarks>English：Construction underground is classified as Grade I (used for proportion calculation)</remarks>
         public static readonly List<string> ConstructionSubCodes = new()
             { "07", "08", "HH", "09", "10", "11", "12", "13", "14", "15", "16", "建设用地小计" };
 
         /// <summary>判断是否为建设用地一级类</summary>
+        /// <remarks>English：Determine whether it is classified as Grade 1 construction land</remarks>
         public static bool IsConstructionLand(string level1Code)
             => ConstructionLandCodes.Contains(level1Code);
 
         /// <summary>判断是否为其他用地一级类</summary>
+        /// <remarks>English：Determine whether it is classified as other land use category I</remarks>
         public static bool IsOtherLand(string level1Code)
             => OtherLandCodes.Contains(level1Code);
 
@@ -453,6 +497,7 @@ namespace SpatialAgent.Knowledge.Data
         // Source: National Spatial Planning Database Specification 硬编码 + 数据库规范 表1
         // YSDM field values when creating new feature classes
         // ───────────────────────────────────────────────────────────────────
+        // 中文：YSDM 要素代码映射 来源：国家空间规划数据库规范 硬编码 + 数据库规范表1 创建新特征类时的YSDM字段值
 
         private static readonly Dictionary<string, string> DefaultYsdmCodes = new()
         {
@@ -478,6 +523,7 @@ namespace SpatialAgent.Knowledge.Data
         };
 
         /// <summary>根据图层名称获取 YSDM</summary>
+        /// <remarks>English：Obtain YSDM based on the layer name</remarks>
         public static string? GetYsdm(string layerName)
         {
             if (YsdmCodes.TryGetValue(layerName, out var code)) return code;
@@ -491,6 +537,7 @@ namespace SpatialAgent.Knowledge.Data
         // Heritage protection level + type codes
         // Source: National Spatial Planning Database Specification lines 1085-1096
         // ───────────────────────────────────────────────────────────────────
+        // 中文：遗产保护级别+类型代码 来源：国家空间规划数据库 规范线1085-1096
 
         public static readonly Dictionary<string, string> HeritageLevelCodes = new()
         {
@@ -517,6 +564,7 @@ namespace SpatialAgent.Knowledge.Data
         // Village type classification
         // Source: National Spatial Planning Database Specification lines 246-247
         // ───────────────────────────────────────────────────────────────────
+        // 中文：村庄类型分类来源：国家空间规划数据库 规范线246-247
 
         public static readonly List<string> VillageTypeKeywords = new()
             { "集聚", "提升", "中心", "转型", "融合", "城郊", "保护", "开发", "特色", "搬迁", "撤并", "衰退" };
@@ -525,6 +573,7 @@ namespace SpatialAgent.Knowledge.Data
             { "集聚提升中心", "转型融合城郊", "保护开发特色", "搬迁撤并衰退" };
 
         /// <summary>根据关键字匹配村庄类型</summary>
+        /// <remarks>English：Match village types based on keywords</remarks>
         public static string? MatchVillageType(string input)
         {
             foreach (var full in VillageTypeFullNames)
@@ -544,6 +593,7 @@ namespace SpatialAgent.Knowledge.Data
         // Administrative level keywords
         // Source: National Spatial Planning Database Specification lines 122-123
         // ───────────────────────────────────────────────────────────────────
+        // 中文：行政层级关键词 来源：国家空间规划数据库 规范行122-123
 
         public static readonly List<string> CityLevelWords = new()
             { "市", "县", "实验区", "区" };
@@ -555,6 +605,7 @@ namespace SpatialAgent.Knowledge.Data
         // Construction land mixed types (for development zone merging)
         // Source: National Spatial Planning Database Specification line 892
         // ───────────────────────────────────────────────────────────────────
+        // 中文：建设用地混合类型（用于开发区合并） 来源：国家空间规划数据库规范行892
 
         public static readonly List<string> ConstructionLandTypeNames = new()
         {

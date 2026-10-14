@@ -11,6 +11,7 @@
 //
 // The jieba custom dictionary (gis_dict.txt, 427 terms) is loaded at static
 // init so domain terminology like "三区三线" is segmented correctly.
+// 中文：TfidfEmbeddingService.cs — 本地TF-IDF+BM25嵌入服务。完全离线运行，没有任何外部依赖。专为GIS领域中文语义搜索设计。流水线：1. 分词化：jieba 字典分割（首选），或汉文的 N-gram（双gram + 单字母组）备用;英语词语分割。2. 权重：TF-IDF（术语频率×文档频率的反向）。3. 检索：奥卡比BM25排名。4. 向量：稀疏（词典）→稠密浮点[]，代表余弦。jieba 自定义词典（gis_dict.txt，427 个术语）以静态初始值加载，因此像“三区三线”这样的领域术语被正确分段。
 
 using System;
 using System.Collections.Generic;
@@ -25,9 +26,11 @@ namespace SpatialAgent.Knowledge
     /// <summary>
     /// Local TF-IDF + BM25 embedding service for offline knowledge-base search.
     /// </summary>
+    /// <remarks>中文：本地TF-IDF + BM25嵌入服务，用于离线知识库搜索。</remarks>
     public class TfidfEmbeddingService : IEmbeddingService
     {
         // ── jieba tokenizer (static init with GIS custom dictionary) ──
+        // 中文：jieba 分词器（静态初始化，含 GIS 自定义字典）
         private static readonly JiebaSegmenter? _jieba;
 
         static TfidfEmbeddingService()
@@ -53,20 +56,24 @@ namespace SpatialAgent.Knowledge
         }
 
         // ── BM25 hyperparameters ──
+        // 中文：BM25超参数
         private const double BM25_K1 = 1.5;
         private const double BM25_B = 0.75;
 
         // ── Vocabulary ──
-        private readonly Dictionary<string, int> _vocab = new();      // token → index
-        private readonly List<string> _indexToToken = new();           // index → token
-        private readonly Dictionary<int, int> _docFreq = new();        // index → document frequency
+        // 中文：词汇
+        private readonly Dictionary<string, int> _vocab = new();       // 词元 → 索引。 / Token → index.
+        private readonly List<string> _indexToToken = new();           // 索引 → 词元。 / Index → token.
+        private readonly Dictionary<int, int> _docFreq = new();        // 索引 → 文档频率。 / Index → document frequency.
         private int _docCount;
         private double _avgDocLength;
 
         // ── Document cache (doc string → term frequency map) ──
+        // 中文：文档缓存（文档字符串→术语频率映射）
         private readonly Dictionary<string, Dictionary<int, int>> _docTermFreqs = new();
 
         // ── Stop words (Chinese + English) ──
+        // 中文：停用词（中文 + 英文）
         private static readonly HashSet<string> StopTokens = new()
         {
             "的", "了", "在", "是", "我", "有", "和", "就", "不", "人", "都", "一", "一个",
@@ -83,12 +90,14 @@ namespace SpatialAgent.Knowledge
         };
 
         // ── IEmbeddingService properties ──
+        // 中文：IEmbeddingService 属性
         public string Name => "TF-IDF (Local)";
         public bool IsLocal => true;
         public int Dimension => _vocab.Count;
         public bool IsReady => _vocab.Count > 0 && _docCount > 0;
 
         // ── Vocabulary building ──
+        // 中文：词汇积累
         public Task BuildVocabularyAsync(IEnumerable<string> corpus)
         {
             _vocab.Clear();
@@ -135,6 +144,7 @@ namespace SpatialAgent.Knowledge
         }
 
         // ── Embedding (text → dense float vector) ──
+        // 中文：嵌入（文本→稠密浮点矢量）
         public Task<float[]> EmbedAsync(string text)
         {
             if (!IsReady || string.IsNullOrWhiteSpace(text))
@@ -152,6 +162,7 @@ namespace SpatialAgent.Knowledge
             int docLen = tokens.Count;
 
             // TF-IDF vector
+            // 中文：TF-IDF载体
             var vector = new float[Dimension];
             foreach (var (idx, tf) in termFreq)
             {
@@ -162,6 +173,7 @@ namespace SpatialAgent.Knowledge
             }
 
             // L2 normalization
+            // 中文：L2归一化
             float norm = 0;
             for (int i = 0; i < vector.Length; i++) norm += vector[i] * vector[i];
             norm = (float)Math.Sqrt(norm);
@@ -178,10 +190,12 @@ namespace SpatialAgent.Knowledge
         }
 
         // ── BM25 search (direct term-frequency ranking, no vector needed) ──
+        // 中文：BM25搜索（直接词频排序，无需向量）
         /// <summary>
         /// Rank candidate documents using Okapi BM25.
         /// More accurate than TF-IDF vector + cosine similarity for text search.
         /// </summary>
+        /// <remarks>中文：使用 Okapi BM25 对候选文档排序；比 TF-IDF 向量加余弦相似度更准确。</remarks>
         public List<ScoredDocument> Search(IEnumerable<string> candidates, string query, int topK = 5)
         {
             if (!IsReady || string.IsNullOrWhiteSpace(query))
@@ -221,10 +235,12 @@ namespace SpatialAgent.Knowledge
         }
 
         // ── Fallback: keyword overlap search ──
+        // 中文：备选：关键词重叠搜索
         /// <summary>
         /// Coarse keyword match used when BM25 has no vocabulary coverage for the query.
         /// Longer matching tokens receive a length bonus (domain terms tend to be multi-character).
         /// </summary>
+        /// <remarks>中文：粗略关键词匹配，适用于BM25对该查询没有词汇覆盖。匹配时间较长的标记会获得长度加成（域名术语通常是多字符）。</remarks>
         public List<ScoredDocument> KeywordSearch(IEnumerable<string> candidates, string query, int topK = 5)
         {
             var qTokens = Tokenize(query).Where(t => !StopTokens.Contains(t)).ToHashSet();
@@ -246,6 +262,7 @@ namespace SpatialAgent.Knowledge
         }
 
         // ── Tokenization (Chinese-friendly: jieba → character N-gram fallback) ──
+        // 中文：分词（中文优先：jieba，字符 N-gram 作为回退）
         /// <summary>
         /// Tokenize Chinese text. Uses jieba dictionary segmentation when available,
         /// falls back to character bigram + unigram for pure Chinese segments.
@@ -253,12 +270,14 @@ namespace SpatialAgent.Knowledge
         /// Example: "国土空间规划" → ["国土", "空间", "规划"] (jieba) or
         /// ["国土", "土空", "空间", "间规", "规划", "国", "土", "空", "间", "规", "划"] (N-gram).
         /// </summary>
+        /// <remarks>中文：将中文文本标记化。在有字典时使用字典分割，纯中文段则回退为双字母组+单字母组。英语和数字部分被分割成空白区域。例如：“国土空间规划” → [“国土”， “空间”， “规划”]（jieba）或 [“国土”， “土空”， “空间”， “间规”， “规划”， “国”， “土”， “空”， “间”， “规”， “划”]（N-gram）。</remarks>
         public static List<string> Tokenize(string text)
         {
             var tokens = new List<string>();
             if (string.IsNullOrWhiteSpace(text)) return tokens;
 
             // jieba dictionary-based segmentation (preferred for Chinese).
+            // 中文：基于字典的分割（中文偏好）。
             if (_jieba != null)
             {
                 var segments = _jieba.Cut(text, cutAll: false);
@@ -273,6 +292,7 @@ namespace SpatialAgent.Knowledge
             }
 
             // Fallback: character N-gram for Chinese, word splitting for English.
+            // 中文：备选：中文用N-gram字符，英语用单词拆分。
             var parts = Regex.Split(text, @"[^一-鿿\w]+");
 
             foreach (var seg in parts)
@@ -282,6 +302,7 @@ namespace SpatialAgent.Knowledge
                 string cleaned = seg.Trim().ToLowerInvariant();
 
                 // Pure Chinese segment → bigram + unigram
+                // 中文：纯中文段→双字母组+单字母组
                 if (Regex.IsMatch(cleaned, @"^[一-鿿]+$"))
                 {
                     for (int i = 0; i < cleaned.Length - 1; i++)
@@ -301,6 +322,7 @@ namespace SpatialAgent.Knowledge
                 else
                 {
                     // English/numeric → split on whitespace
+                    // 中文：英文/数字→在空白处分割
                     var words = Regex.Split(cleaned, @"\s+");
                     foreach (var word in words)
                     {
@@ -316,6 +338,7 @@ namespace SpatialAgent.Knowledge
         }
 
         // ── Helpers ──
+        // 中文：助手
 
         private int GetOrAddToken(string token)
         {
@@ -329,18 +352,22 @@ namespace SpatialAgent.Knowledge
         }
 
         /// <summary>Vocabulary size.</summary>
+        /// <remarks>中文：词汇量。</remarks>
         public int VocabSize => _vocab.Count;
 
         /// <summary>Number of indexed documents.</summary>
+        /// <remarks>中文：索引文档数量。</remarks>
         public int DocumentCount => _docCount;
 
         /// <summary>One-line diagnostics summary.</summary>
+        /// <remarks>中文：一行诊断总结。</remarks>
         public string Stats => $"vocab: {VocabSize} tokens | docs: {DocumentCount} | avg len: {_avgDocLength:F1}";
     }
 
     /// <summary>
     /// A document with a relevance score (used by local search methods).
     /// </summary>
+    /// <remarks>中文：一个带有相关性评分的文档（由局部搜索方法使用）。</remarks>
     public class ScoredDocument
     {
         public string Content { get; set; } = "";

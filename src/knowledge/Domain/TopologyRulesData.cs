@@ -21,6 +21,7 @@ using Newtonsoft.Json.Linq;
 //
 // GP tools used: Intersect, Clip, SymDiff, Erase, CheckGeometry
 // ────────────────────────────────────────────────────────────────
+// 中文：TopologyRulesData.cs — 空间规划拓扑验证规则。构建时间资产：作为生成输入被工具/工具/extract_domain_data.py消耗。没有运行时调用者。保留用于域引用和未来的拓扑探针集成。来源：国家空间规划数据库规范（国土空间规划数据库规范） 三类规则：多边形自检——无重叠、无空隙、必须覆盖 多边形自检——无重叠、无交叉、无悬挂 跨层规则——三线互斥、包含、边界一致性、规划与当前GP工具的比较：交集、剪辑、SymDiff、擦除、检查几何
 namespace SpatialAgent.Knowledge.Data
 {
     public static class TopologyRulesData
@@ -52,39 +53,42 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         // ── Default inline data ──
+        // 中文：默认的内联数据
 
         public enum RuleType
         {
-            MustNotOverlap,          // polygon/line: must not overlap
-            MustNotHaveGaps,         // polygon: must not have gaps
-            MustNotIntersect,        // line: must not intersect
-            MustNotHaveDangles,      // line: must not have dangles
-            MustNotHavePseudoNodes,  // line: must not have pseudo-nodes
-            MustBeCoveredBy,         // polygon A must be covered by polygon B
-            MustNotOverlapWith,      // polygon A must not overlap polygon B
-            MustBeInside,            // polygon A must be inside polygon B
-            BoundaryMustBeCoveredBy  // line boundary must be covered by polygon boundary
+            MustNotOverlap,          // 面/线：不得重叠。 / Polygon/line: must not overlap.
+            MustNotHaveGaps,         // 面：不得有空隙。 / Polygon: must not have gaps.
+            MustNotIntersect,        // 线：不得相交。 / Line: must not intersect.
+            MustNotHaveDangles,      // 线：不得有悬挂点。 / Line: must not have dangles.
+            MustNotHavePseudoNodes,  // 线：不得有伪节点。 / Line: must not have pseudo-nodes.
+            MustBeCoveredBy,         // 面 A 必须被面 B 覆盖。 / Polygon A must be covered by polygon B.
+            MustNotOverlapWith,      // 面 A 不得与面 B 重叠。 / Polygon A must not overlap polygon B.
+            MustBeInside,            // 面 A 必须位于面 B 内。 / Polygon A must be inside polygon B.
+            BoundaryMustBeCoveredBy  // 线边界必须被面边界覆盖。 / Line boundary must be covered by polygon boundary.
         }
 
         // ───────────────────────────────────────────────────────────────────
         // Topology rule definitions
         // ───────────────────────────────────────────────────────────────────
+        // 中文：拓扑规则定义
         public class TopologyRule
         {
             public string Id { get; set; } = "";
             public string Name { get; set; } = "";
             public RuleType Type { get; set; }
-            public string SourceDescription { get; set; } = "";     // source layer description
-            public string? TargetDescription { get; set; }          // target layer description (cross-layer rules only)
-            public string ErrorDescription { get; set; } = "";      // error description on violation
-            public string GpCheck { get; set; } = "";               // GP check tool
-            public string GpFix { get; set; } = "";                 // GP fix tool
-            public string Severity { get; set; } = "error";         // error / warning
+            public string SourceDescription { get; set; } = "";     // 源图层描述。 / Source-layer description.
+            public string? TargetDescription { get; set; }          // 目标图层描述（仅跨图层规则）。 / Target-layer description (cross-layer rules only).
+            public string ErrorDescription { get; set; } = "";      // 违规时的错误描述。 / Error description on violation.
+            public string GpCheck { get; set; } = "";               // GP 检查工具。 / GP check tool.
+            public string GpFix { get; set; } = "";                 // GP 修复工具。 / GP fix tool.
+            public string Severity { get; set; } = "error";         // 错误/警告。 / Error/warning.
         }
 
         // ───────────────────────────────────────────────────────────────────
         // Polygon self-check rules
         // ───────────────────────────────────────────────────────────────────
+        // 中文：多边形自检规则
         private static readonly List<TopologyRule> DefaultPolygonSelfRules = new()
         {
             new TopologyRule
@@ -112,6 +116,7 @@ namespace SpatialAgent.Knowledge.Data
         // ───────────────────────────────────────────────────────────────────
         // Polyline self-check rules
         // ───────────────────────────────────────────────────────────────────
+        // 中文：多线自检规则
         private static readonly List<TopologyRule> DefaultPolylineSelfRules = new()
         {
             new TopologyRule
@@ -159,9 +164,11 @@ namespace SpatialAgent.Knowledge.Data
         // ───────────────────────────────────────────────────────────────────
         // Cross-layer rules (core spatial planning constraints)
         // ───────────────────────────────────────────────────────────────────
+        // 中文：跨层规则（核心空间规划约束）
         private static readonly List<TopologyRule> DefaultCrossLayerRules = new()
         {
             // -- Three-lines mutual exclusion --
+            // 中文：——三线互斥——
             new TopologyRule
             {
                 Id = "CROSS-01", Name = "生态红线与永久基本农田不能重叠",
@@ -197,6 +204,7 @@ namespace SpatialAgent.Knowledge.Data
             },
 
             // -- Containment constraints --
+            // 中文：—— 约束条件 ——
             new TopologyRule
             {
                 Id = "CROSS-04", Name = "建设用地必须在城镇开发边界内",
@@ -221,6 +229,7 @@ namespace SpatialAgent.Knowledge.Data
             },
 
             // -- Boundary consistency --
+            // 中文：——边界一致性——
             new TopologyRule
             {
                 Id = "CROSS-06", Name = "行政区边界不能裁切图斑",
@@ -234,6 +243,7 @@ namespace SpatialAgent.Knowledge.Data
             },
 
             // -- Current vs. planning --
+            // 中文：——当前与规划——
             new TopologyRule
             {
                 Id = "CROSS-07", Name = "规划用地与现状用地变更必须有迹可循",
@@ -247,6 +257,7 @@ namespace SpatialAgent.Knowledge.Data
             },
 
             // -- Central urban area rules --
+            // 中文：—— 中心城市区规则 ——
             new TopologyRule
             {
                 Id = "CROSS-08", Name = "中心城区城市绿线不能与建设用地重叠",
@@ -274,6 +285,7 @@ namespace SpatialAgent.Knowledge.Data
         // ───────────────────────────────────────────────────────────────────
         // Get rules by geometry type
         // ───────────────────────────────────────────────────────────────────
+        // 中文：按几何类型获取规则
         public static List<TopologyRule> GetRulesByGeometry(string geometryType)
         {
             var rules = new List<TopologyRule>();
@@ -287,6 +299,7 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>获取所有自检规则</summary>
+        /// <remarks>English：Get all self-check rules</remarks>
         public static List<TopologyRule> GetAllSelfRules()
         {
             var rules = new List<TopologyRule>();
@@ -296,9 +309,11 @@ namespace SpatialAgent.Knowledge.Data
         }
 
         /// <summary>获取所有图层间规则</summary>
+        /// <remarks>English：Get all rules between layers</remarks>
         public static List<TopologyRule> GetAllCrossLayerRules() => CrossLayerRules;
 
         /// <summary>三线互检规则（最常用的3条）</summary>
+        /// <remarks>English：Three-line mutual inspection rules (the three most commonly used)</remarks>
         public static List<TopologyRule> GetThreeLinesRules()
             => CrossLayerRules.FindAll(r => r.Id is "CROSS-01" or "CROSS-02" or "CROSS-03");
 

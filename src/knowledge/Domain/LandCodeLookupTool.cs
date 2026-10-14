@@ -19,6 +19,7 @@ using SpatialAgent.Runtime.Contracts;
 // 真实性约束：查不到的项如实列入 unmatched，绝不猜测；同名多码全部
 // 返回为候选，由模型结合上下文选择并向用户说明。
 // ────────────────────────────────────────────────────────────────
+// English：LandCodeLookupTool.cs — Land use classification standard reference query tool (cc_lookup_land_code). Exposing the official LandClassificationData comparison table (2023 edition of land use sea + three land use classes + three adjustments →land use sea mapping) as a model callable tool. Previously, this data was only a build-time asset. When the model performed the ydyhmc/ydyhbm conversion, it couldn't get authoritative mapping, so it could only 'make up from memory' or guess from other layers—the field clearing incident on 2026-07-18 was precisely due to this. Authenticity constraint: Items that cannot be found are truthfully listed as unmatched and never guessed; All multi-code codes with the same name are returned as candidates, selected by the model based on context and explained to the user.
 namespace SpatialAgent.Knowledge
 {
     public class LandCodeLookupTool : ITool
@@ -113,6 +114,7 @@ namespace SpatialAgent.Knowledge
                     }
 
                     // name → code：精确命中优先（同名多码全部返回）
+                    // English：name → code: Accurate hit priority (all duplicate codes are returned)
                     var exact = table.Where(kv => kv.Value == token).ToList();
                     if (exact.Count == 1)
                     {
@@ -131,6 +133,7 @@ namespace SpatialAgent.Knowledge
                     }
 
                     // 模糊：名称包含查询词或查询词包含名称
+                    // English：Fuzzy: Name contains query terms or query words contain names
                     var fuzzy = table
                         .Where(kv => kv.Value.Contains(token, StringComparison.Ordinal)
                                   || token.Contains(kv.Value, StringComparison.Ordinal))
@@ -177,6 +180,7 @@ namespace SpatialAgent.Knowledge
         private static object BuildMatch(string system, string query, string code, string name)
         {
             // 三调代码附带用地用海映射建议（一对多时全部列出，由模型按语境判断）
+            // English：Third-level code includes land use and sea use mapping suggestions (all listed in one-to-many scenarios, judged by the model based on context)
             if (system == "sd" &&
                 LandClassificationData.SdToYh.TryGetValue(code, out string[]? yhCodes) &&
                 yhCodes is { Length: > 0 })

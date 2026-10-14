@@ -5,6 +5,7 @@
 //   3. API-only (cosine similarity on embedding vectors).
 // Chunks are deduplicated by stable Id, not Content text, to avoid silent
 // overwrites when GIS standards documents contain repeated boilerplate.
+// 中文：KnowledgeRetriever.cs — 带有混合检索功能的RAG知识索引。从markdown文档构建区块索引，然后通过以下方式提供查询：1. 混合模式（BM25 + API 嵌入 + RRF 融合），或 2.仅限本地（TF-IDF/BM25），或3.仅API的（嵌入矢量的余弦相似性）。区块通过稳定ID去重，而非内容文本，以避免在GIS标准文档中出现重复样板时的无声覆盖。
 
 using System;
 using System.Collections.Generic;
@@ -106,6 +107,7 @@ namespace SpatialAgent.Knowledge
             if (_hybrid != null && _hybrid.IsLocalReady && _hybrid.IsApiReady)
             {
                 // Hybrid: dual-path retrieval + RRF fusion
+                // 中文：混合模式：双路径检索 + RRF 融合
                 return await HybridSearchAsync(query, topK);
             }
             if (_embedding.IsLocal && _embedding is TfidfEmbeddingService tfidf)
@@ -133,19 +135,23 @@ namespace SpatialAgent.Knowledge
             // all of them by mapping each chunk index to its Id, then using the index
             // to resolve scored results. This avoids silent overwrites that happen with
             // content-as-key dictionaries.
+            // 中文：建立一个内容→ID查询。当多个区块共享相同内容（在GIS标准文档中常见重复的样板时），我们通过将每个区块索引映射到其ID，然后用索引解析评分结果来保留所有区块。这避免了内容即键词典中发生的静默覆盖。
             var contents = _chunks.Select(c => c.Content).ToList();
 
             // Path 1: local BM25
+            // 中文：路径1：本地BM25
             var localResults = _hybrid!.LocalSearch(contents, query, topK * 2);
             for (int i = 0; i < localResults.Count; i++)
             {
                 // Resolve via chunk index (LocalSearch preserves input order)
+                // 中文：通过区块索引解析（LocalSearch 保留输入顺序）
                 int idx = contents.IndexOf(localResults[i].Content);
                 string key = idx >= 0 ? _chunks[idx].Id : localResults[i].Content;
                 rrfScores[key] = rrfScores.GetValueOrDefault(key, 0) + 1.0 / (RRF_K + i + 1);
             }
 
             // Path 2: API embedding
+            // 中文：路径2：API嵌入
             try
             {
                 float[]? qEmb = await _embedding.EmbedAsync(query);
@@ -208,6 +214,7 @@ namespace SpatialAgent.Knowledge
             foreach (var sd in scored)
             {
                 // Find first unconsumed chunk with matching content (handles duplicates).
+                // 中文：找到第一个未被消耗且内容匹配的块（handles，重复的）。
                 int idx = contents.FindIndex(c => c == sd.Content);
                 while (idx >= 0 && consumed.Contains(idx))
                     idx = contents.FindIndex(idx + 1, c => c == sd.Content);
@@ -230,6 +237,7 @@ namespace SpatialAgent.Knowledge
             foreach (var line in lines)
             {
                 // Split on H1, H2, H3 headings (H4+ treated as body)
+                // 中文：按H1、H2、H3方向拆分（H4+视为正体）
                 bool isH1 = line.StartsWith("# ") && !line.StartsWith("## ");
                 bool isH2 = line.StartsWith("## ") && !line.StartsWith("### ");
                 bool isH3 = line.StartsWith("### ") && !line.StartsWith("#### ");

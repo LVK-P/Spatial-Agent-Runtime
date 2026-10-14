@@ -2,6 +2,7 @@
 // Delegates to DeepSeekProvider.GetEmbeddingAsync(). EmbedBatchAsync
 // fans out single-text calls. BuildVocabularyAsync is a no-op — the API
 // model is pre-trained and does not need corpus indexing.
+// 中文：ApiEmbeddingService.cs — 通过DeepSeek API支持的LLM嵌入。delegates to deepSeekProvider.GetEmbeddingAsync（）。EmbedBatchAsync 会扇出单文本调用。BuildVocabularyAsync 是无操作的——API 模型是预训练的，不需要语料库索引。
 
 using System.Collections.Generic;
 using System.Linq;

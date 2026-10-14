@@ -3,6 +3,7 @@
 // category + parameter metadata), then ranks tools against a user query by cosine
 // distance. Used as a fallback/second-pass when keyword-based ToolIndex matching
 // produces too few or too many results.
+// 中文：ToolSemanticScorer.cs — 通过嵌入余弦相似度进行L2语义工具排名。为所有注册工具描述符（名称 + 描述 + 类别 + 参数元数据）构建嵌入向量，然后根据用户查询按余弦距离对工具进行排名。当基于关键词的 ToolIndex 匹配结果过少或过多时，作为备份/第二遍。
 
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ namespace SpatialAgent.Knowledge
     /// <summary>
     /// Local semantic scorer for tool retrieval using the existing embedding service.
     /// </summary>
+    /// <remarks>中文：利用现有嵌入服务进行工具检索的本地语义评分器。</remarks>
     public class ToolSemanticScorer : IToolSemanticScorer
     {
         private readonly IEmbeddingService _embedding;

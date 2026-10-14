@@ -15,6 +15,7 @@ using System.Collections.Generic;
 //
 // GP 工具链：analysis.Statistics + management.CalculateField
 // ────────────────────────────────────────────────────────────────
+// English：ReportTemplateData.cs — Planning Report Template Definition BUILD-TIME ASSET: consumed by tools/extract_domain_data.py as generation input. No runtime callers. Keep for domain reference. Six standard report templates for spatial planning: 1. Land use structure table — summarize area by land category + proportion 2. Planning Land Use Adjustment Table — Current Situation vs. Planning Comparison 3. Summary Table of Three Major Area Categories — Agricultural Land / Construction Land / Unused Land 4. Construction Land Balance Table — Various Indicators of Construction Land 5. Farmland Occupation and Compensation Balance Table — Tracking Cultivated Land Occupation and Supplementation 6. Land Use Indicator Accounting Table — GP Toolchain for Determining Planning Indicator Compliance: analysis. Statistics + management. CalculateField
 namespace SpatialAgent.Knowledge.Data
 {
     public static class ReportTemplateData
@@ -22,30 +23,32 @@ namespace SpatialAgent.Knowledge.Data
         // ───────────────────────────────────────────────────────────────────
         // Report column definitions
         // ───────────────────────────────────────────────────────────────────
+        // 中文：报告列定义
         public class ReportColumn
         {
-            public string FieldName { get; set; } = "";       // field name
-            public string Alias { get; set; } = "";           // column header
-            public string Type { get; set; } = "string";      // data type
-            public string? Formula { get; set; }              // CalculateField expression
-            public string? Source { get; set; }               // data source
+            public string FieldName { get; set; } = "";       // 字段名。 / Field name.
+            public string Alias { get; set; } = "";           // 列标题。 / Column header.
+            public string Type { get; set; } = "string";      // 数据类型。 / Data type.
+            public string? Formula { get; set; }              // CalculateField 表达式。 / CalculateField expression.
+            public string? Source { get; set; }               // 数据源。 / Data source.
         }
 
         public class ReportTemplate
         {
             public string Name { get; set; } = "";
             public string Description { get; set; } = "";
-            public string TriggerKeyword { get; set; } = "";  // comma-separated keywords for matching
+            public string TriggerKeyword { get; set; } = "";  // 用于匹配的逗号分隔关键词。 / Comma-separated matching keywords.
             public List<ReportColumn> Columns { get; set; } = new();
-            public string GroupByField { get; set; } = "";    // field to group statistics by
-            public string AreaField { get; set; } = "JSMJ";   // area field name
-            public string? FilterSql { get; set; }            // optional SQL WHERE clause
+            public string GroupByField { get; set; } = "";    // 统计分组字段。 / Field used to group statistics.
+            public string AreaField { get; set; } = "JSMJ";   // 面积字段名。 / Area-field name.
+            public string? FilterSql { get; set; }            // 可选的 SQL WHERE 子句。 / Optional SQL WHERE clause.
         }
 
         // ───────────────────────────────────────────────────────────────────
         // Template 1: Land use structure (area + proportion by category)
         // Purpose: aggregate area and proportion by land use type
         // ───────────────────────────────────────────────────────────────────
+        // 中文：模板1：土地利用结构（面积+类别比例）目的：按土地利用类型划分的总面积和比例
         public static readonly ReportTemplate LandUseStructure = new()
         {
             Name = "用地结构表",
@@ -63,13 +66,14 @@ namespace SpatialAgent.Knowledge.Data
                 new() { FieldName = "占建设用地比例", Alias = "占建设用地比例(%)", Type = "float", Formula = "!SUM_JSMJ! / <建设用地总面积> * 100" },
                 new() { FieldName = "人均面积", Alias = "人均面积(㎡/人)", Type = "float", Formula = "!JSMJ! / <规划人口>", Source = "仅计算建设用地时有效" },
             },
-            FilterSql = null  // all records
+            FilterSql = null  // 所有记录。 / All records.
         };
 
         // ───────────────────────────────────────────────────────────────────
         // Template 2: Land use adjustment (current vs. planned)
         // Purpose: compare base-year current vs. target-year planned land change
         // ───────────────────────────────────────────────────────────────────
+        // 中文：模板2：土地利用调整（当前与计划） 目的：比较基准年当前与目标年度规划土地变更
         public static readonly ReportTemplate LandUseAdjustment = new()
         {
             Name = "规划用地调整表",
@@ -95,6 +99,7 @@ namespace SpatialAgent.Knowledge.Data
         // Template 3: Three-category area summary
         // Purpose: aggregate by agricultural/construction/unused categories
         // ───────────────────────────────────────────────────────────────────
+        // 中文：模板3：三类别区域总结 目的：按农业/建筑/未使用类别汇总
         public static readonly ReportTemplate ThreeCategorySummary = new()
         {
             Name = "三大类面积汇总表",
@@ -116,6 +121,7 @@ namespace SpatialAgent.Knowledge.Data
         // Template 4: Construction land balance
         // Purpose: detailed construction land breakdown with per-capita indicators
         // ───────────────────────────────────────────────────────────────────
+        // 中文：模板4：建筑用地平衡目的：详细的建筑用地分布及人均指标
         public static readonly ReportTemplate ConstructionLandBalance = new()
         {
             Name = "建设用地平衡表",
@@ -142,6 +148,7 @@ namespace SpatialAgent.Knowledge.Data
         // Template 5: Farmland requisition-compensation balance
         // Purpose: track farmland occupation and replenishment
         // ───────────────────────────────────────────────────────────────────
+        // 中文：模板5：农田征用-补偿平衡目的：追踪农田占用和补充情况
         public static readonly ReportTemplate FarmlandBalance = new()
         {
             Name = "耕地占补平衡表",
@@ -164,6 +171,7 @@ namespace SpatialAgent.Knowledge.Data
         // Template 6: Land use indicator audit
         // Purpose: verify planning indicators against targets
         // ───────────────────────────────────────────────────────────────────
+        // 中文：模板6：土地利用指标审计 目的：核实规划指标是否符合目标
         public static readonly ReportTemplate IndicatorAudit = new()
         {
             Name = "用地指标核算表",
@@ -186,6 +194,7 @@ namespace SpatialAgent.Knowledge.Data
         // ───────────────────────────────────────────────────────────────────
         // Template registry
         // ───────────────────────────────────────────────────────────────────
+        // 中文：模板注册表
         public static readonly List<ReportTemplate> AllTemplates = new()
         {
             LandUseStructure,
@@ -197,6 +206,7 @@ namespace SpatialAgent.Knowledge.Data
         };
 
         /// <summary>根据关键词匹配报表模板</summary>
+        /// <remarks>English：Match report templates based on keywords</remarks>
         public static ReportTemplate? MatchTemplate(string userInput)
         {
             foreach (var template in AllTemplates)
