@@ -13,9 +13,11 @@ namespace SpatialAgent.Runtime.Tests
     /// All LLM-dependent logic is excluded; these test the deterministic
     /// execution layer in isolation (2026 Layer 1 — code-based unit tests).
     /// </summary>
+    /// <remarks>中文：调度器单元测试——安全门、备份执行（F2回归）、重试策略、超时控制。排除所有依赖LLM的逻辑;这些测试是对确定性执行层进行孤立测试（2026年第一层——基于代码的单元测试）。</remarks>
     public class SchedulerTests
     {
         // ── Stub tool infrastructure ──
+        // 中文：存根工具基础设施
 
         private sealed class StubDescriptor : IToolDescriptor
         {
@@ -92,11 +94,13 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // F2 regression: Destructive + workspace enforcement
         // ════════════════════════════════════════════════════════════════
+        // 中文：F2 regression： Destructive + workspace enforcement
 
         [Fact]
         public async Task Destructive_without_workspace_is_blocked()
         {
             // F2 fix (2026-07-20): workspace == null for Destructive → Blocked
+            // 中文：F2修复（2026-07-20）：workspace == null，因破坏性→被阻挡
             var registry = MakeRegistry("management_DeleteField", ToolAnnotation.Destructive,
                 new ToolResult { ToolName = "management_DeleteField", Success = true });
             var safety = Substitute.For<ISafetyGate>();
@@ -107,6 +111,7 @@ namespace SpatialAgent.Runtime.Tests
             var scheduler = new Scheduler(registry, eventBus: null, validators: null, safety: safety);
             scheduler.CurrentPermissionLevel = AgentPermissionLevel.FullAccess;
             // workspace NOT set → should block
+            // 中文：工作区未设置→应该被封锁
 
             var results = await scheduler.RunAsync(SingleStepPlan("management_DeleteField"));
 
@@ -191,6 +196,7 @@ namespace SpatialAgent.Runtime.Tests
 
             var workspace = Substitute.For<IWorkspaceService>();
             // Backup returns null → failure
+            // 中文：备份返回空 → 失败
             workspace.BackupAsync(Arg.Any<string>(), Arg.Any<string>()).Returns((string?)null);
 
             var scheduler = new Scheduler(registry, eventBus: null, validators: null, safety: safety);
@@ -221,6 +227,7 @@ namespace SpatialAgent.Runtime.Tests
             scheduler.SetWorkspace(workspace);
 
             // No in_features or any recognizable input → backup target unresolvable
+            // 中文：没有in_features或任何可识别的输入→备份目标无法解决
             var results = await scheduler.RunAsync(SingleStepPlan("management_DeleteField",
                 new Dictionary<string, object?> { ["some_unknown_param"] = 42 }));
 
@@ -246,18 +253,21 @@ namespace SpatialAgent.Runtime.Tests
 
             // Add where_clause to prevent the new batch-confirmation check from
             // upgrading this Modify tool to AwaitingApproval.
+            // 中文：添加where_clause以防止新的批次确认检查将此修改工具升级为等待批准。
             var results = await scheduler.RunAsync(SingleStepPlan("management_CalculateField",
                 new Dictionary<string, object?> { ["where_clause"] = "OBJECTID = 1" }));
 
             results.Should().HaveCount(1);
             results[0].Status.Should().Be(StepResultStatus.Completed);
             // Modify tools should NOT trigger backup
+            // 中文：修改工具不应该触发备份
             await workspace.DidNotReceive().BackupAsync(Arg.Any<string>(), Arg.Any<string>());
         }
 
         // ════════════════════════════════════════════════════════════════
         // Retry policy
         // ════════════════════════════════════════════════════════════════
+        // 中文：重试政策
 
         [Fact]
         public async Task ReadOnly_tool_retries_on_failure()
@@ -308,6 +318,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Safety gate decisions
         // ════════════════════════════════════════════════════════════════
+        // 中文：安全门决策
 
         [Fact]
         public async Task RequireApproval_returns_awaiting_approval_before_execution()
@@ -333,6 +344,7 @@ namespace SpatialAgent.Runtime.Tests
             results[0].Status.Should().Be(StepResultStatus.AwaitingApproval);
             results[0].ApprovalReason.Should().Contain("需用户确认删除操作");
             // Tool should NOT have been executed
+            // 中文：工具本不该被执行
             results[0].ToolResult.Should().BeNull();
         }
 
@@ -365,6 +377,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Timeout control
         // ════════════════════════════════════════════════════════════════
+        // 中文：超时控制
 
         [Fact]
         public async Task Tool_timeout_returns_failed_with_timeout_error()
@@ -375,6 +388,7 @@ namespace SpatialAgent.Runtime.Tests
                 new LambdaExecutor(async (call, ct) =>
                 {
                     // Simulate a tool that respects cancellation
+                    // 中文：模拟一个尊重消去的工具
                     await Task.Delay(Timeout.Infinite, ct);
                     return new ToolResult { ToolName = "analysis_Statistics", Success = true };
                 }));
@@ -386,6 +400,7 @@ namespace SpatialAgent.Runtime.Tests
             var scheduler = new Scheduler(registry, eventBus: null, validators: null, safety: safety);
             scheduler.CurrentPermissionLevel = AgentPermissionLevel.FullAccess;
             // Override the default 60s timeout to 50ms for test
+            // 中文：测试时将默认的60秒超时改为50毫秒
             scheduler.SetTimeoutPolicy(new ToolExecutionTimeoutPolicy
             {
                 ReadOnlyTimeout = TimeSpan.FromMilliseconds(50)
@@ -405,11 +420,13 @@ namespace SpatialAgent.Runtime.Tests
         // SafetyGate 用原始名称 → Destructive（修复后），但需要确认解析后
         // 名称不会导致风险降级。
         // ════════════════════════════════════════════════════════════════
+        // English：P0-3 Enhancement: ShortName Rollback Risk Escalation Scenario: LLM calls "conversion_Erase" (fabricated), ToolNameResolver parses "management_Erase" (real Destructive tool) through shortName regression. SafetyGate uses the original name → Destructive (after fix), but it is necessary to confirm that the parsed name will not cause risk degradation.
 
         [Fact]
         public async Task Shortname_fallback_triggers_risk_upgrade_event()
         {
             // 注册一个以 "Erase" 结尾的工具——这是 ToolNameResolver shortName 回退的目标
+            // English：Register a tool ending with "Erase"—this is the target of the ToolNameResolver shortName rollback
             var registry = new ToolRegistry();
             registry.Register(
                 new StubDescriptor { Name = "management_Erase", Annotation = ToolAnnotation.Destructive },
@@ -425,9 +442,11 @@ namespace SpatialAgent.Runtime.Tests
             var eventBus = Substitute.For<IEventBus>();
             var safety = Substitute.For<ISafetyGate>();
             // LLM 原始名称 "conversion_Erase" — 不在 SafetyGate 中 → Destructive（P0-3 修复后）
+            // English：LLM original name "conversion_Erase" — not in SafetyGate → Structural (after P0-3 fix)
             safety.Classify("conversion_Erase").Returns(ToolRiskLevel.Destructive);
             // 但解析后的 "management_Erase" 也是 Destructive — 这里风险等级相同
             // 真正的升级场景是：原始=Modify, 解析后=Destructive
+            // English：But the parsed "management_Erase" is also Destructive — the risk level is the same here. The real upgrade scenario is: original = Modify, parse = Destructive
             safety.Classify("management_Erase").Returns(ToolRiskLevel.Destructive);
             safety.Evaluate(Arg.Any<string>(), Arg.Any<AgentPermissionLevel>())
                 .Returns(ci => new SafetyDecision
@@ -440,6 +459,7 @@ namespace SpatialAgent.Runtime.Tests
             var scheduler = new Scheduler(registry, eventBus, validators: null, safety: safety);
             scheduler.CurrentPermissionLevel = AgentPermissionLevel.FullAccess;
             // workspace 必须设置——否则 Destructive 操作被 block（F2 修复）
+            // English：Workspace must be set — otherwise the Destructive operation will be blocked (F2 fix)
             var workspace = Substitute.For<IWorkspaceService>();
             workspace.BackupAsync(Arg.Any<string>(), Arg.Any<string>())
                 .Returns(Task.FromResult<string?>("G:\\backup\\test.gdb"));
@@ -471,10 +491,12 @@ namespace SpatialAgent.Runtime.Tests
 
             results.Should().HaveCount(1);
             // 工具应该成功执行（management_Erase 存在且 Success=true）
+            // English：The tool should execute successfully (management_Erase exists and Success=true)
             results[0].ToolName.Should().Be("conversion_Erase");
             results[0].Status.Should().Be(StepResultStatus.Completed,
                 "原始名称被解析到 management_Erase 并成功执行");
             // 验证 eventBus 收到了 tool.started 和 tool.completed
+            // 中文：验证 eventBus 收到了 tool.started 和 tool.completed
             eventBus.Received().Publish(Arg.Is<AgentEvent>(e =>
                 e.EventType == "tool.started"));
         }
@@ -483,6 +505,7 @@ namespace SpatialAgent.Runtime.Tests
         public async Task Risk_upgrade_on_resolved_name_fires_event()
         {
             // 模拟升级场景：原始=Modify, 解析后=Destructive
+            // English：Simulated upgrade scenario: Original = Modify, Parse = Destructive
             var registry = new ToolRegistry();
             registry.Register(
                 new StubDescriptor { Name = "management_Erase", Annotation = ToolAnnotation.Destructive },
@@ -494,6 +517,7 @@ namespace SpatialAgent.Runtime.Tests
             var eventBus = Substitute.For<IEventBus>();
             var safety = Substitute.For<ISafetyGate>();
             // 原始名称分类=Modify（低风险），解析后名称分类=Destructive（高风险）
+            // English：Original name classification = Modify (low risk), Parsed name classification = Destroy (high risk)
             safety.Classify("conversion_Erase").Returns(ToolRiskLevel.Modify);
             safety.Classify("management_Erase").Returns(ToolRiskLevel.Destructive);
             safety.Evaluate(Arg.Any<string>(), Arg.Any<AgentPermissionLevel>())
@@ -536,6 +560,7 @@ namespace SpatialAgent.Runtime.Tests
             await scheduler.RunAsync(plan);
 
             // ★ 关键断言：safety.risk_upgraded 事件应被发布
+            // English：Key assertion: safety.risk_upgraded events should be published
             eventBus.Received().Publish(Arg.Is<AgentEvent>(e =>
                 e.EventType == "safety.risk_upgraded"
                 && e.Metadata!["original_tool"] == "conversion_Erase"
@@ -546,11 +571,13 @@ namespace SpatialAgent.Runtime.Tests
     // ════════════════════════════════════════════════════════════════
     // Quantity-sensitive safety gate (ADR 0051)
     // ════════════════════════════════════════════════════════════════
+    // 中文：数量感应安全门（ADR 0051）
 
     [Fact]
     public async Task Modify_tool_with_large_influence_requires_approval()
     {
         // Setup: Modify tool, RequestApproval, influence > 100
+        // 中文：设置：修改工具，请求批准，影响力> 100
         var registry = MakeRegistry("management_CalculateField", ToolAnnotation.Modify,
             new ToolResult { ToolName = "management_CalculateField", Success = true });
         var safety = Substitute.For<ISafetyGate>();
@@ -1312,6 +1339,7 @@ namespace SpatialAgent.Runtime.Tests
 }
 
 // ── Helper: IToolExecutor from lambda ──
+// 中文：助手：IToolExecutor from lambda
 
     public class SchedulerProgressTests
     {

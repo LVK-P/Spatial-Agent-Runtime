@@ -9,6 +9,7 @@ namespace SpatialAgent.Runtime.Tests
     /// CorrelationContext unit tests — AsyncLocal propagation, nesting,
     /// thread isolation, and scope disposal correctness.
     /// </summary>
+    /// <remarks>中文：CorrelationContext单元测试——异步本地传播、嵌套、线程隔离和作用域处置正确性。</remarks>
     public class CorrelationContextTests
     {
         [Fact]
@@ -20,6 +21,7 @@ namespace SpatialAgent.Runtime.Tests
                 CorrelationContext.SpanId.Should().BeEmpty();
             }
             // 作用域退出后清空
+            // English：After exiting the scope, clear it
             CorrelationContext.RunId.Should().BeEmpty();
         }
 
@@ -50,6 +52,7 @@ namespace SpatialAgent.Runtime.Tests
                     }
 
                     // 内层退出后恢复外层
+                    // English：After the inner layer is removed, the outer layer is restored
                     CorrelationContext.SpanId.Should().Be("root/llm_request");
                     CorrelationContext.SpanDepth.Should().Be(1);
                 }

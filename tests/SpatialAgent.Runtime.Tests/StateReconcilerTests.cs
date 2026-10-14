@@ -8,12 +8,14 @@ namespace SpatialAgent.Runtime.Tests
         private const string CurrentMap = "地图：测试\n· BASE_01：面要素\n· ROAD_02：线要素";
 
         // ── Truthfulness guards ──
+        // 中文：诚实守护者
 
         [Fact]
         public void Missing_transcript_produces_no_fabricated_layer_claims()
         {
             // Old behavior: pastLayers extraction fails silently → every current
             // layer reported as "新增图层（上次会话时不存在）" — a fabricated claim.
+            // 中文：旧行为：pastLayers 提取在所有当前层→无声地失败，报告为“新增图层（上次会话时不存在）”——这是捏造的说法。
             var report = StateReconciler.Reconcile(
                 transcriptPath: null, currentMapInfo: CurrentMap, threadId: "t-1");
 
@@ -58,6 +60,7 @@ namespace SpatialAgent.Runtime.Tests
         // ── Transcript location + per-session slicing ──
         // Transcript files are transcript_{timestamp}.jsonl, one per window
         // lifetime, holding multiple sessions back to back.
+        // 中文：转录地点 + 每次会话切片 转录文件是 transcript_{timestamp}.jsonl，每个窗口寿命一个，连续保存多个会话。
 
         private static string WriteTranscript(params string[] lines)
         {
@@ -105,6 +108,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Reconcile_uses_sliced_transcript_for_layer_diff()
         {
             // thread-1 used BASE_01; thread-2's OTHER_99 must not leak into the diff
+            // 中文：thread-1 使用的是BASE_01;螺纹2的OTHER_99不能漏到差速器里
             string path = WriteTranscript(
                 "{\"type\":\"session_start\",\"session\":\"thread-1\"}",
                 "{\"type\":\"context_gathered\",\"turn\":1,\"map\":\"· BASE_01：面要素\"}",
@@ -114,7 +118,7 @@ namespace SpatialAgent.Runtime.Tests
             var report = StateReconciler.Reconcile(path, CurrentMap, "thread-1");
 
             report.LayersStillPresent.Should().ContainSingle().Which.Should().Be("BASE_01");
-            report.LayersMissing.Should().BeEmpty();           // OTHER_99 not attributed to thread-1
+            report.LayersMissing.Should().BeEmpty();           // OTHER_99 不归属于 thread-1。 / OTHER_99 is not attributed to thread-1.
             report.LayersNew.Should().ContainSingle().Which.Should().Be("ROAD_02");
         }
     }

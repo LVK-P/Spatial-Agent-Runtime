@@ -36,9 +36,11 @@ namespace SpatialAgent.Runtime.Tests
         [InlineData("source_features", true)]
         [InlineData("clip_features", true)]
         // Fix NC-CX5: case_field should NOT be blocked
+        // 中文：修复NC-CX5：case_field不应被封锁
         [InlineData("case_field", false)]
         [InlineData("case_fields", false)]
         // Fields/settings should NOT be classified as data sources
+        // 中文：字段/设置不应被归类为数据源
         [InlineData("field_name", false)]
         [InlineData("expression", false)]
         [InlineData("where_clause", false)]

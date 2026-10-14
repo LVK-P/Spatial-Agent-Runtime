@@ -10,6 +10,7 @@ namespace SpatialAgent.Runtime.Tests
     /// Policy: instrumental selections are cleared at end of turn; a terminal
     /// selection (the turn's final step) is kept — it was likely the task.
     /// </summary>
+    /// <remarks>中文：针对2026-07-18残留选择事件的回归测试：代理运行了SelectLayerByAttribute（NEW_SELECTION）作为工具，从未清除，且整个图层仍被选中。政策：工具选择在回合结束时清除;保留一个终端选择（回合的最后一步）——这很可能就是任务本身。</remarks>
     public class SelectionCleanupPolicyTests
     {
         private static (string, IReadOnlyDictionary<string, object?>?) Step(
@@ -20,6 +21,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Instrumental_selection_is_cleared()
         {
             // 事故复现：选择 → 加字段 → 计算字段，选择集从未清除
+            // English：Accident recurrence: Select → add fields → compute fields; the selection set is never cleared
             var steps = new[]
             {
                 Step("management_SelectLayerByAttribute",
@@ -36,6 +38,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Terminal_selection_kept_only_with_explicit_user_intent()
         {
             // 用户的任务就是"选中住宅用地"——终态选择保留
+            // English：The user's task is to "select residential land"—the final state to choose to reserve
             var steps = new[]
             {
                 Step("agent_describe_layer", ("layer_name", "现状用地")),
@@ -51,6 +54,7 @@ namespace SpatialAgent.Runtime.Tests
         {
             // 2026-07-19 实测误漏复现：模型把选择当行读取器且恰好以它收尾，
             // 用户消息（"对比字段是否有错误对应"）并无选择意图 → 必须清
+            // English：2026-07-19 Actual test of errors and omissions: The model selects the current line reader and ends with it. The user message ("Check if the comparison field has an incorrect map") has no selection intent → must be cleared
             var steps = new[]
             {
                 Step("agent_describe_layer", ("layer_name", "道路面")),
@@ -66,6 +70,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Generic_word_select_alone_does_not_keep_terminal_selection()
         {
             // "选择"一词过泛（"选择合适的方案"），不计入选择意图
+            // English：The term "choice" is overly general ("choosing the appropriate solution") and is not counted as the intention to choose
             var steps = new[]
             {
                 Step("management_SelectLayerByAttribute",
@@ -152,6 +157,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Clear_call_shape_is_defined_by_policy_single_source()
         {
             // 审查项 F1：选择集工具名/参数知识单点在 RuntimePolicy
+            // English：Review item F1: Select the tool name/parameter knowledge single point in RuntimePolicy
             var call = RuntimePolicy.BuildSelectionClearCall("现状用地");
 
             call.Name.Should().Be("management_SelectLayerByAttribute");

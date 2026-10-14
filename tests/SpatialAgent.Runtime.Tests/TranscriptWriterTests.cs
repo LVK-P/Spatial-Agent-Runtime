@@ -11,6 +11,7 @@ namespace SpatialAgent.Runtime.Tests
     /// TranscriptWriter unit tests — initialization, migration, event
     /// count consistency, dispose safety, and sanitization edge cases.
     /// </summary>
+    /// <remarks>中文：TranscriptWriter单元测试——初始化、迁移、事件计数一致性、丢弃安全性和净化边缘案例。</remarks>
     public class TranscriptWriterTests : IDisposable
     {
         private TranscriptWriter? _tw;
@@ -65,6 +66,7 @@ namespace SpatialAgent.Runtime.Tests
             File.Exists(tw.FilePath).Should().BeTrue($"file should exist at {tw.FilePath}");
             // log_initialized is written during Initialize
             // ★ P0-2：Flush 排空 Channel 后再检查 EventCount
+            // 中文：log_initialized 是在 Initialize P0-2：Flush 排空 Channel 后再检查 EventCount 期间编写的
             tw.Flush();
             tw.EventCount.Should().BeGreaterOrEqualTo(1);
         }
@@ -181,7 +183,7 @@ namespace SpatialAgent.Runtime.Tests
             var path1 = tw.FilePath;
             var count1 = tw.EventCount;
 
-            tw.Initialize(Path.Combine(Path.GetTempPath(), "tw_test2_" + Guid.NewGuid().ToString("N")[..8])); // second call — no-op
+            tw.Initialize(Path.Combine(Path.GetTempPath(), "tw_test2_" + Guid.NewGuid().ToString("N")[..8])); // 第二次调用不执行任何操作。 / The second call is a no-op.
 
             tw.FilePath.Should().Be(path1, "second Initialize should be no-op");
             tw.EventCount.Should().Be(count1, "no additional events written");
@@ -192,6 +194,7 @@ namespace SpatialAgent.Runtime.Tests
         {
             // ★ P0-2：Write() 经 Channel<T> 异步写入，计数在 Dispose 后排空。
             // 验证文件内容包含写入的事件（端到端断言替代 EventCount 实时断言）。
+            // English：P0-2: Write() is written asynchronously via Channel, and the count is empty after Dispose. Verify that the file content contains the written event (end-to-end assertions replace EventCount real-time assertions).
             var tw = new TranscriptWriter();
             tw.Initialize(Path.Combine(Path.GetTempPath(), "tw_inc_" + Guid.NewGuid().ToString("N")[..8]));
             var fp = tw.FilePath;
@@ -203,6 +206,7 @@ namespace SpatialAgent.Runtime.Tests
                 tw.Dispose();
 
                 // 验证文件内容
+                // English：Verify the contents of the documents
                 var content = File.ReadAllText(fp!);
                 content.Should().Contain("\"type\":\"test\"");
                 content.Should().Contain("\"type\":\"session_end\"");
@@ -246,6 +250,7 @@ namespace SpatialAgent.Runtime.Tests
             tw.Dispose();
             var lines = File.ReadAllLines(_filePath!);
             // Should have: log_initialized, session_start, user_msg
+            // 中文：应该有：log_initialized，session_start，user_msg
             lines.Should().HaveCountGreaterOrEqualTo(3);
             var content = string.Join("\n", lines);
             content.Should().Contain("session_start");
@@ -283,6 +288,7 @@ namespace SpatialAgent.Runtime.Tests
         {
             // ★ Phase A5（2026-07-20）：WriteContext 不再截断——全量写入，
             // 但附带 project_truncated/map_truncated 标记。
+            // English：Phase A5 (2026-07-20): WriteContext no longer truncates—full write, but with project_truncated/map_truncated marking.
             var tw = Init();
             var longProject = new string('A', 600);
             tw.WriteContext(1, longProject, "map", 3, 2);
@@ -290,6 +296,7 @@ namespace SpatialAgent.Runtime.Tests
             tw.Dispose();
             var content = File.ReadAllText(_filePath!);
             // 全量 600 字符应完整保留
+            // English：The full 600 characters should be fully retained
             content.Should().Contain(new string('A', 600));
             // project_truncated 标记应为 true
             content.Should().Contain("\"project_truncated\":true");
@@ -338,12 +345,14 @@ namespace SpatialAgent.Runtime.Tests
         {
             var tw = Init();
             // 在 Initialize 中已调用 ResetLossCounter，确认初始状态
+            // English：ResetLossCounter is called in Initialize to confirm the initial state
             tw.LostEventCount.Should().Be(0);
 
             tw.WriteSessionEnd(1, 1, 0, 0, 1000);
             tw.Dispose();
 
             // 无写入错误 → LostEventCount 仍然为 0
+            // English：No write errors → LostEventCount remains 0
             tw.LostEventCount.Should().Be(0);
         }
 
@@ -441,7 +450,7 @@ namespace SpatialAgent.Runtime.Tests
 
                     var content = File.ReadAllText(_filePath!);
                     content.Should().Contain("\"run_id\":\"test-run-42\"");
-                    content.Should().Contain("test_span");  // span_id appears in content
+                    content.Should().Contain("test_span");  // 内容中包含 span_id。 / span_id appears in the content.
                 }
             }
         }
@@ -500,6 +509,7 @@ namespace SpatialAgent.Runtime.Tests
             tw.SetLoggingHealthMonitor(monitor);
 
             // 制造一次假故障
+            // English：Creating a false fault
             monitor.ReportWriteFailure("ledger", "DiskFull");
 
             tw.WriteSessionStart("s1", "m1", "", null);

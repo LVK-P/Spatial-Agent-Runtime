@@ -10,6 +10,7 @@ namespace SpatialAgent.Runtime.Tests
     /// Verifies that user-profile paths, GDB paths, and UNC paths
     /// are replaced with tokens in the serialized JSONL output.
     /// </summary>
+    /// <remarks>中文：TranscriptWriter 路径净化 Layer 1 测试。验证用户配置文件路径、GDB 路径和 UNC 路径是否被序列化 JSONL 输出中的令牌替换。</remarks>
     public class TranscriptSanitizationTests : IDisposable
     {
         private TranscriptWriter? _tw;
@@ -23,6 +24,7 @@ namespace SpatialAgent.Runtime.Tests
             _filePath = _tw.FilePath;
             act(_tw);
             // Flush & close before reading to avoid file-lock
+            // 中文：读取前冲洗并关闭以避免文件锁定
             _tw.Dispose();
             _tw = null;
             return File.ReadAllText(_filePath!);
@@ -53,6 +55,7 @@ namespace SpatialAgent.Runtime.Tests
             jsonl.Should().Contain("%USERPROFILE%");
             jsonl.Should().NotContain(@"C:\Users\ExampleUser");
             // Layer name and expression should survive
+            // 中文：层名和表达应得以保留
             jsonl.Should().Contain("buffer_result");
             jsonl.Should().Contain("100 Meters");
         }
@@ -72,6 +75,7 @@ namespace SpatialAgent.Runtime.Tests
             jsonl.Should().Contain("{GDB}");
             jsonl.Should().NotContain(@"C:\Example\SampleProject.gdb");
             // Layer names within GDB paths are preserved after the path is tokenized
+            // 中文：GDB路径中的层名在路径被标记化后会被保留
             jsonl.Should().Contain("BASE_01");
         }
 
@@ -92,6 +96,7 @@ namespace SpatialAgent.Runtime.Tests
             jsonl.Should().Contain("用地代码");
             jsonl.Should().Contain("geodesicArea");
             // Layer names / field names MUST survive sanitization intact
+            // 中文：层名/字段名必须在消毒后保持完整
             jsonl.Should().Contain("\"BASE_01\"");
             jsonl.Should().Contain("用地代码");
         }
@@ -151,7 +156,7 @@ namespace SpatialAgent.Runtime.Tests
                 var act = () =>
                 {
                     tw.Write(new { ok = true });
-                    tw.Dispose(); // close before delete
+                    tw.Dispose(); // 删除前关闭。 / Close before deleting.
                 };
                 act.Should().NotThrow();
             }

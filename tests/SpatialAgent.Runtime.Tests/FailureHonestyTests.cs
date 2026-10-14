@@ -15,9 +15,11 @@ namespace SpatialAgent.Runtime.Tests
     /// 正向（含"失败"/"阻止"等信号）和负向（不含"已完成"/"成功"等
     /// 虚假信号）来验证。
     /// </summary>
+    /// <remarks>English："Failure does not fabricate" end-to-end testing — verifying the core trustworthiness of the product: when a tool fails, validates fails, or security is blocked, the final response does not falsely claim success. Assertion strategy: semantic feature matching rather than precise text matching. LLM wording is non-deterministic, but "whether the report failed honestly" can be verified by positive (including signals like "failed" or "blocked") and negative (excluding false signals like "completed" or "successful").</remarks>
     public class FailureHonestyTests
     {
         /// <summary>Setup harness matching AgentRuntimeTests pattern.</summary>
+        /// <remarks>中文：设置 AgentRuntimeTesting 匹配的线束模式。</remarks>
         private static (AgentRuntime runtime, IAgentSession session, ILLMProvider llm, ToolRegistry tools)
             Setup(Action<ToolRegistry, IAgentSession, ILLMProvider> configure)
         {
@@ -142,6 +144,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // F1: 工具执行失败 → 回复中如实汇报失败
         // ════════════════════════════════════════════════════════════════
+        // English：F1: Tool execution failure → Truthfully report failure in the reply
 
         [Fact]
         public async Task Tool_execution_failure_is_reported_honestly()
@@ -163,15 +166,17 @@ namespace SpatialAgent.Runtime.Tests
                     {
                         Success = true,
                         ToolCalls = new List<ToolCall>(),
-                        Content = "已完成统计分析。" // ← 这是 LLM 可能伪造的回复
+                        Content = "已完成统计分析。" // ← 这是 LLM 可能伪造的回复。 / This is a response the LLM might fabricate.
                     });
             });
 
             var resp = await runtime.ProcessAsync(new TaskRequest { UserMessage = "统计" });
 
             // 语义断言：ExecutionSummary 应如实反映失败状态
+            // English：Semantic assertion: ExecutionSummary should accurately reflect the failure state
             resp.ExecutionSummary.Should().NotBeNull();
             // Summary 中 analysis_Statistics 应当标记为 ❌（失败）而非 ✅
+            // English：In the summary, analysis_Statistics should be marked as ❌ (Fail) rather than ✅
             resp.ExecutionSummary!.Should().Contain("❌");
             resp.ExecutionSummary.Should().NotContain("✅ analysis_Statistics");
             // ★ P1-E：LLM 在工具执行失败后的回复不应与 ExecutionSummary 矛盾。
@@ -181,6 +186,7 @@ namespace SpatialAgent.Runtime.Tests
             // 当前 "no tool calls → done" 路径直接透传 LLM 原始回复，未经过
             // Synth() 的 failure-aware 合成。这是待修复的结构性问题，但测试
             // 至少确保不出现显式的矛盾声明。
+            // English：P1-E: LLM's response after tool execution failure should not conflict with ExecutionSummary. In ExecutionSummary, analysis_Statistics is marked as ❌ , and UserReply should not claim that the tool "succeeded" or "passed." Note: LLM wording is non-deterministic; vague expressions like "statistical analysis completed" are known behaviors—the current "no tool calls → done" path directly transmits the LLM's original response without fail-aware synthesis by Synth(). This is a structural issue to be fixed, but testing at least ensures that no explicit contradictory statements appear.
             resp.UserReply.Should().NotContain("分析成功");
             resp.UserReply.Should().NotContain("统计成功");
         }
@@ -222,6 +228,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // F2: 部分成功 → 区分完成与未完成
         // ════════════════════════════════════════════════════════════════
+        // English：F2: Partial success → Distinguishes between completed and unfinished
 
         [Fact]
         public async Task Partial_success_distinguishes_completed_from_failed()
@@ -254,9 +261,11 @@ namespace SpatialAgent.Runtime.Tests
 
             resp.ExecutionSummary.Should().NotBeNull();
             // 成功和失败应同时出现在摘要中
+            // English：Success and failure should appear together in the summary
             resp.ExecutionSummary!.Should().Contain("✅");
             resp.ExecutionSummary.Should().Contain("❌");
             // ★ P1-E：UserReply 不应声称全部成功
+            // English：P1-E:UserReply should not claim all successes
             resp.UserReply.Should().NotContain("全部完成");
             resp.UserReply.Should().NotContain("所有操作均已成功");
         }
@@ -264,6 +273,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // F3: 安全阻断 → 解释阻断原因，不冒充成功
         // ════════════════════════════════════════════════════════════════
+        // English：F3: Secure Blocking → Explain the reason for the block, without pretending it was successful
 
         [Fact]
         public async Task Safety_blocked_is_explained_not_faked()
@@ -271,6 +281,7 @@ namespace SpatialAgent.Runtime.Tests
             var (runtime, session, llm, tools) = Setup((t, s, l) =>
             {
                 // ReadOnly permission blocks Modify tools
+                // 中文：只读权限阻挡修改工具
                 s.PermissionLevel.Returns(AgentPermissionLevel.ReadOnly);
                 RegisterTool(t, "management_DeleteField", ToolAnnotation.Destructive,
                     new ToolResult { ToolName = "management_DeleteField", Success = true });
@@ -284,6 +295,7 @@ namespace SpatialAgent.Runtime.Tests
                         }
                     },
                     // After blocking, LLM keeps returning same → exhaust rounds
+                    // 中文：阻塞后，LLM总是返回同样→的排气弹
                     new LLMResponse { Success = true, ToolCalls = new List<ToolCall> { new() { Id = "c2", Name = "management_DeleteField", Arguments = new() } } },
                     new LLMResponse { Success = true, ToolCalls = new List<ToolCall> { new() { Id = "c3", Name = "management_DeleteField", Arguments = new() } } },
                     new LLMResponse { Success = true, ToolCalls = new List<ToolCall> { new() { Id = "c4", Name = "management_DeleteField", Arguments = new() } } },
@@ -293,8 +305,10 @@ namespace SpatialAgent.Runtime.Tests
             var resp = await runtime.ProcessAsync(new TaskRequest { UserMessage = "删除字段" });
 
             // SafetyBlocked means all steps were blocked and agent stops
+            // 中文：安全阻挡意味着所有台阶都被封锁，代理被拦截
             resp.StopReason.Should().Be("SafetyBlocked");
             // Should explain blocking, not pretend success
+            // 中文：应该解释阻挡，而不是假装成功
             resp.UserReply.Should().Contain("阻止");
             resp.UserReply.Should().NotContain("已删除");
         }
@@ -302,6 +316,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // F4: 后置验证不通过 → 回复中指出验证失败
         // ════════════════════════════════════════════════════════════════
+        // English：F4: Post-verification failed → The reply states that the verification failed
 
         [Fact]
         public async Task Verification_failure_is_reported()
@@ -329,6 +344,7 @@ namespace SpatialAgent.Runtime.Tests
             });
 
             // Inject a failing validator after Setup (runtime is now available)
+            // 中文：在设置后注入失败的验证程序（运行时现已可用）
             var validator = Substitute.For<IValidationRule>();
             validator.Name.Returns("verify_field_populated");
             validator.AppliesTo(Arg.Any<string>(), Arg.Any<IObservation>()).Returns(true);
@@ -344,12 +360,15 @@ namespace SpatialAgent.Runtime.Tests
             var resp = await runtime.ProcessAsync(new TaskRequest { UserMessage = "计算字段" });
 
             // The execution summary should show the validation failure
+            // 中文：执行摘要应显示验证失败
             resp.ExecutionSummary.Should().NotBeNull();
             // Even if LLM said "已完成", the summary produced by BuildSummary
             // uses StepExecutionResult.Status which accounts for validation.
             // Tool succeeded but validation failed → step status is Failed.
+            // 中文：即使LLM显示“已完成”，BuildSummary生成的摘要仍使用StepExecutionResult.Status，用于验证。工具成功但验证失败→步骤状态为失败。
             resp.ExecutionSummary!.Should().Contain("❌");
             // ★ P1-E：LLM 合成回复中不应声称字段计算完成（验证发现 100% 为空 = 数据被清空）
+            // English：P1-E: LLM synthetic responses should not claim that fields have been completed (verification finds 100% empty = data is cleared)
             resp.UserReply.Should().NotContain("字段计算已完成");
             resp.UserReply.Should().NotContain("计算成功");
         }

@@ -13,11 +13,13 @@ namespace SpatialAgent.Runtime.Tests
     /// asserts the correct exit path, state variables, and F1 regression
     /// (_lastTurnToolCalls populated on every exit path).
     /// </summary>
+    /// <remarks>中文：AgentRuntime ReAct 循环测试 — 假的 LLM + 真实的编排器。每次测试都驱动 ProcessAsync，使用受控的大型语言模型响应，断言正确的出口路径、状态变量和 F1 回归（每个出口路径上都填充_lastTurnToolCalls）。</remarks>
     public class AgentRuntimeTests
     {
         // ════════════════════════════════════════════════════════════════
         // Test harness
         // ════════════════════════════════════════════════════════════════
+        // 中文：测试线束
 
         private class Harness
         {
@@ -67,6 +69,7 @@ namespace SpatialAgent.Runtime.Tests
                 Context = new ContextManager(projectReader, mapReader, skillProvider, knowledge: null);
 
                 // Default safety: classify based on annotation, evaluate via permission
+                // 中文：默认安全：根据注释分类，通过权限评估
                 var defaultSafety = Substitute.For<ISafetyGate>();
                 defaultSafety.Classify(Arg.Any<string>()).Returns(ci =>
                     Tools.GetDescriptor(ci.Arg<string>())?.Annotation switch
@@ -106,6 +109,7 @@ namespace SpatialAgent.Runtime.Tests
             }
 
             /// <summary>Register a simple tool that always succeeds.</summary>
+            /// <remarks>中文：注册一个总能成功的简单工具。</remarks>
             public void RegisterPassingTool(string name)
             {
                 Tools.Register(
@@ -114,6 +118,7 @@ namespace SpatialAgent.Runtime.Tests
             }
 
             /// <summary>Register a tool that returns a specific result.</summary>
+            /// <remarks>中文：注册一个返回特定结果的工具。</remarks>
             public void RegisterTool(string name, ToolAnnotation ann, ToolResult result)
             {
                 Tools.Register(
@@ -133,6 +138,7 @@ namespace SpatialAgent.Runtime.Tests
             }
 
             /// <summary>Returns a sequence of responses for successive ChatAsync calls.</summary>
+            /// <remarks>中文：返回连续 ChatAsync 呼叫的响应序列。</remarks>
             public void SetLlmResponseSequence(params LLMResponse[] responses)
             {
                 var queue = new Queue<LLMResponse>(responses);
@@ -261,6 +267,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Test 1: Pure text — no tool calls
         // ════════════════════════════════════════════════════════════════
+        // 中文：测试1：纯文本——无工具调用
 
         [Fact]
         public async Task Pure_text_reply_no_tool_calls()
@@ -278,6 +285,7 @@ namespace SpatialAgent.Runtime.Tests
             resp.HadToolCalls.Should().BeFalse();
             resp.StopReason.Should().Be("纯文本");
             // F1 regression: _lastTurnToolCalls should be empty (no tools executed)
+            // 中文：F1回归：_lastTurnToolCalls应该是空的（没有执行工具）
             h.Session.Received().SetStatus(SessionStatus.Completed);
         }
 
@@ -342,6 +350,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Test 2: One round of tools → LLM says done
         // ════════════════════════════════════════════════════════════════
+        // 中文：测试2：一轮工具→LLM表示完成
 
         [Fact]
         public async Task One_round_tool_calls_then_done()
@@ -360,7 +369,7 @@ namespace SpatialAgent.Runtime.Tests
                 new LLMResponse
                 {
                     Success = true,
-                    ToolCalls = new List<ToolCall>(), // empty → no more tools
+                    ToolCalls = new List<ToolCall>(), // 空列表表示没有更多工具。 / Empty means no more tools.
                     Content = "已完成缓冲区分析。"
                 });
 
@@ -375,6 +384,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Test 3: LLM exception → Fail with LLM异常
         // ════════════════════════════════════════════════════════════════
+        // 中文：测试3：LLM异常→ Fail with LLM异常
 
         [Fact]
         public async Task Llm_throws_returns_failed()
@@ -397,6 +407,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Test 4: LLM error response → error-specific StopReason
         // ════════════════════════════════════════════════════════════════
+        // 中文：测试4：LLM错误响应 →针对错误的StopReason
 
         [Theory]
         [InlineData(LLMErrorKind.RateLimit, "LLM限流")]
@@ -420,12 +431,14 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Test 5: Tool requires approval → AwaitingApproval
         // ════════════════════════════════════════════════════════════════
+        // 中文：测试5：工具需要批准→等待批准
 
         [Fact]
         public async Task Tool_requiring_approval_pauses_with_awaiting_approval()
         {
             var h = new Harness();
             // Use RequestApproval permission so destructive tools require approval
+            // 中文：使用 RequestApproval 权限，使破坏性工具需要批准
             h.Session.PermissionLevel.Returns(AgentPermissionLevel.RequestApproval);
 
             h.RegisterTool("management_DeleteField", ToolAnnotation.Destructive,
@@ -449,6 +462,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Test 6: Max rounds → Synthesis
         // ════════════════════════════════════════════════════════════════
+        // 中文：测试6：合成→最大回合数
 
         [Fact]
         public async Task Max_rounds_reached_synthesizes()
@@ -456,6 +470,7 @@ namespace SpatialAgent.Runtime.Tests
             var h = new Harness();
             h.RegisterPassingTool("analysis_Buffer");
             // Return tool calls forever → will exhaust all 5 rounds
+            // 中文：还击工具呼叫会一直用→会耗尽全部5发子弹
             var toolResponse = new LLMResponse
             {
                 Success = true,
@@ -464,7 +479,7 @@ namespace SpatialAgent.Runtime.Tests
                     new() { Id = "call_x", Name = "analysis_Buffer", Arguments = new() }
                 }
             };
-            h.SetLlmsNextResponse(toolResponse); // every call returns the same
+            h.SetLlmsNextResponse(toolResponse); // 每次调用都返回相同结果。 / Every call returns the same result.
 
             var resp = await h.Runtime.ProcessAsync(new TaskRequest { UserMessage = "批量处理" });
 
@@ -475,12 +490,13 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Test 7: All blocked → SafetyBlocked (max-rounds path)
         // ════════════════════════════════════════════════════════════════
+        // 中文：测试7：所有→被阻挡安全（最大回合路径）
 
         [Fact]
         public async Task All_blocked_returns_safety_blocked()
         {
             var h = new Harness();
-            h.Session.PermissionLevel.Returns(AgentPermissionLevel.ReadOnly); // blocks Modify
+            h.Session.PermissionLevel.Returns(AgentPermissionLevel.ReadOnly); // 阻止修改。 / Blocks Modify.
             h.RegisterTool("analysis_Buffer", ToolAnnotation.Modify,
                 new ToolResult { ToolName = "analysis_Buffer", Success = true });
             h.SetLlmsNextResponse(new LLMResponse
@@ -496,6 +512,7 @@ namespace SpatialAgent.Runtime.Tests
 
             // With ReadOnly permission, Modify tools are blocked. After max rounds,
             // all steps are blocked → SafetyBlocked.
+            // 中文：拥有只读权限后，修改工具被屏蔽。满回合后，所有步骤都会被→安全阻挡。
             resp.StopReason.Should().Be("SafetyBlocked");
             resp.UserReply.Should().Contain("阻止");
         }
@@ -503,6 +520,7 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // Test 8: Path D prediction — tool chain carries to next turn
         // ════════════════════════════════════════════════════════════════
+        // 中文：测试8：路径D预测——工具链继续到下一回合
 
         [Fact]
         public async Task Tool_chain_prediction_carries_over_to_next_turn()
@@ -513,6 +531,7 @@ namespace SpatialAgent.Runtime.Tests
             h.RegisterPassingTool("analysis_Statistics");
 
             // Turn 1: Project is called → should record in _lastTurnToolCalls
+            // 中文：第一回合：项目叫做 → 应该在_lastTurnToolCalls
             h.SetLlmResponseSequence(
                 new LLMResponse
                 {
@@ -534,6 +553,7 @@ namespace SpatialAgent.Runtime.Tests
 
             // Turn 2: PredictNextTools should return Clip, Intersect, Erase, Statistics
             // based on the ChainPredictions table entry for management_Project
+            // 中文：第二回合：PredictNextTools 应返回基于 ChainPredictions 表条目的剪辑、交集、擦除和统计数据management_Project
             h.SetLlmResponseSequence(
                 new LLMResponse
                 {
@@ -551,6 +571,7 @@ namespace SpatialAgent.Runtime.Tests
             // the RuntimePolicy.SelectExposedToolsTiered was called with predicted tools.
             //
             // Direct assertion: verify that Runtime.TurnCount advanced correctly.
+            // 中文：F1：关键测试是第二回合的工具暴露包含了预测的工具（比如剪辑等）在第一阶段。我们间接验证：ProcessAsync 没有崩溃（PredictNextTools 运行时 _lastTurnToolCalls 非空），预测工具调用了 RuntimePolicy.SelectExposedToolsTiered。直接断言：验证 Runtime.TurnCount 是否正确推进。
             h.Runtime.TurnCount.Should().Be(2);
         }
 
@@ -562,6 +583,7 @@ namespace SpatialAgent.Runtime.Tests
         public async Task ProcessAsync_without_safety_returns_SafetyUnavailable()
         {
             // 构造 Harness 但故意不设置 SafetyGate
+            // English：Construct the Harness but intentionally leave the SafetyGate unset
             var session = Substitute.For<IAgentSession>();
             session.ThreadId.Returns("test-no-safety");
             session.Messages.Returns(new List<Message>());
@@ -594,6 +616,7 @@ namespace SpatialAgent.Runtime.Tests
             var ctx = new ContextManager(projectReader, mapReader, skillProvider, knowledge: null);
 
             // ★ 关键：不调用 SetSafety——复现 P0-1 场景
+            // English：Key: Do not call SetSafety—recreate the P0-1 scenario
             var runtime = new AgentRuntime(session, llm, tools, ctx, bus: null);
             // 显式不调用：runtime.SetSafety(...);
 
@@ -607,12 +630,14 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // ★ P0-3 加强：工具存在性预检——全部幻觉
         // ════════════════════════════════════════════════════════════════
+        // English：P0-3 Enhancement: Tool Existence Pre-Check—All Illusions
 
         [Fact]
         public async Task All_hallucinated_tools_are_rejected_before_scheduler()
         {
             var h = new Harness();
             // LLM 编造了 3 个不存在的工具名
+            // English：The LLM invented three tool names that don't exist
             h.SetLlmResponseSequence(
                 new LLMResponse
                 {
@@ -625,6 +650,7 @@ namespace SpatialAgent.Runtime.Tests
                     }
                 },
                 // 第二轮：LLM 被反馈后不再编造
+                // English：Round Two: LLMs no longer fabricate after receiving feedback
                 new LLMResponse
                 {
                     Success = true,
@@ -635,6 +661,7 @@ namespace SpatialAgent.Runtime.Tests
             var resp = await h.Runtime.ProcessAsync(new TaskRequest { UserMessage = "导出选中的要素" });
 
             // 不应该进入 Scheduler（没有注册的工具被执行）
+            // English：You should not enter the Scheduler (unregistered tools are executed)
             resp.StopReason.Should().Be("未完成");
             resp.HadToolCalls.Should().BeTrue();
             resp.ToolResults.Should().HaveCount(3);
@@ -645,24 +672,27 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // ★ P0-3 加强：工具存在性预检——部分幻觉
         // ════════════════════════════════════════════════════════════════
+        // English：P0-3 Enhancement: Tool Existence Pre-Check—Partial Hallucination
 
         [Fact]
         public async Task Partial_hallucinated_tools_filter_and_continue_with_valid()
         {
             var h = new Harness();
             // 只注册一个真实工具
+            // English：Only register one real tool
             h.RegisterPassingTool("analysis_Buffer");
 
             // LLM 调用了 1 个真实工具 + 2 个编造工具
+            // English：The LLM calls 1 real tool + 2 fabrication tools
             h.SetLlmResponseSequence(
                 new LLMResponse
                 {
                     Success = true,
                     ToolCalls = new List<ToolCall>
                     {
-                        new() { Id = "c1", Name = "analysis_Buffer", Arguments = new() },       // 存在
-                        new() { Id = "c2", Name = "conversion_FakeExport", Arguments = new() }, // 幻觉
-                        new() { Id = "c3", Name = "management_FakeMerge", Arguments = new() }    // 幻觉
+                        new() { Id = "c1", Name = "analysis_Buffer", Arguments = new() },       // 存在。 / Exists.
+                        new() { Id = "c2", Name = "conversion_FakeExport", Arguments = new() }, // 幻觉工具。 / Hallucinated tool.
+                        new() { Id = "c3", Name = "management_FakeMerge", Arguments = new() }    // 幻觉工具。 / Hallucinated tool.
                     }
                 },
                 new LLMResponse

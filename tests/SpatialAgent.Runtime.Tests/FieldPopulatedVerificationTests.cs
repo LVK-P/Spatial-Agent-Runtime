@@ -13,6 +13,7 @@ namespace SpatialAgent.Runtime.Tests
     /// reported完成. verify_field_populated closes the value blind spot, and
     /// target resolution no longer fabricates "first-two-args" field names.
     /// </summary>
+    /// <remarks>中文：2026-07-18字段清除事件的回归测试：CalculateField对ydyhmc/ydyhbm的每一行写入无，GP呼叫“成功”，仅存在verify_field PASS，代理报告完成。verify_field_populated会关闭数值盲点，目标解析不再伪造“first-two-args”字段名。</remarks>
     public class FieldPopulatedVerificationTests
     {
         private sealed class FakeProbe : IPostConditionProbe
@@ -129,6 +130,7 @@ namespace SpatialAgent.Runtime.Tests
         public async Task CalculateField_contract_fails_when_written_column_is_wiped()
         {
             // 事故复现：CalculateField 成功返回，但字段被整列写空 → 必须 FAIL
+            // English：Incident recurrence: CalculateField returns successfully, but the field is written to the entire column → must FAIL
             var probe = new FakeProbe { Total = 37, Populated = 0 };
             var rule = new PostConditionValidationRule(probe);
 
@@ -145,6 +147,7 @@ namespace SpatialAgent.Runtime.Tests
         public async Task Field_default_from_rule_params_resolves_composite_tool_target()
         {
             // cc_calculate_area 省略 field_name 时实际写 TQMJ——通过 Params 声明
+            // English：cc_calculate_area Actually write TQMJ when omitting field_name—declared via Params
             var probe = new FakeProbe { Total = 8, Populated = 8 };
             var rule = new PostConditionValidationRule(probe);
 
@@ -163,6 +166,7 @@ namespace SpatialAgent.Runtime.Tests
         {
             // 旧行为：取前两个参数值拼成 "道路面.椭球面积" 去查字段 → 18 个假失败。
             // 新行为：目标未知 → WARN 跳过，探针不被调用。
+            // English：Old behavior: Combine the first two parameter values to form "road surface. Ellipsoid area" to check fields → 18 false failures. New behavior: Target unknown→ WARN skips, probe not called.
             var probe = new FakeProbe();
             var rule = new PostConditionValidationRule(probe);
 

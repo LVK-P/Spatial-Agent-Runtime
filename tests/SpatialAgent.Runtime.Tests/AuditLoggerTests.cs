@@ -10,6 +10,7 @@ namespace SpatialAgent.Runtime.Tests
     /// AuditLogger unit tests — destructive operation logging, health
     /// monitoring, correlation ID injection, elapsedMs recording.
     /// </summary>
+    /// <remarks>中文：AuditLogger单元测试——破坏性操作日志、健康监测、关联ID注入、elapedMs记录。</remarks>
     public class AuditLoggerTests : IDisposable
     {
         private readonly string _projectFolder;
@@ -53,6 +54,7 @@ namespace SpatialAgent.Runtime.Tests
             a.EntryCount.Should().Be(0);
 
             // 不应抛出异常
+            // English：Anomalies should not be thrown out
             var act = () => a.Log(new AuditEntry { Tool = "test" });
             act.Should().NotThrow();
         }
@@ -110,6 +112,7 @@ namespace SpatialAgent.Runtime.Tests
             a.SetLoggingHealthMonitor(monitor);
 
             // 正常写入不触发故障
+            // English：Normal writes do not trigger faults
             a.LogDestructiveOperation("t", new(), ToolRiskLevel.Modify, null, true, true);
             a.WriteFailures.Should().Be(0);
 

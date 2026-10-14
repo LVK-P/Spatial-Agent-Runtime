@@ -21,6 +21,7 @@ namespace SpatialAgent.Runtime.Tests
     /// for stray source-level using statements that never make it into IL.
     /// A companion source scan below covers that lighter-weight code-level guard.
     /// </summary>
+    /// <remarks>中文：架构守护：将文档中的分层契约转换为可执行的断言。该代码库的核心不变量是运行时层保持主机无关——零ArcGIS引用，零LLM引用，在项目装配中可能仅依赖合同和核心。ADR 0056引入了合同与运行时之间的核心层，用于纯逻辑共享基础设施。允许且期望运行时引用 Core。GetReferencedAssemblies（） 仅验证已编译的汇编引用。它足够强大，适合项目/主机/界面依赖方向，但对于那些从未进入IL的零散源码级语句就不够。下面的配套源扫描涵盖了那个较轻的代码级守卫。</remarks>
     public class ArchitectureGuardTests
     {
         private static string[] ReferencedNames(Assembly assembly) =>
@@ -124,6 +125,7 @@ namespace SpatialAgent.Runtime.Tests
         /// <summary>
         /// ADR 0056: Core 零宿主依赖——只能引用 Contracts 和 .NET 基础库。
         /// </summary>
+        /// <remarks>English：ADR 0056: Core Zero Host Dependency — can only reference Contracts and .NET base libraries.</remarks>
         [Fact]
         public void Core_depends_only_on_contracts_among_project_assemblies()
         {
@@ -138,21 +140,25 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // 5A（Phase 5）：外层不引用 Runtime——除白名单外
         // ════════════════════════════════════════════════════════════════
+        // English：5A (Phase 5): Outer layers do not reference Runtime—except for the whitelist
 
         /// <summary>
         /// Phase 5A 白名单：因结构性依赖（ToolRegistry/EventBus/Observation）仍需保留
         /// Runtime 引用的项目。标注了预期解耦阶段。
         /// </summary>
+        /// <remarks>English：Phase 5A Whitelist: Projects that still need to retain runtime references due to structural dependencies (ToolRegistry/EventBus/Observation). The expected decoupling stage is annotated.</remarks>
         private static readonly Dictionary<string, string> RuntimeReferenceWhitelist = new()
         {
             // Services 引用 Runtime 因 SafetyGate→ToolRegistry, TranscriptWriter→EventBus,
             // DynamicToolLoader→ToolRegistry, PostConditionValidationRule→Observation
+            // 中文：Services 引用 Runtime 因 SafetyGate→ToolRegistry， TranscriptWriter→EventBus， DynamicToolLoader→ToolRegistry， PostConditionValidationRule→Observation
             ["SpatialAgent.Services"] = "Phase 4 ToolRegistry/事件接口继续下沉后移除（预计）"
         };
 
         /// <summary>
         /// 5A-3：Services/Tools/Adapters/Knowledge 不得引用 Runtime，除白名单外。
         /// </summary>
+        /// <remarks>中文：5A-3：Services/Tools/Adapters/Knowledge 不得引用 Runtime，除白名单外。</remarks>
         [Fact]
         public void Capability_layers_do_not_reference_runtime_except_whitelist()
         {
@@ -193,6 +199,7 @@ namespace SpatialAgent.Runtime.Tests
         /// 5A-4：白名单非空时验证——记录哪些项目仍依赖 Runtime 及其原因。
         /// 白名单为空时（即全部脱钩）此测试仍通过——意味着目标达成。
         /// </summary>
+        /// <remarks>English：5A-4: Whitelist Non-Empty Time Validation—Records which projects still rely on Runtime and why. If the whitelist is empty (i.e., all decoupling), this test still passes—meaning the goal is achieved.</remarks>
         [Fact]
         public void Runtime_whitelist_items_have_documented_reason()
         {
@@ -207,6 +214,7 @@ namespace SpatialAgent.Runtime.Tests
         // Runtime_depends_only_on_contracts_and_core_among_project_assemblies ✅
         // Core_depends_only_on_contracts_among_project_assemblies ✅
         // Core_references_no_host_or_ui_assemblies ✅
+        // English：5A-1/5A-2: Runtime and Core dependency directions have been covered by Runtime_depends_only_on_contracts_and_core_among_project_assemblies ✅ Core_depends_only_on_contracts_among_project_assemblies ✅ in Phase 1 Core_references_no_host_or_ui_assemblies ✅
 
         private static string FindRepoRoot()
         {

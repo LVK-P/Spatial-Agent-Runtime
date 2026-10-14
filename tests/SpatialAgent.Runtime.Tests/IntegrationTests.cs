@@ -18,6 +18,7 @@ namespace SpatialAgent.Runtime.Tests
     /// ★ Phase 5C：轻量集成测试（不需 ArcGIS Pro）。
     /// 覆盖 Transcript 完整链路 + Checkpoint 保存/恢复。
     /// </summary>
+    /// <remarks>English：Phase 5C: Lightweight integration testing (no ArcGIS Pro required). Overwrite the full transcript link + Checkpoint save/recover.</remarks>
     public class IntegrationTests
     {
         // ════════════════════════════════════════════════════════════════
@@ -35,6 +36,7 @@ namespace SpatialAgent.Runtime.Tests
                 transcript.Initialize(tmpDir);
 
                 // Write session events — verify API doesn't throw
+                // 中文：写会话事件——验证API不抛出
                 transcript.WriteSessionStart("test-session-1", "deepseek-v4", "high", null);
                 transcript.WriteUserMessage(1, "请统计图层要素数量");
                 transcript.WriteContext(1, "TestProject", "MapInfo", 3, 1);
@@ -50,6 +52,7 @@ namespace SpatialAgent.Runtime.Tests
                 transcript.Flush();
 
                 // API-level verification: event count should reflect written events
+                // 中文：API层面验证：事件计数应反映书面事件
                 transcript.EventCount.Should().BeGreaterThan(0, "写入事件后计数应 >0");
                 transcript.FilePath.Should().NotBeNull("Initialize 后应有文件路径");
                 transcript.IsEnabled.Should().BeTrue();
@@ -75,6 +78,7 @@ namespace SpatialAgent.Runtime.Tests
                 transcript.WriteSessionEnd(1, 1, 0, 0, 1000);
 
                 // After session boundary writes, event count should increase
+                // 中文：写入会话边界后，事件计数应增加
                 transcript.EventCount.Should().BeGreaterThan(initCount,
                     "session_start + session_end 应增加事件计数");
             }
@@ -98,6 +102,7 @@ namespace SpatialAgent.Runtime.Tests
                 var store = new FileRunCheckpointStore(tmpDir);
 
                 // Save checkpoint
+                // 中文：存档检查点
                 var original = new AgentRunState
                 {
                     ThreadId = "thread-42",
@@ -145,12 +150,15 @@ namespace SpatialAgent.Runtime.Tests
                 var store = new FileRunCheckpointStore(tmpDir);
 
                 // Save first checkpoint
+                // 中文：保存第一个检查点
                 await store.SaveAsync(new AgentRunState { ThreadId = "t1", Turn = 1 });
 
                 // Save second checkpoint (same thread)
+                // 中文：保存第二个检查点（同一帖子）
                 await store.SaveAsync(new AgentRunState { ThreadId = "t1", Turn = 5 });
 
                 // Should restore latest
+                // 中文：应该恢复最新的
                 var restored = await store.LoadMostRecentAsync(System.Threading.CancellationToken.None);
                 restored.Should().NotBeNull();
                 restored!.Turn.Should().Be(5, "应恢复最新的 checkpoint");

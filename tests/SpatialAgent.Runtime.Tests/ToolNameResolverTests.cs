@@ -57,6 +57,7 @@ namespace SpatialAgent.Runtime.Tests
         {
             // "analysis_Clip" was registered second — short name "Clip" maps to "analysis_Buffer" only
             // This tests that short name collisions don't overwrite
+            // 中文：“analysis_Clip”是第二个注册的——短名“Clip”只映射到“analysis_Buffer”。这测试了短名称碰撞不会覆盖
             _resolver.Resolve("Clip").Should().Be("analysis_Clip");
         }
 

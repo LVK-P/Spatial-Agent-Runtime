@@ -11,6 +11,7 @@ namespace SpatialAgent.Runtime.Tests
     /// 查官方对照、缺失保原值、未映射/歧义如实清单。模型自由度收敛为
     /// 填参数，忘查表/手写表达式错/空值兜底三类事故被结构性消灭。
     /// </summary>
+    /// <remarks>English：cc_map_field_values (User ruling on 2026-07-19): Field mapping assignment follows the Pro standard "computed field + Python code_block" format—merge similar items to scan unique values, check official comparisons, preserve original missing values, and provide a truthful list of unmapped/ambiguous items. The model's degrees of freedom converge to fill in parameters, forgetting to look up tables, handwriting errors, and empty value backup are structurally eliminated.</remarks>
     public class MapFieldValuesToolTests
     {
         // ── BuildMapping：官方对照 ──
@@ -34,6 +35,7 @@ namespace SpatialAgent.Runtime.Tests
                 new[] { "公路用地", "城镇道路用地" }, "yh_name_to_code", null);
 
             // "城镇道路用地"不是 2023 版规范名（规范名"城镇村道路用地"）——如实未命中
+            // English："Urban road land" is not the 2023 standard name (the standard name "urban village road land")—it is not accurate
             r.Matched.Should().ContainKey("公路用地");
             r.Unmatched.Should().ContainSingle().Which.Should().Be("城镇道路用地");
         }
@@ -42,6 +44,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Ambiguous_same_name_multi_code_is_listed_not_guessed()
         {
             // 三调"建制镇"对应 202/202A——一名多码不猜
+            // English：Third adjustment "Established Town" corresponds to 202/202A—one name with multiple codes, no guessing
             var r = MapFieldValuesTool.BuildMapping(
                 new[] { "建制镇" }, "sd_name_to_code", null);
 
@@ -83,6 +86,7 @@ namespace SpatialAgent.Runtime.Tests
         }
 
         // ── BuildCodeBlock：Pro 计算字段标准形态 ──
+        // English：BuildCodeBlock: The standard form of the Pro calculation field
 
         [Fact]
         public void Code_block_preserves_current_value_on_missing_mapping()
@@ -91,9 +95,9 @@ namespace SpatialAgent.Runtime.Tests
                 new Dictionary<string, string> { ["公路用地"] = "1202" });
 
             code.Should().Contain("def _sa_map(v, cur):");
-            code.Should().Contain("return m.get(str(v).strip(), cur)");   // 保值兜底
-            code.Should().NotContain(", None)");                          // 禁空值兜底
-            code.Should().NotContain(", \"\")");                          // 禁空串兜底
+            code.Should().Contain("return m.get(str(v).strip(), cur)");   // 保留原值的回退。 / Preserve-value fallback.
+            code.Should().NotContain(", None)");                          // 禁止空值回退。 / Forbid a null-value fallback.
+            code.Should().NotContain(", \"\")");                          // 禁止空字符串回退。 / Forbid an empty-string fallback.
         }
 
         [Fact]
@@ -102,7 +106,7 @@ namespace SpatialAgent.Runtime.Tests
             string code = MapFieldValuesTool.BuildCodeBlock(
                 new Dictionary<string, string> { ["含\"引号\"名"] = "X1" });
 
-            code.Should().Contain("\\\"引号\\\"");   // JSON 转义，Python 兼容
+            code.Should().Contain("\\\"引号\\\"");   // JSON 转义，与 Python 兼容。 / JSON escaping compatible with Python.
         }
     }
 
@@ -110,6 +114,7 @@ namespace SpatialAgent.Runtime.Tests
     /// cc_read_rows 保守调用门槛（2026-07-19 用户裁定：小样本核对专用，
     /// 超限拒绝而非截断——部分可见比不可见更误导）。
     /// </summary>
+    /// <remarks>English：cc_read_rows Conservative call threshold (2026-07-19 user rule: few-sample verification only, overlimit denial rather than truncation—partially visible is more misleading than invisible).</remarks>
     public class ReadRowsGateTests
     {
         [Fact]

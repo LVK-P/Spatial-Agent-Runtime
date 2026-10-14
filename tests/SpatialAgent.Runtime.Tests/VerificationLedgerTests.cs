@@ -10,6 +10,7 @@ namespace SpatialAgent.Runtime.Tests
     /// VerificationLedger unit tests — recording entries, statistics,
     /// health monitoring, correlation ID injection, and dispose safety.
     /// </summary>
+    /// <remarks>中文：VerificationLedger单元测试——记录条目、统计数据、健康监测、关联ID注入和处置安全。</remarks>
     public class VerificationLedgerTests : IDisposable
     {
         private readonly string _logDir;
@@ -116,6 +117,7 @@ namespace SpatialAgent.Runtime.Tests
                     var v = Init();
                     // VerificationEntry doesn't expose injected fields directly,
                     // but they show up in the serialized JSON.
+                    // 中文：VerificationEntry 不会直接暴露注入字段，但它们会在序列化的 JSON 中显示。
                     v.Record(new VerificationEntry { Verdict = "PASS", Turn = 1 });
                     v.Dispose();
 

@@ -72,6 +72,7 @@ namespace SpatialAgent.Runtime.Tests
             // ★ P0-3 修复（2026-07-20）：未知工具默认归类为 Destructive 而非 Modify。
             // 未知名称可能是 LLM 幻觉，也可能来自未审计的本地 manifest。
             // 2026 年安全实践：unknown → deny/require-approval，不是 unknown → allow。
+            // English：P0-3 Fix (2026-07-20): Unknown tool is classified as Destructive by default rather than Modified. The unknown name could be an LLM hallucination or an unaudited local manifest. 2026 Security Practices: unknown → deny/require-approval, not unknown → allow.
             _gate.Classify("custom.Tool").Should().Be(ToolRiskLevel.Destructive);
         }
 
@@ -81,6 +82,7 @@ namespace SpatialAgent.Runtime.Tests
             // ★ P0-3 修复（2026-07-20）：所有未知工具默认归类为 Destructive。
             // 如果确实是新工具（manifest 更新导致），应在 SafetyGate.RegisterClassification()
             // 中显式注册风险级别后才能使用。
+            // English：P0-3 Fix (2026-07-20): All unknown tools are classified as Structural by default. If it is indeed a new tool (due to manifest updates), it should be explicitly registered in SafetyGate.RegisterClassification() before use.
             _gate.Classify("UnknownTool").Should().Be(ToolRiskLevel.Destructive);
             _gate.Classify("some.custom.Tool").Should().Be(ToolRiskLevel.Destructive);
         }
@@ -97,6 +99,7 @@ namespace SpatialAgent.Runtime.Tests
             AgentPermissionLevel permission, ToolRiskLevel risk, SafetyDecisionKind expected)
         {
             // Register a custom classification to control risk level
+            // 中文：注册一个自定义分类以控制风险水平
             _gate.RegisterClassification("_test_tool", risk);
             var decision = _gate.Evaluate("_test_tool", permission);
             decision.Kind.Should().Be(expected);
@@ -122,6 +125,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Wildcard_registration_matches_short_name_prefix()
         {
             // Register "Delete*" — matches any tool whose short name starts with "Delete"
+            // 中文：注册“Delete*”——匹配任何简称以“Delete”开头的工具
             _gate.RegisterClassification("Delete*", ToolRiskLevel.Destructive);
             _gate.Classify("management_DeleteRows").Should().Be(ToolRiskLevel.Destructive);
         }
@@ -129,11 +133,13 @@ namespace SpatialAgent.Runtime.Tests
         // ════════════════════════════════════════════════════════════════
         // ★ P0-3：未知工具 → Destructive 行为在 Evaluate 中的表现
         // ════════════════════════════════════════════════════════════════
+        // English：P0-3: Unknown Tool → Destructive behavior in Evaluate
 
         [Fact]
         public void Unknown_tool_in_RequestApproval_requires_approval()
         {
             // P0-3 修复后：未知工具 → Destructive → RequestApproval 模式下触发审批
+            // English：P0-3 After Fix: Unknown Tool → Triggered approval in Destructive → RequestApproval mode
             var decision = _gate.Evaluate("UnknownHallucinatedTool", AgentPermissionLevel.RequestApproval);
             decision.Kind.Should().Be(SafetyDecisionKind.RequireApproval,
                 "未知工具被分类为 Destructive，在 RequestApproval 模式必须触发审批");
@@ -143,6 +149,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Unknown_tool_in_ReadOnly_is_blocked()
         {
             // P0-3 修复后：未知工具 → Destructive → ReadOnly 模式下被阻止
+            // English：P0-3 After fix: Unknown tool → blocked in Destructive → ReadOnly mode
             var decision = _gate.Evaluate("UnknownHallucinatedTool", AgentPermissionLevel.ReadOnly);
             decision.Kind.Should().Be(SafetyDecisionKind.Block,
                 "未知工具被分类为 Destructive，在 ReadOnly 模式必须被阻止");
@@ -153,6 +160,7 @@ namespace SpatialAgent.Runtime.Tests
         {
             // P0-3 修复后：未知工具 → Destructive → FullAccess 仍放行（保持效率）
             // 但 RiskLevel 为 Destructive——后续 Scheduler 会触发备份流程
+            // English：After P0-3 fix: Unknown tool → Destructive → FullAccess still allows (maintains efficiency) but the Risk Level is Destructive—subsequent Scheduler will trigger the backup process
             var decision = _gate.Evaluate("UnknownHallucinatedTool", AgentPermissionLevel.FullAccess);
             decision.Kind.Should().Be(SafetyDecisionKind.Allow,
                 "FullAccess 模式放行所有操作");

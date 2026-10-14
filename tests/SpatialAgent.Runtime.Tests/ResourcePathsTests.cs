@@ -17,6 +17,7 @@ namespace SpatialAgent.Runtime.Tests
         {
             // In the Pro add-in the resources sit next to the assemblies in
             // AssemblyCache; in tests the bin dir plays that role.
+            // 中文：在 Pro 插件中，资源位于 AssemblyCache 的汇编旁边;在测试中，bin dir扮演着这个角色。
             string root = ResourcePaths.PrimaryRoot();
             string name = $"resourcepaths-probe-{Guid.NewGuid():N}.txt";
             string path = Path.Combine(root, name);

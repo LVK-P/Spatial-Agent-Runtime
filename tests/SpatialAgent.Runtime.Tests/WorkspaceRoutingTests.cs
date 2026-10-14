@@ -11,6 +11,7 @@ namespace SpatialAgent.Runtime.Tests
     /// tables (ERROR 000210 on Statistics). Outputs now live flat at the
     /// agentworkspace.gdb root.
     /// </summary>
+    /// <remarks>中文：针对2026-07-19输出路由事件的回归检验：特征-数据集路由将输出钉在数据集的空间参考（14次重投影无声丢失）和被拒绝的独立表（统计错误000210）。输出现在平放在 agentworkspace.gdb 根节点。</remarks>
     public class WorkspaceRoutingTests
     {
         [Fact]
@@ -22,7 +23,7 @@ namespace SpatialAgent.Runtime.Tests
             string resolved = ws.ResolveOutputPath("tmp_道路面_ydyhmc统计", "analysis_Statistics");
 
             resolved.Should().Be(@"C:\proj\agentworkspace.gdb\tmp_道路面_ydyhmc统计");
-            resolved.Should().NotContain(@"\Stats\");     // 表进要素数据集 = ERROR 000210
+            resolved.Should().NotContain(@"\Stats\");     // 表放入要素数据集会触发 ERROR 000210。 / Putting a table in a feature dataset causes ERROR 000210.
         }
 
         [Fact]
@@ -51,7 +52,7 @@ namespace SpatialAgent.Runtime.Tests
         [Fact]
         public void Unconfigured_workspace_leaves_bare_name_unchanged()
         {
-            var ws = new WorkspaceTool();   // Configure/Initialize 未调用
+            var ws = new WorkspaceTool();   // 未调用 Configure/Initialize。 / Configure/Initialize was not called.
 
             ws.ResolveOutputPath("tmp_x").Should().Be("tmp_x");
         }

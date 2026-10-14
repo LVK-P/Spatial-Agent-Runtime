@@ -23,6 +23,7 @@ namespace SpatialAgent.Runtime.Tests
     /// intended to catch architectural explosions on ordinary desktop runners
     /// while detailed ArcGIS GP timings remain in the Pro integration matrix.
     /// </summary>
+    /// <remarks>中文：广泛回归预算，而非微基准测试。这些宽松的限制旨在捕捉普通桌面运行者的架构爆炸，同时详细的ArcGIS GP时序仍保留在Pro集成矩阵中。</remarks>
     [Collection("GP dispatcher")]
     public sealed class PerformanceBaselineTests
     {

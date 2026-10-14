@@ -72,9 +72,11 @@ namespace SpatialAgent.Runtime.Tests
             current.TurnRelation.Should().Be(GoalTurnRelation.New);
             current.GoalId.Should().NotBe(previous.GoalId);
             // Default Expand: category quantifier materializes physical targets.
+            // 中文：默认扩展：类别量词实现物理目标。
             current.DomainCategories.Should().Equal("line");
             current.ExplicitTargets.Should().Equal("roads");
             // Unspecified layer + geometry class ⇒ all physical members of class.
+            // 中文：未指定层+几何类⇒所有物理成员。
             current.ScopeExpansionRule.Should().Be("by_category:all_physical");
             current.ScopeSufficiency.Should().Be(GoalScopeSufficiency.Sufficient);
             current.RequiredCapabilities.Should().Equal(
@@ -105,6 +107,7 @@ namespace SpatialAgent.Runtime.Tests
             scope.ScopeExpansionRule.Should().Be("by_category:all_physical");
             // Unspecified layer name means ALL members of the class, including
             // both raw and projected copies when both are on the map.
+            // 中文：未指定图层名称指该类的所有成员，包括原始和投影副本，当两者都出现在地图上时。
             scope.ExplicitTargets.Should().BeEquivalentTo(
                 "highway",
                 "highway_4490",

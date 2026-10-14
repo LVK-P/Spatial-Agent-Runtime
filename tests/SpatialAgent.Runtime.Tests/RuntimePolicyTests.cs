@@ -39,7 +39,7 @@ namespace SpatialAgent.Runtime.Tests
             var result = RuntimePolicy.SelectExposedTools(all, new[] { "conversion_FeatureClassToShapefile" });
 
             result.Should().Contain(t => t.Name == "conversion_FeatureClassToShapefile");
-            result.Should().Contain(t => t.Name == "agent_get_map_info");   // always-on
+            result.Should().Contain(t => t.Name == "agent_get_map_info");   // 始终启用。 / Always on.
             result.Should().NotContain(t => t.Name == "analysis_Buffer");
             result.Should().NotContain(t => t.Name == "management_CalculateField");
         }

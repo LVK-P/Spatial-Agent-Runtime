@@ -9,6 +9,7 @@ namespace SpatialAgent.Runtime.Tests
     /// LoggingHealthMonitor unit tests — failure counting, snapshot
     /// correctness, reset behavior, and late binding of stats.
     /// </summary>
+    /// <remarks>中文：LoggingHealthMonitor 单元测试——失败计数、快照正确性、重置行为以及统计的延迟绑定。</remarks>
     public class LoggingHealthMonitorTests
     {
         [Fact]

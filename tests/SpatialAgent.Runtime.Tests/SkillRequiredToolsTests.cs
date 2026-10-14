@@ -9,6 +9,7 @@ namespace SpatialAgent.Runtime.Tests
     /// 暴露集，模型根本调不了（拓扑链工具从不进 top50，实测九轮 拓扑=[]）。
     /// 技能通过「## 所需工具」节声明依赖，命中时并入暴露集。
     /// </summary>
+    /// <remarks>English：Skill → tool exposure linkage (2026-07-19): The skill document teaches the process, but if the tool is not in the exposure set, the model cannot be adjusted at all (topology chain tools never enter the top 50; tested nine rounds of topology = []). Skills declare dependencies through the "## Required Tools" section, and when they hit, they are merged into the exposure set.</remarks>
     public class SkillRequiredToolsTests
     {
         private static string WriteSkillDir(string content)
@@ -44,8 +45,8 @@ namespace SpatialAgent.Runtime.Tests
             var skill = mgr.Skills.Single();
             skill.RequiredTools.Should().BeEquivalentTo(new[]
             {
-                "management_CreateTopology",     // 去重后一次
-                "management_ValidateTopology",   // 反引号被剥
+                "management_CreateTopology",     // 去重后一次。 / Appears once after deduplication.
+                "management_ValidateTopology",   // 反引号已移除。 / Backticks are stripped.
                 "management_ExportTopologyErrors"
             });
         }

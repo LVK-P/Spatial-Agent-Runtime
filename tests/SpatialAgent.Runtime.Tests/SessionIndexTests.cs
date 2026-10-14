@@ -53,6 +53,7 @@ namespace SpatialAgent.Runtime.Tests
             // latest.json pointer: same turn/round as the real checkpoint but hollow.
             // Enumerated first alphabetically — the old "*.json" scan let it win the
             // tie and blank out Summary/tool info.
+            // 中文：latest.json 指针与真实检查点具有相同轮次，但内容为空。按字母顺序它排在前面；旧式“*.json”扫描会在并列时误选它，并显示错误的摘要/工具信息。
             string dir = Path.Combine(root, ".agent", "checkpoints", "thread-a");
             File.WriteAllText(Path.Combine(dir, "latest.json"), JsonConvert.SerializeObject(new
             {
@@ -69,8 +70,8 @@ namespace SpatialAgent.Runtime.Tests
             var sessions = index.ListSessions();
             sessions.Should().HaveCount(1);
             var info = sessions[0];
-            info.Summary.Should().Be("计算各地块面积");          // first user message, not blank
-            info.ToolCount.Should().Be(2);                        // tools actually called
+            info.Summary.Should().Be("计算各地块面积");          // 第一条用户消息，非空。 / First user message, not blank.
+            info.ToolCount.Should().Be(2);                        // 实际调用的工具数。 / Number of tools actually called.
             info.ToolChain.Should().Be("management_AddField → management_CalculateField");
             info.TurnCount.Should().Be(2);
         }
@@ -82,6 +83,7 @@ namespace SpatialAgent.Runtime.Tests
 
             // Cross-year boundary: "12-31" > "01-02" as strings, so the old
             // DateLabel string sort would list the OLDER session first.
+            // 中文：跨年边界：“12-31”>“01-02”作为字符串，旧的DateLabel字符串排序会优先列出较旧的会话。
             WriteCheckpoint(root, "thread-old", new AgentRunState
             {
                 ThreadId = "thread-old",

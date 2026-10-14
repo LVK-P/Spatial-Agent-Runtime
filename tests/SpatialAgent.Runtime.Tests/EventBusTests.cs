@@ -9,6 +9,7 @@ namespace SpatialAgent.Runtime.Tests
     /// EventBus unit tests — subscription isolation, wildcard handling,
     /// thread safety, and failure containment.
     /// </summary>
+    /// <remarks>中文：EventBus单元测试——订阅隔离、通配符处理、线程安全和故障控制。</remarks>
     public class EventBusTests
     {
         private static AgentEvent Evt(string type) => new() { EventType = type, Turn = 1 };
@@ -101,7 +102,7 @@ namespace SpatialAgent.Runtime.Tests
         public void Concurrent_publishes_do_not_throw()
         {
             var bus = new EventBus();
-            bus.Subscribe("*", _ => { }); // ensure handlers list non-empty
+            bus.Subscribe("*", _ => { }); // 确保处理程序列表非空。 / Ensure the handlers list is non-empty.
 
             var tasks = Enumerable.Range(0, 20).Select(i =>
                 Task.Run(() => bus.Publish(Evt($"event_{i}"))));
