@@ -15,6 +15,7 @@ using SpatialAgent.Core;
 // overlap (+5 name / +1 content), L3 embedding cosine similarity
 // (when IEmbeddingService is injected). Top 3 are returned via RRF.
 // ================================================================
+// 中文：================================================================ SkillManager.cs — 技能加载、匹配与总结。从Skills/目录加载Markdown技能文件。匹配采用三层级联处理：L1触发字精确匹配（+10）、L2关键词重叠（+5个名称/+1内容）、L3嵌入余弦相似度（注入IEmbeddingService时）。前三名通过RRF返回。================================================================
 namespace SpatialAgent.Runtime
 {
     public class Skill
@@ -28,6 +29,7 @@ namespace SpatialAgent.Runtime
         public bool Enabled { get; set; } = true;
 
         /// <summary>Tools declared in the skill's "## 所需工具" section (schema names).</summary>
+        /// <remarks>中文：工具声明在技能的“## 所需工具”部分（结构名称）。</remarks>
         public List<string> RequiredTools { get; set; } = new();
     }
 
@@ -48,6 +50,7 @@ namespace SpatialAgent.Runtime
         /// <param name="skillsDir">Directory containing .md skill files.</param>
         /// <param name="embedAsync">Optional async embedding function for L3 semantic matching.
         /// Signature: text -> dense float vector. If null, only L1/L2 keyword matching is used.</param>
+        /// <remarks>中文：创建一个技能管理器。包含.md技能文件的目录。可选的异步嵌入功能用于L3语义匹配。签名：文本 -&gt;密集浮点向量。如果为空，则仅使用 L1/L2 关键词匹配。</remarks>
         public SkillManager(string skillsDir, Func<string, Task<float[]>>? embedAsync = null)
         {
             _skillsDir = skillsDir;
@@ -95,6 +98,7 @@ namespace SpatialAgent.Runtime
                 if (enabled.Count == 0) return;
 
                 // Build text representations: name + triggers + summary
+                // 中文：构建文本表示：名称 + 触发器 + 摘要
                 var texts = enabled.Select(s => $"{s.Name}. {string.Join(", ", s.Triggers)}. {s.Summary}").ToList();
                 var tasks = texts.Select(t => _embedAsync(t));
                 var vectors = await Task.WhenAll(tasks);
@@ -135,9 +139,11 @@ namespace SpatialAgent.Runtime
         };
 
         /// <summary>Sync fallback for L1/L2-only callers. Prefer MatchSkillsAsync when embedding is available.</summary>
+        /// <remarks>中文：同步回退仅供 L1/L2 调用方使用；具备嵌入能力时优先使用 MatchSkillsAsync。</remarks>
         private List<Skill> MatchSkillsInternal(string userInput)
         {
             // L1+L2 only — no embedding. Use MatchSkillsInternalAsync for full L3 support.
+            // 中文：仅L1+L2——不嵌入。使用MatchSkillsInternalAsync来实现完整的L3支持。
             var (l1l2Scores, triggerHits) = ComputeL1L2Scores(userInput);
             return RankByRrf(l1l2Scores, new Dictionary<string, double>(), triggerHits);
         }
@@ -150,6 +156,7 @@ namespace SpatialAgent.Runtime
             var (l1l2Scores, triggerHits) = ComputeL1L2Scores(userInput);
 
             // L3 — embedding cosine similarity (async, no .Result blocking).
+            // 中文：L3 — 嵌入余弦相似性（异步，无 。结果阻塞）。
             Dictionary<string, double> l3Scores = new();
             if (_vectorsBuilt && _skillVectors.Count > 0 && _embedAsync != null)
             {
@@ -169,6 +176,7 @@ namespace SpatialAgent.Runtime
                 catch
                 {
                     // Embedding failure → skip L3, use L1+L2 only.
+                    // 中文：嵌入失败→跳过L3，只使用L1+L2。
                 }
             }
 
@@ -187,6 +195,7 @@ namespace SpatialAgent.Runtime
                 double score = 0;
 
                 // L1 — exact trigger word match.
+                // 中文：L1 — 完全匹配的触发词。
                 foreach (var trigger in skill.Triggers)
                 {
                     if (IsStrongTrigger(lower, trigger))
@@ -197,6 +206,7 @@ namespace SpatialAgent.Runtime
                 }
 
                 // L2 — name and content keyword overlap.
+                // 中文：L2 — 名称和内容关键词重叠。
                 if (lower.Contains(skill.Name.ToLowerInvariant()))
                     score += 5;
 
@@ -237,6 +247,7 @@ namespace SpatialAgent.Runtime
             // Short ontology nouns such as "村庄" describe resources, not
             // workflow intent. They may be exact commands but cannot activate
             // a procedural skill merely by appearing inside a larger request.
+            // 中文：短本体名词如“村庄”描述资源，而非工作流意图。它们可能是精确命令，但不能仅凭出现在较大请求中激活程序技能。
             if (cjkCount > 0 && cjkCount < 4)
                 return false;
             if (cjkCount == 0 && normalizedTrigger.Length < 4)
@@ -368,6 +379,7 @@ namespace SpatialAgent.Runtime
             // "## 所需工具" — schema tool names this skill's workflow depends on.
             // Merged into the exposed-tool set on match (ContextManager), so the
             // model can actually CALL what the skill teaches.
+            // 中文：“## 所需工具”——该技能工作流程依赖的结构工具名称。在匹配时合并到暴露工具集（ContextManager），这样模型才能调用技能所教的内容。
             var toolsMatch = Regex.Match(content,
                 @"##\s*所需工具\s*\n([\s\S]*?)(?=\n##\s|\Z)", RegexOptions.IgnoreCase);
             if (toolsMatch.Success)
@@ -384,6 +396,7 @@ namespace SpatialAgent.Runtime
                 // ★ P1-D（2026-07-20）：上限硬性约束——防止技能声明过多工具导致 prompt 膨胀。
                 // 每个 Tier1 工具约 1.8K token。3 个匹配技能 × 15 上限 = 45 个工具 = ~81K token。
                 // 当前最大技能（拓扑检查）声明 10 个——15 是合理上限。
+                // English：P1-D (2026-07-20): Upper limit rigid constraint—prevents excessive skill statements from causing prompt bloat. Each Tier 1 tool costs about 1.8K tokens. 3 matching skills × 15 cap = 45 tools = ~81K tokens. The current maximum skill (topology check) declaration is 10—15 is a reasonable upper limit.
                 if (rawTools.Count > MaxRequiredToolsPerSkill)
                 {
                     var removed = rawTools.Skip(MaxRequiredToolsPerSkill).ToList();

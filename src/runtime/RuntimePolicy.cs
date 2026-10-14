@@ -11,15 +11,18 @@ namespace SpatialAgent.Runtime
     /// <summary>
     /// Runtime-level policy loaded from runtime_config.json with hardcoded defaults.
     /// </summary>
+    /// <remarks>中文：运行时级策略从runtime_config.json加载，带有硬编码默认值。</remarks>
     public static class RuntimePolicy
     {
         private static readonly Lazy<RuntimeConfig> _config = new(LoadConfig);
 
         /// <summary>Tier 1 full-schema budget beyond the read-only probe kernel.
         /// Capability tools are considered before skill and chain candidates.</summary>
+        /// <remarks>中文：一级全模式预算，超出只读探针内核。技能和链条候选人之前会考虑能力工具。</remarks>
         private const int MaxTier1Additional = 8;
 
         // ── Config-backed properties ──
+        // 中文：配置支持的属性
         public static int MaxReactRounds => _config.Value.MaxReactRounds;
         public static int LargeBatchThreshold => _config.Value.LargeBatchThreshold;
         public static int DataInfluenceThreshold => _config.Value.DataInfluenceThreshold;
@@ -62,6 +65,7 @@ namespace SpatialAgent.Runtime
         /// descriptors + at most 20 lightweight discovery descriptors.
         /// </summary>
         /// <returns>(tier1FullDetail, tier2Lightweight)</returns>
+        /// <remarks>中文：两层工具暴露（路径D，2026-07-19）：Tier 1 （完整） = always-on + skill 声明的 RequiredTools， 模型拿到完整参数描述，确保高频/安全关键工具调用正确。Tier 2 （轻量） = context top-N 中不在 Tier 1 的剩余工具， 用 LightweightToolDescriptor 剥离参描/枚举/标题，仅保留 name+type+required， 每工具约 0.3K token（vs 完整版约 1.8K）。当前硬预算：6个始终在线探测器 + 最多8个晋升完整描述符 + 最多20个轻量级发现描述符。（tier1FullDetail，tier2Lightweight）</remarks>
         public static (IReadOnlyList<IToolDescriptor> Tier1Full, IReadOnlyList<IToolDescriptor> Tier2Light)
             SelectExposedToolsTiered(
                 IReadOnlyList<IToolDescriptor> allTools,
@@ -72,9 +76,11 @@ namespace SpatialAgent.Runtime
             var tier1Names = new HashSet<string>(AlwaysOnToolNames, StringComparer.OrdinalIgnoreCase);
 
             // ★ Q3（Phase 4）：附加上限——技能工具 + 链预测 ≤ MaxTier1Additional
+            // English：Q3 (Phase 4): Upper limit — skill tools + chain prediction ≤ MaxTier1 Additional
             int additionalSlots = MaxTier1Additional;
 
             // 技能声明的所需工具 = 模型这一轮大概率要调用的 → 进完整暴露
+            // English：The tool needed for skill declarations = the → most likely to be called in this round of the model is fully exposed
             if (skillRequiredTools != null)
             {
                 foreach (string name in skillRequiredTools)
@@ -88,6 +94,7 @@ namespace SpatialAgent.Runtime
             }
 
             // ★ 操作链预测：上回合调用触发的后继工具 → 进完整暴露
+            // English：Chain of Operation Prediction: The successor tool triggered by the last call → the full exposure
             if (predictedTools != null)
             {
                 foreach (string name in predictedTools)
@@ -100,6 +107,7 @@ namespace SpatialAgent.Runtime
 
             // Tier 2 is a bounded discovery surface. Preserve the relevance
             // order before turning it into a lookup set.
+            // 中文：第二层是一个有界发现曲面。在将其转换为查找集之前，先保留相关性顺序。
             var tier2Names = relevantTools
                 .Where(name => !string.IsNullOrWhiteSpace(name))
                 .Where(name => !tier1Names.Contains(name))
@@ -113,9 +121,9 @@ namespace SpatialAgent.Runtime
             foreach (var tool in allTools)
             {
                 if (tier1Names.Contains(tool.Name))
-                    tier1.Add(tool);                         // 完整，原样不动
+                    tier1.Add(tool);                         // 完整描述，原样保留。 / Keep the full descriptor unchanged.
                 else if (tier2Names.Contains(tool.Name))
-                    tier2.Add(new LightweightToolDescriptor(tool));  // 轻量包装，剥参描
+                    tier2.Add(new LightweightToolDescriptor(tool));  // 轻量包装，移除参数描述。 / Lightweight wrapper with parameter descriptions removed.
             }
 
             return (tier1.AsReadOnly(), tier2.AsReadOnly());
@@ -129,6 +137,7 @@ namespace SpatialAgent.Runtime
         //
         // 触发时机：SelectExposedToolsTiered 检查上一回合的工具调用记录，
         // 命中起点 → 后继进 Tier1。零新依赖，纯 RuntimePolicy 内部逻辑。
+        // English：GIS Chain of Operation Prediction (Path D Enhancement, 2026-07-19) Tool calls in planning projects have extremely high sequence regularity—"describe→compute→ statistical," "projected → clipped→erase". When the model calls the chain origin tool, it pre-elevates the successor tool to Tier 1 (full parameter), avoiding being in Tier 2 (light parameter) when the next round of the model needs it. Deterministic static tables, no gambling on LLMs. Trigger timing: SelectExposedToolsTiered checks the previous round's tool call record, hits the starting point →, then proceeds to Tier 1. Zero new dependencies, pure RuntimePolicy internal logic.
 
         // ★ ADR 0056 / Phase 3：操作链预测迁入 Core
         public static IReadOnlyList<string> PredictNextTools(
@@ -163,6 +172,7 @@ namespace SpatialAgent.Runtime
                 : "";
 
             // ★ 冗余执行防护：列出已成功的工具，明确告诉 LLM 不要重做
+            // English：Redundant execution protection: List successful tools and clearly tell LLMs not to redo them
             var completedStepNames = steps
                 .Where(sr => sr.Status == StepResultStatus.Completed)
                 .Select(sr => sr.ToolName)
@@ -193,11 +203,13 @@ namespace SpatialAgent.Runtime
                 {
                     string md = File.ReadAllText(mdPath, System.Text.Encoding.UTF8);
                     // Extract the # 续推指令 block — between the heading and EOF.
+                    // 中文：提取#续推指令块——位于标题和EOF之间。
                     int start = md.IndexOf("# 续推指令");
                     if (start >= 0)
                     {
                         string block = md[start..];
                         // Remove the heading line and the metadata comment.
+                        // 中文：删除标题行和元数据评论。
                         int nl = block.IndexOf('\n');
                         if (nl >= 0) block = block[(nl + 1)..];
                         nl = block.IndexOf('\n');
@@ -236,6 +248,7 @@ namespace SpatialAgent.Runtime
             catch (Exception ex)
             {
                 // Fall through to defaults — config file is optional.
+                // 中文：切换到默认设置——配置文件是可选的。
                 AgentDiagnostics.Warn("RuntimePolicy.LoadConfig",
                     "runtime_config.json 解析失败，使用内置默认策略", ex);
             }

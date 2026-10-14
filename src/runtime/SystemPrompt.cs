@@ -4,6 +4,7 @@
 // context-dependent injections (first-interaction guidance, recency boost)
 // on top of the base template. Continuation prompts are built separately
 // by RuntimePolicy.BuildContinuationPrompt().
+// 中文：SystemPrompt.cs — 大型语言模型系统提示构建器。运行时从 system_prompt.md 加载基础模板。如果文件缺失，它会退回到硬编码模板。Build（） 方法在基础模板之上附加上下文相关的注入（首次交互指导、近期提升）。续写提示由 RuntimePolicy.BuildContinuationPrompt（） 单独构建。
 
 using System;
 using System.IO;
@@ -17,6 +18,7 @@ namespace SpatialAgent.Runtime
     /// Loads and builds the system prompt for LLM requests.
     /// Template source: system_prompt.md (resource, copied to output directory).
     /// </summary>
+    /// <remarks>中文：加载并构建LLM请求的系统提示。模板来源：system_prompt.md（资源，复制到输出目录）。</remarks>
     public static class SystemPrompt
     {
         private static readonly Lazy<string> _baseTemplate = new(LoadBaseTemplate);
@@ -24,17 +26,21 @@ namespace SpatialAgent.Runtime
         /// <summary>
         /// Task response mode — determines whether to add structured output guidance.
         /// </summary>
+        /// <remarks>中文：任务响应模式——决定是否添加结构化输出指导。</remarks>
         public enum ResponseMode
         {
             /// <summary>Open-ended analysis, recommendations, explanations.</summary>
+            /// <remarks>中文：开放式分析、建议、解释。</remarks>
             Freeform,
             /// <summary>Statistics, reports, quality checks — benefits from structured guidance.</summary>
+            /// <remarks>中文：统计、报告、质量检查——受益于结构化指导。</remarks>
             Structured
         }
 
         /// <summary>
         /// Detect the appropriate response mode from the user message.
         /// </summary>
+        /// <remarks>中文：从用户消息中检测合适的响应模式。</remarks>
         public static ResponseMode DetectResponseMode(string userMessage)
         {
             string lower = userMessage.ToLowerInvariant();
@@ -47,6 +53,7 @@ namespace SpatialAgent.Runtime
         /// <summary>
         /// Build the final system prompt with optional context-aware injections.
         /// </summary>
+        /// <remarks>中文：构建最终系统提示符，并可选择上下文感知注入。</remarks>
         public static string Build(AgentContext? ctx = null, ResponseMode mode = ResponseMode.Freeform)
         {
             var sb = new StringBuilder();
@@ -59,6 +66,7 @@ namespace SpatialAgent.Runtime
             }
 
             // ── P0-4: Spatial reference context injection ──
+            // 中文：P0-4：空间参考上下文注入
             if (ctx?.SpatialRef != null)
             {
                 var crsInjection = ctx.SpatialRef.ToPromptInjection();
@@ -70,6 +78,7 @@ namespace SpatialAgent.Runtime
             }
 
             // ── P2-A（2026-07-20）：结构化输出——统计/报告类任务使用等宽文本表格 ──
+            // English：P2-A (2026-07-20): Structured output—statistical/reporting tasks use monospaced text tables
             if (mode == ResponseMode.Structured)
             {
                 sb.AppendLine();
@@ -94,6 +103,7 @@ namespace SpatialAgent.Runtime
             }
 
             // Recency boost: restate the critical output constraint at the end.
+            // 中文：新近性提升：在结尾重申关键输出约束。
             sb.AppendLine();
             sb.AppendLine("Output must be plain text. No markdown, no tables, no emoji, no code blocks. Chinese. 3 paragraphs max. State results directly.");
 
@@ -105,6 +115,7 @@ namespace SpatialAgent.Runtime
             try
             {
                 // ResourcePaths：插件环境下 BaseDirectory 指向 Pro 安装目录，必须按程序集目录探测
+                // English：ResourcePaths: In the plugin environment, BaseDirectory points to the Pro installation directory; you must search by the assembly directory
                 string? mdPath = ResourcePaths.Find("system_prompt.md");
                 if (mdPath != null)
                     return File.ReadAllText(mdPath, Encoding.UTF8);
@@ -120,6 +131,7 @@ namespace SpatialAgent.Runtime
         /// <summary>
         /// Hardcoded fallback template. Keep synchronized with system_prompt.md.
         /// </summary>
+        /// <remarks>中文：硬编码的备用模板。保持与system_prompt.md的同步。</remarks>
         private const string DefaultTemplate = @"你的所有回复必须严格遵循以下格式。任何违反即为错误回复。
 
 纯文本。无 markdown。无 emoji。无表格。无列表。无代码块。无分隔线。无加粗。

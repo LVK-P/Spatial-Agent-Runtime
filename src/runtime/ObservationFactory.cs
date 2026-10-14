@@ -11,17 +11,20 @@ namespace SpatialAgent.Runtime
     /// Converts raw ToolResult → structured Observation.
     /// Tries to parse JSON output for typed fields.
     /// </summary>
+    /// <remarks>中文：将原始工具结果转换为结构化观察→。尝试解析 JSON 输出中的类型字段。</remarks>
     public static class ObservationFactory
     {
         public static IObservation Create(string toolName, Dictionary<string, object?> input, ToolResult result, TimeSpan elapsed)
         {
             // Prefer typed StructuredOutput if tool provided it
+            // 中文：如果工具提供了类型化的结构化输出（StructuredOutput），我更倾向于使用
             if (result.StructuredOutput != null)
                 return new Observation { ToolName = toolName, Elapsed = elapsed, Output = result.StructuredOutput, Warnings = result.Success ? new List<string>() : new List<string> { result.Error ?? "" } };
 
             var output = new ObservationOutput { Raw = result.Output };
 
             // Fallback: Try parsing JSON output for structured fields
+            // 中文：备选方案：尝试解析结构化字段的JSON输出
             if (!string.IsNullOrEmpty(result.Output) && result.Success)
             {
                 try
@@ -49,13 +52,13 @@ namespace SpatialAgent.Runtime
                                 .Select(f => f?["name"]?.ToString() ?? f?.ToString() ?? "").ToList();
                     }
                 }
-                catch { /* JSON parse fails → keep Raw only */ }
+                catch { /* JSON 解析失败时仅保留原始值。 / If JSON parsing fails, keep only Raw. */ }
             }
 
             return new Observation
             {
                 ToolName = toolName,
-                ToolCategory = "", // filled by caller if needed
+                ToolCategory = "", // 如有需要由调用方填充。 / Filled by the caller if needed.
                 Elapsed = elapsed,
                 Output = output,
                 Warnings = result.Success ? new List<string>() : new List<string> { result.Error ?? "" }

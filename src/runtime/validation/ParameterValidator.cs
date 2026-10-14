@@ -15,6 +15,7 @@ using SpatialAgent.Core;
 //
 // 来源：跨实现架构审查后的参数验证边界。
 // ================================================================
+// English：================================================================ ParameterValidator.cs — Tool parameter pre-execution checker: Verify parameters before each ToolCall is executed in the Scheduler: (1) Required parameter check (2) Type validation (3) Fuzzy enumeration matching (via IEnumAliasProvider) (4) Spatial reference parameter validation (5) Numerical range validation (Phase 2) Pure logic, zero ArcGIS dependency — can be tested directly in Runtime.Tests. Source: Across Parameter Verification Boundaries After Implementation Architecture Review. ================================================================
 namespace SpatialAgent.Runtime.Validation
 {
     /// <summary>
@@ -24,6 +25,7 @@ namespace SpatialAgent.Runtime.Validation
     /// lowercase or aliased variants. IEnumAliasProvider corrects these
     /// before they hit the expensive GP execution layer.
     /// </summary>
+    /// <remarks>中文：预执行参数验证器。验证LLM生成的工具调用与ToolDefinition模式的匹配。关键见解：GIS 枚举值区分大小写;LLM经常生成小写或带混叠的变体。IEnumAliasProvider会在这些问题进入昂贵的GP执行层之前进行修正。</remarks>
     public class ParameterValidator
     {
         private readonly Dictionary<string, ToolDefinition> _schemas;
@@ -46,6 +48,7 @@ namespace SpatialAgent.Runtime.Validation
         }
 
         /// <summary>Validate a tool call. Returns corrected args or errors.</summary>
+        /// <remarks>中文：验证工具调用。返回已修正的辩论或错误。</remarks>
         public ParameterValidationResult Validate(ToolCall call)
         {
             var result = new ParameterValidationResult
@@ -62,6 +65,7 @@ namespace SpatialAgent.Runtime.Validation
             }
 
             // ① Required parameter check
+            // 中文：（1） 必要的参数检查
             foreach (var req in schema.Parameters.Required)
             {
                 if (!result.CorrectedArgs.ContainsKey(req) ||
@@ -72,21 +76,25 @@ namespace SpatialAgent.Runtime.Validation
             }
 
             // ② Type + range validation (per-parameter)
+            // 中文：（2） 类型 + 范围验证（每参数）
             foreach (var (name, prop) in schema.Parameters.Properties)
             {
                 if (!result.CorrectedArgs.TryGetValue(name, out var val) || val == null)
                     continue;
 
                 // Numeric range (Phase 2 — only active when data is available)
+                // 中文：数值范围（第二阶段——仅在数据可用时激活）
                 if (prop.MinValue.HasValue || prop.MaxValue.HasValue)
                     ValidateNumericRange(name, val, prop, result);
 
                 // Numeric type check for GP numeric types
+                // 中文：GP数字类型的数值类型检查
                 if (IsNumericDataType(prop.DataType))
                     ValidateNumericType(name, val, result);
             }
 
             // ③ Enum validation with alias resolution
+            // 中文：（3） 带有别名解析的枚举验证
             foreach (var (name, prop) in schema.Parameters.Properties)
             {
                 if (prop.Enum == null || prop.Enum.Count == 0) continue;
@@ -95,6 +103,7 @@ namespace SpatialAgent.Runtime.Validation
                 string strVal = val.ToString() ?? "";
 
                 // ③a: Exact match (case-insensitive)
+                // 中文：（3）a：完全匹配（不区分大小写）
                 var exact = prop.Enum.FirstOrDefault(e =>
                     e.Equals(strVal, StringComparison.OrdinalIgnoreCase));
                 if (exact != null)
@@ -110,6 +119,7 @@ namespace SpatialAgent.Runtime.Validation
                 }
 
                 // ③b: Type selector conversion (field_type, selection_type, etc.)
+                // 中文：（3）b：类型选择器转换（field_type、selection_type等）
                 if (_aliasProvider != null && _aliasProvider.IsTypeSelector(name))
                 {
                     var converted = _aliasProvider.ConvertType(name, strVal);
@@ -124,6 +134,7 @@ namespace SpatialAgent.Runtime.Validation
                 }
 
                 // ③c: Alias table lookup (IEnumAliasProvider)
+                // 中文：（3）c：别名表查询（IEnumAliasProvider）
                 if (_aliasProvider != null)
                 {
                     var resolved = _aliasProvider.ResolveAlias(name, strVal);
@@ -138,6 +149,7 @@ namespace SpatialAgent.Runtime.Validation
                 }
 
                 // ③d: Substring fallback (last resort fuzzy match)
+                // 中文：（3）d：子字符串备份（最后手段模糊匹配）
                 var substring = FuzzySubstringMatch(strVal, prop.Enum);
                 if (substring != null)
                 {
@@ -149,6 +161,7 @@ namespace SpatialAgent.Runtime.Validation
                 }
 
                 // Unresolvable
+                // 中文：无法解决
                 result.Errors.Add(
                     $"参数 {name} 枚举值无效: '{strVal}'，" +
                     $"有效值: [{string.Join(", ", prop.Enum.Take(10))}]" +
@@ -156,6 +169,7 @@ namespace SpatialAgent.Runtime.Validation
             }
 
             // ④ Spatial reference parameter validation
+            // 中文：（4） 空间参考参数验证
             foreach (var (name, prop) in schema.Parameters.Properties)
             {
                 if (!prop.IsSpatialRef) continue;
@@ -163,6 +177,7 @@ namespace SpatialAgent.Runtime.Validation
 
                 string strVal = val.ToString() ?? "";
                 // WKID should be an integer; longer strings look like WKT/prj paths
+                // 中文：WKID应为整数;较长的弦看起来像WKT/PRJ路径
                 if (!int.TryParse(strVal, out _) && strVal.Length > 10)
                 {
                     result.Warnings.Add(

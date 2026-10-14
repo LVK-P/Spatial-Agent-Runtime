@@ -8,6 +8,7 @@ namespace SpatialAgent.Runtime.Planning
     /// plan. It does not ask the model to restate a plan and therefore adds no
     /// latency for the common desktop path.
     /// </summary>
+    /// <remarks>中文：将模型提出的调用转变为不可变动、具有证据支持的物理计划。它不会要求模型重新陈述计划，因此不会为公共桌面路径增加延迟。</remarks>
     public sealed class DefaultPlanCompiler : IPlanCompiler
     {
         private readonly ToolRegistry _tools;
@@ -105,6 +106,7 @@ namespace SpatialAgent.Runtime.Planning
 
                 // ArcGIS Pro's geoprocessing host remains a single writer even
                 // when two writes have no detectable path overlap.
+                // 中文：即使两个写入没有可检测的路径重叠，ArcGIS Pro 的地理处理主机仍是单一写入者。
                 if (step.WriteSet.Count > 0)
                 {
                     var lastWriter = plan.Steps.LastOrDefault(
@@ -180,6 +182,7 @@ namespace SpatialAgent.Runtime.Planning
             {
                 // Declared contracts are authoritative. Name heuristics are a
                 // compatibility fallback only for legacy descriptors.
+                // 中文：声明的合同具有权威性。名称启发式只是遗留描述符的兼容性备份。
                 bool output = declaredOutputs.Count > 0
                     ? declaredOutputs.Contains(argument.Key)
                     : ParameterNameClassifier.IsOutputParameter(argument.Key);

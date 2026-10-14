@@ -6,6 +6,7 @@
 //   2. Token fallback: when tag scoring returns too few results, tokens
 //      from the user message are matched against tool name/description.
 // Consumed by ContextManager as part of the two-tier tool exposure system.
+// 中文：ToolIndex.cs — 用于上下文感知工具筛选的标签索引。加载可选的本地生成 tools_index.json，并按当前项目上下文使用两种策略评分：1. 标签评分：几何类型 + 带可配置权重的操作提示标签（RuntimePolicy）；2. 词元回退：标签评分结果不足时，将用户消息中的词元与工具名称/描述匹配。ContextManager 将其用于两层工具暴露机制。
 
 using System;
 using System.Collections.Generic;
@@ -37,6 +38,7 @@ namespace SpatialAgent.Runtime
         public bool IsLoaded => _loaded;
 
         /// <summary>Load from tools_index.json at the given path.</summary>
+        /// <remarks>中文：从给定路径的tools_index.json加载。</remarks>
         public void Load(string indexPath)
         {
             if (!File.Exists(indexPath))
@@ -65,6 +67,7 @@ namespace SpatialAgent.Runtime
         /// Score tools by tag overlap with geometry types and operation hints.
         /// Returns tool names ordered by descending relevance.
         /// </summary>
+        /// <remarks>中文：按标签评分工具与几何类型和操作提示的重叠。返回按相关性递减排序的工具名称。</remarks>
         public List<string> FindRelevant(
             HashSet<string>? layerGeomTypes = null,
             HashSet<string>? operationHints = null,
@@ -119,6 +122,7 @@ namespace SpatialAgent.Runtime
         /// <summary>
         /// Primary tag-based scoring, with token-based fallback when too few results are found.
         /// </summary>
+        /// <remarks>中文：主要按标签评分；结果过少时回退到词元评分。</remarks>
         public List<string> FindRelevantWithFallback(
             string userMessage,
             HashSet<string>? layerGeomTypes = null,
@@ -170,6 +174,7 @@ namespace SpatialAgent.Runtime
         }
 
         // ── Tokenization helpers ──
+        // 中文：令牌化辅助工具
 
         private static IEnumerable<string> Tokenize(string? text)
         {
@@ -199,8 +204,8 @@ namespace SpatialAgent.Runtime
         }
 
         private static bool IsCjk(char ch) =>
-            (ch >= '一' && ch <= '鿿') ||   // CJK Unified Ideographs
-            (ch >= '㐀' && ch <= '䶿') ||   // CJK Extension A
-            (ch >= '぀' && ch <= 'ヿ');      // Hiragana + Katakana
+            (ch >= '一' && ch <= '鿿') ||   // CJK 统一表意文字。 / CJK Unified Ideographs.
+            (ch >= '㐀' && ch <= '䶿') ||   // CJK 扩展 A。 / CJK Extension A.
+            (ch >= '぀' && ch <= 'ヿ');      // 平假名和片假名。 / Hiragana and Katakana.
     }
 }

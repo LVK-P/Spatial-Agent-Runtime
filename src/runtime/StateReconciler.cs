@@ -25,6 +25,7 @@ namespace SpatialAgent.Runtime
         /// <summary>
         /// Locate the transcript file that contains a given thread's session_start.
         /// </summary>
+        /// <remarks>中文：找到包含某一线程session_start的转录文件。</remarks>
         public static string? FindTranscriptForThread(string logDir, string threadId)
         {
             if (string.IsNullOrWhiteSpace(logDir) ||
@@ -47,7 +48,7 @@ namespace SpatialAgent.Runtime
                             return file.FullName;
                     }
                 }
-                catch { /* Unreadable file — keep scanning older ones */ }
+                catch { /* 文件不可读，继续扫描更旧的文件。 / Unreadable file; keep scanning older ones. */ }
             }
 
             return null;
@@ -57,6 +58,7 @@ namespace SpatialAgent.Runtime
         /// Return only the JSONL lines belonging to one session inside a shared
         /// transcript file: from its session_start up to the next session_start.
         /// </summary>
+        /// <remarks>中文：只返回共享转录文件中属于某一会话的 JSONL 行：从其session_start到下一session_start。</remarks>
         public static List<string> ReadSessionLines(string transcriptPath, string threadId = "")
         {
             var result = new List<string>();
@@ -84,6 +86,7 @@ namespace SpatialAgent.Runtime
                     catch (Newtonsoft.Json.JsonException)
                     {
                         // corrupt session_start line — skip, keep scanning
+                        // 中文：腐败session_start线——跳过，继续扫描
                     }
                 }
 
@@ -97,20 +100,24 @@ namespace SpatialAgent.Runtime
         // ★ ADR 0056 / Phase 3：以下方法委托到 Core——纯内存 JSONL 解析
 
         /// <summary>Extract layer names from in-memory transcript lines → Core.</summary>
+        /// <remarks>中文：从内存中的转录线中提取层名→核心。</remarks>
         public static List<string> ExtractReferencedLayers(IEnumerable<string> transcriptLines)
             => CoreReconciliationRules.ExtractReferencedLayers(transcriptLines);
 
         /// <summary>Path-based overload: reads file then delegates to Core.</summary>
+        /// <remarks>中文：基于路径的过载：读取文件然后委派给 Core。</remarks>
         public static List<string> ExtractReferencedLayers(string transcriptPath)
             => File.Exists(transcriptPath)
                 ? CoreReconciliationRules.ExtractReferencedLayers(File.ReadLines(transcriptPath))
                 : new List<string>();
 
         /// <summary>Extract tool chain from in-memory transcript lines → Core.</summary>
+        /// <remarks>中文：从内存中的转录行中提取工具链→ Core。</remarks>
         public static List<string> ExtractToolChain(IEnumerable<string> transcriptLines)
             => CoreReconciliationRules.ExtractToolChain(transcriptLines);
 
         /// <summary>Path-based overload: reads file then delegates to Core.</summary>
+        /// <remarks>中文：基于路径的过载：读取文件然后委派给 Core。</remarks>
         public static List<string> ExtractToolChain(string transcriptPath)
             => File.Exists(transcriptPath)
                 ? CoreReconciliationRules.ExtractToolChain(File.ReadLines(transcriptPath))
@@ -121,6 +128,7 @@ namespace SpatialAgent.Runtime
         /// against current project state.
         /// ★ Phase 3：diff 计算委托到 Core；本方法仅负责文件 I/O 编排。
         /// </summary>
+        /// <remarks>中文：制作一份对账报告，比较过去的会话状态与当前项目状态。Phase 3：diff 计算委托到 Core;本方法仅负责文件 I/O 编排。</remarks>
         public static ReconciliationReport Reconcile(
             string? transcriptPath,
             string currentMapInfo,

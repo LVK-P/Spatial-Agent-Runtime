@@ -125,6 +125,7 @@ namespace SpatialAgent.Runtime
             _sessionLease = lease;
 
         /// <summary>统一日志初始化——四层日志 + EventBus 订阅 + 健康监控。</summary>
+        /// <remarks>English：Unified log initialization—four-layer logs + EventBus subscription + health monitoring.</remarks>
         public void InitializeLogging(LoggingConfig config)
         {
             if (_eventBus == null) return;
@@ -193,9 +194,11 @@ namespace SpatialAgent.Runtime
         public IAgentSession Session => _session;
 
         /// <summary>本轮（最近一次 LLM 调用）的 token 用量，单轮展示用。</summary>
+        /// <remarks>English：The token usage for this round (the most recent LLM call) is for single-round demonstration.</remarks>
         public TokenUsage LastTurnTokens { get; } = new();
 
         /// <summary>上回合调用的工具名——操作链预测输入（Path D 增强）。</summary>
+        /// <remarks>English：The tool called last round is called — Chain of Operation Prediction Input (Path D Enhancement).</remarks>
         private List<string> _lastTurnToolCalls = new();
 
         // ── 审批恢复状态（ADR 0051）──
@@ -222,7 +225,7 @@ namespace SpatialAgent.Runtime
         {
             _turnCount = 0;
             _sessionTotalMs = 0;
-            _lastTurnToolCalls.Clear();   // ★ F1 配套：新会话不应携带旧会话的预测链
+            _lastTurnToolCalls.Clear();   // ★ F1：新会话不应携带旧会话的预测链。 / A new session must not retain the prior session's prediction chain.
             lock (_turnStateLock)
             {
                 _allStepResultsThisTurn.Clear();
@@ -308,6 +311,7 @@ namespace SpatialAgent.Runtime
 
             // ★ Phase C: rejected tools → blocked for this turn
             // Normalize to canonical name so Scheduler's canonical-name check always matches.
+            // 中文：C阶段：拒绝工具→本回合被封锁，归一化为规范名称，以便调度器的规范名称检查始终匹配。
             foreach (var step in rejectedSteps)
             {
                 AddRejectedCallSignature(step);
@@ -345,9 +349,11 @@ namespace SpatialAgent.Runtime
         /// LLM → Execute → feed results back → LLM decides continue/stop.
         /// Max 5 rounds per user turn. Stops when LLM returns no tool_calls.
         /// </summary>
+        /// <remarks>中文：LLM → 执行→反馈结果→LLM决定继续/停止。每回合最多5发子弹。当LLM无tool_calls返回时停止。</remarks>
         public async Task<AgentResponse> ProcessAsync(TaskRequest req)
         {
             // ★ P0-1：安全门缺失时硬阻断
+            // English：P0-1: Hard blocking when the safety door is missing
             if (_safety == null)
             {
                 _session.SetStatus(SessionStatus.Failed);
@@ -357,6 +363,7 @@ namespace SpatialAgent.Runtime
 
             using var run = CorrelationContext.BeginRun(_session.ThreadId);
             // ★ 审批恢复：复用被中断的 turn，不递增不写 user_msg
+            // English：Approval recovery: Reuse interrupted turns, do not increment or write user_msg
             if (!req.IsApprovalResumption)
                 _turnCount++;
             int turn = _turnCount;
@@ -391,13 +398,14 @@ namespace SpatialAgent.Runtime
             _scheduler.IsApprovalResumption = false;
             _scheduler.ApprovedTicketIds = null;
             _scheduler.ApprovedStepIds = null;
-            _scheduler.InvalidateInfluenceCache();  // ★ ADR 0051：每 turn 清除 describe 缓存，防止跨轮次数据污染
+            _scheduler.InvalidateInfluenceCache();  // ★ ADR 0051：每轮清除 describe 缓存，防止跨轮次数据污染。 / Clear the describe cache each turn to prevent cross-turn contamination.
             if (req.AppendUserMessage)
                 _transcriptTurn?.WriteUserMessage(turn, msg);
             var approvalDecision = req.ApprovalDecision;
             var approvalResumeMessages = new List<Message>();
 
             // ── ★ 审批恢复——暂停继续，非重试（ADR 0051，2026-07-21）──
+            // English：Approval Resumption — Pause and Continue, No Retrial (ADR 0051, 2026-07-21)
             if (req.IsApprovalResumption)
             {
                 var savedPlan = _session.Plan;
@@ -452,6 +460,7 @@ namespace SpatialAgent.Runtime
                             // ★ ADR 0055：归一化工具名。LLM 可能用短名/别名调用，
                             // 但 blocked set 必须存 canonical name，否则 Scheduler
                             // 用 canonical 名查不到 → 别名绕过拦截。
+                            // English：ADR 0055: Name of the normalization tool. LLMs may be called with shortened/aliases, but the blocked set must store the canonical name; otherwise, the scheduler cannot find the canonical name → bypass interception.
                             string raw = s.ToolCall?.Name ?? "";
                             string canonical = _tools.ResolveName(raw) ?? raw;
                             AddRejectedCallSignature(s);
@@ -514,6 +523,7 @@ namespace SpatialAgent.Runtime
                 {
                     // ★ ADR 0055：审计充实——记录批准范围（approval_kind、step、tool），
                     // 事后可证明"本次只执行了被批准的那一步"。
+                    // English：ADR 0055: Audit Enrichment—Recording the scope of approval (approval_kind, steps, tools), which can be later proven that "only the approved step was performed this time."
                     var approvedSteps = savedPlan.Steps
                         .Where(s => s.Status == PlanStepStatus.AwaitingApproval
                                     && s.PendingApproval?.Id == approvalDecision.TicketId)
@@ -548,6 +558,7 @@ namespace SpatialAgent.Runtime
                         approvalDecision.TicketId
                     };
                     // Batch Destructive: pass all covered step IDs to the scheduler.
+                    // 中文：批次破坏：将所有覆盖的步 ID 传递给调度器。
                     var approvedTicket = savedPlan.Steps
                         .Select(s => s.PendingApproval)
                         .FirstOrDefault(t => t != null && t.Id.Equals(approvalDecision.TicketId, StringComparison.OrdinalIgnoreCase));
@@ -689,6 +700,7 @@ namespace SpatialAgent.Runtime
                     }
                 }
                 // 批准（有失败）/拒绝 → 继续 ReAct 循环
+                // English：Approval (with failure)/rejection → continues the ReAct cycle
             }
             EmitProgress("收集上下文");
             var ctx = await _contextManager.GatherLightAsync(msg);
@@ -729,11 +741,13 @@ namespace SpatialAgent.Runtime
                 _tools.GetAllDescriptors());
             // Goal-contract capabilities are the strongest deterministic
             // routing signal and must not be displaced by the Tier-1 budget.
+            // 中文：目标-合同能力是最强的确定性路由信号，不能被一级预算取代。
             skillTools = capabilityTools
                 .Concat(skillTools)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
             // 操作链预测：上回合调用的工具 → 其后继预提升到 Tier1
+            // English：Chain of operation prediction: The tool called last round → its successor is pre-promoted to Tier 1
             var predicted = RuntimePolicy.PredictNextTools(_lastTurnToolCalls);
             var (tier1, tier2) = RuntimePolicy.SelectExposedToolsTiered(
                 _tools.GetAllDescriptors(), ctx.RelevantTools, skillTools, predicted);
@@ -742,6 +756,7 @@ namespace SpatialAgent.Runtime
                 Debug.WriteLine($"[AgentRuntime] Tool exposure: Tier1={tier1.Count} Tier2={tier2.Count} Total={tools.Count} predicted={predicted.Count}");
 
             // ★ Phase C2 fix：工具暴露决策写入 transcript（此前仅 Debug.WriteLine，事后无据可查）
+            // English：Phase C2 fix: Tool exposes decision writing transcript (previously only Debug.WriteLine, no evidence available afterward)
             _transcriptTurn?.WriteToolExposure(turn, tier1.Count, tier2.Count,
                 RuntimePolicy.AlwaysOnToolNames.Count,
                 tier1.Select(t => t.Name).ToList(),
@@ -751,6 +766,7 @@ namespace SpatialAgent.Runtime
             // Messages: prior session history + exactly one augmented current
             // user input. The raw current message is retained in the durable
             // session ledger, but must not be sent a second time to the model.
+            // 中文：消息：之前的会话历史 + 恰好一次增强的当前用户输入。原始当前消息会被保留在持久会话账本中，但不能第二次发送给模型。
             var messages = new List<Message>(_session.Messages);
             if (messages.Count > 0
                 && messages[^1].Role.Equals("user", StringComparison.OrdinalIgnoreCase)
@@ -764,6 +780,7 @@ namespace SpatialAgent.Runtime
             await SaveCheckpointAsync(turn, 0, msg, ctx, turnContext, systemPromptHash, tools, Array.Empty<string>(), SessionStatus.Running, ct);
 
             // ★ REACT LOOP ★
+            // 中文：REACT 循环
             var allObs = _allObsThisTurn;
             var allStepResults = _allStepResultsThisTurn;
             var blockedToolsThisTurn = new HashSet<string>(_blockedToolsThisTurn, StringComparer.OrdinalIgnoreCase);
@@ -771,6 +788,7 @@ namespace SpatialAgent.Runtime
             _blockedToolsThisTurn.Clear();
             _blockedCallSignaturesThisTurn.Clear();
             // ★ Phase C: propagate blocked tools to Scheduler for hard intercept
+            // 中文：C 阶段：将阻塞工具传播到调度器以实现硬拦截
             _scheduler.BlockedToolNames = blockedToolsThisTurn;
             _scheduler.BlockedCallSignatures = blockedCallSignaturesThisTurn;
             bool hadTools = false;
@@ -785,6 +803,7 @@ namespace SpatialAgent.Runtime
                 EmitProgress(round == 0 ? "AI 分析中" : $"继续执行({round + 1}/{maxRounds})");
 
                 // ★ Snapshot trigger: what does the agent see before deciding?
+                // 中文：快照触发：代理在决定前看到了什么？
                 if (round == 0)
                 {
                     _eventBus?.Publish(new AgentEvent
@@ -818,6 +837,7 @@ namespace SpatialAgent.Runtime
                     RequiredParameters = t.RequiredParameters
                 }).ToList();
                 // model/thinking 取自 Provider 实际请求参数——UI 切换是否生效以此为准
+                // English：model/thinking is taken from the actual requested parameters of the Provider—whether the UI switch is effective
                 ToolMessageProtocolResult protocol =
                     ToolMessageProtocol.Validate(messages);
                 if (!protocol.IsValid)
@@ -893,6 +913,7 @@ namespace SpatialAgent.Runtime
                 }
 
                 // ★ Token accounting: accumulate session usage after every LLM call
+                // 中文：令牌计费：每次 LLM 调用后累加会话使用量
                 LastTurnTokens.PromptTokens += llmResp.PromptTokens;
                 LastTurnTokens.CompletionTokens += llmResp.CompletionTokens;
                 _session.TokenUsage.PromptTokens += llmResp.PromptTokens;
@@ -1055,6 +1076,7 @@ namespace SpatialAgent.Runtime
                 }
 
                 // No tool calls → done
+                // 中文：→做任何工具调用
                 if (!llmResp.HasToolCalls)
                 {
                     _session.SetStatus(SessionStatus.Completed);
@@ -1091,6 +1113,7 @@ namespace SpatialAgent.Runtime
                     _session.AddMessage(new Message { Role = "assistant", Content = finalReply });
                     _session.Plan = null;
                     // ★ P1-4：turn 收尾——清除本轮 agent 自建且未清的选择集
+                    // English：P1-4: turn to wrap up—Clears the selected set that the agent has built and has not yet cleared in this round
                     if (hadTools)
                         await ClearAgentSelectionsAsync(allStepResults, turn, msg, ct);
                     _sessionTotalMs += sessionSw.ElapsedMilliseconds;
@@ -1112,6 +1135,7 @@ namespace SpatialAgent.Runtime
                 }
 
                 // ★ P0-3：工具存在性预检——LLM 编造的工具名在进 Scheduler 前拦截
+                // English：P0-3: Tool Existence Precheck—The LLM-generated tool name is intercepted before entering the Scheduler
                 var responseToolCalls = llmResp.ToolCalls.ToList();
                 ToolMessageProtocolResult responseProtocol =
                     ToolMessageProtocol.ValidateToolCallBatch(
@@ -1204,11 +1228,13 @@ namespace SpatialAgent.Runtime
                 if (hallucinatedTools.Count > 0)
                 {
                     // 部分幻觉 → 阻止幻觉工具，其余正常执行
+                    // English：Some hallucinations → prevent hallucination tools, while the rest operate normally
                     _eventBus?.Publish(new AgentEvent { EventType = "llm.hallucinated_tools", Turn = turn,
                         Metadata = new() { ["tools"] = string.Join(",", hallucinatedTools) } });
                     blockedToolsThisTurn.UnionWith(hallucinatedTools);
                     // Preserve the original assistant batch for protocol
                     // fidelity; only executable calls enter the physical plan.
+                    // 中文：保留原始助理批处理以保证协议的忠实度;只有可执行调用进入物理计划。
                 }
 
                 hadTools = true;
@@ -1216,6 +1242,7 @@ namespace SpatialAgent.Runtime
                 // Compile a physical plan without another model round-trip.
                 // The deterministic router keeps ordinary one-tool interactions
                 // on the direct path and enables reviewers only for complex risk.
+                // 中文：在没有其他模型往返的情况下，编制一份实体计划。确定性路由器将普通单工具交互保持在直接路径上，仅允许审查者处理复杂风险。
                 var planningRequest = new PlanningRequest
                 {
                     Goal = msg,
@@ -1236,6 +1263,7 @@ namespace SpatialAgent.Runtime
                 var plan = _planCompiler.Compile(planningRequest, nextStepId);
                 // The plan is an optimistic transaction over the exact host
                 // revision observed before model inference.
+                // 中文：该计划是基于模型推断前观察到的确切宿主修正的乐观交易。
                 plan.DataRevision = observedHostRevision;
                 plan.ProjectRevision = observedHostRevision.Fingerprint;
                 plan.Version = nextPlanVersion++;
@@ -1395,12 +1423,14 @@ namespace SpatialAgent.Runtime
                 EmitPlanGenerated(turn, round, plan);
                 // Safety pre-check: log intent (audit done after execution based on real status)
                 // No pre-execution audit — audit runs on actual results below
+                // 中文：安全预检查：日志意图（基于实际状态执行后进行审计）无执行前审计——审计基于以下实际结果进行
 
                 EmitProgress($"执行 {plan.Steps.Count} 步");
                 // Persist the exact validated plan before the first tool can
                 // mutate ArcGIS. If Pro is terminated during a GP operation,
                 // recovery still knows what was in flight; durable tool_start
                 // and tool_end records complete the execution timeline.
+                // 中文：在第一个工具修改 ArcGIS 状态前，先持久化已验证的精确计划。如果 Pro 在 GP 操作期间终止，恢复流程仍能识别进行中的操作；持久化的 tool_start 和 tool_end 记录可补全执行时间线。
                 await SaveCheckpointAsync(
                     turn,
                     round,
@@ -1438,6 +1468,7 @@ namespace SpatialAgent.Runtime
                     // Never plan the next round from a pre-mutation map model.
                     // The same refresh reconciles manual edits that invalidated
                     // optimistic execution.
+                    // 中文：绝不要使用变更前的地图模型规划下一轮。同一次刷新还能协调使乐观执行失效的人工编辑。
                     ctx = await _contextManager.GatherLightAsync(msg);
                     PopulateDomainContext(ctx);
                     _scheduler.SetDomainSnapshot(_session.Domain);
@@ -1542,9 +1573,11 @@ namespace SpatialAgent.Runtime
                     // ★ Write validation results to append-only ledger
                     // ★ Sync plan step status from execution result
                     // ★ Audit AFTER execution, based on real status
+                    // 中文：将验证结果写入仅追加账本；同步计划步骤状态与执行结果；基于实际状态执行事后审计
                 }
 
                 // ★ Feed results back to LLM: assistant msg with tool_calls + tool results with tool_call_id
+                // 中文：反馈结果给LLM：助理消息，tool_calls+工具结果，使用tool_call_id
                 messages.Add(new Message
                 {
                     Role = "assistant",
@@ -1593,9 +1626,11 @@ namespace SpatialAgent.Runtime
             }
 
             // ★ P1-4：turn 收尾——清除本轮 agent 自建且未清的选择集（终态保留需用户明确选择意图）
+            // English：P1-4: turn to wrap up—clears the current round of agents' self-created and uncleared selection sets (retaining the terminal state requires the user's clear choice intention)
             await ClearAgentSelectionsAsync(allStepResults, turn, msg, ct);
 
             // Max rounds reached → Synthesize
+            // 中文：最大弹药达到→合成
             if (allStepResults.Any(s => s.Status == StepResultStatus.Blocked) &&
                 !allStepResults.Any(s => s.Status == StepResultStatus.Completed))
             {
@@ -1617,12 +1652,13 @@ namespace SpatialAgent.Runtime
                     ExecutionSummary = BuildSummary(allStepResults),
                     HadToolCalls = true,
                     StopReason = "SafetyBlocked",
-                    CanContinue = false, // all steps blocked — nothing to continue
+                    CanContinue = false, // 所有步骤均被阻止，无法继续。 / All steps are blocked; nothing can continue.
                     ToolResults = CollectToolResults(allStepResults)
                 };
             }
 
             // ★ 操作链预测：记录本回合调用的工具名，下一回合 SelectExposedToolsTiered 使用
+            // English：Chain of operation prediction: Record the name of the tool called in this round, and use it in the next round with SelectExposedToolsTiered
             RecordTurnToolCalls(allStepResults);
 
             EmitProgress("生成回复");
@@ -1677,6 +1713,7 @@ namespace SpatialAgent.Runtime
         // ================================================================
         // Synthesis
         // ================================================================
+        // 中文：================================================================ 综合================================================================
         async Task<string> Synth(
             string question,
             IReadOnlyList<IObservation> obs,
@@ -1870,6 +1907,7 @@ namespace SpatialAgent.Runtime
                 Turn = _turnCount,
                 // 98 is the reversible close observation, 99 the terminal
                 // barrier. Both sort after normal planner rounds.
+                // 中文：98是可逆的近距离观测，99是终极屏障。两者都是在正常的计划轮次后分拣。
                 Round = terminal ? 99 : 98,
                 UserMessage = _session.Messages.LastOrDefault(message => message.Role == "user")?.Content ?? "",
                 Status = _session.Status,
@@ -1941,6 +1979,7 @@ namespace SpatialAgent.Runtime
         /// rather than parsing the ProjectInfo/MapInfo text blobs.
         /// Layers, Selection, Workspace await structured IMapReader DTO methods.
         /// </summary>
+        /// <remarks>中文：用AgentContext中的结构化字段填充DomainContext。它消耗结构化字段（采集时由 ContextManager 填充），而不是解析 ProjectInfo/MapInfo 的文本块。图层、选择、工作区等待结构化的IMapReader DTO方法。</remarks>
         private void PopulateDomainContext(AgentContext ctx)
         {
             var domain = _session.Domain;
@@ -2090,6 +2129,7 @@ namespace SpatialAgent.Runtime
         /// 用户手工选择不受影响——此处只看本轮执行过的工具调用）。
         /// 走注册表内的标准工具执行，并写入 transcript 保持全程可追溯。
         /// </summary>
+        /// <remarks>English：P1-4: At the end of turn, clear the agent's self-built and unfinished selection set (terminal state selection retained, user manual selection unaffected—here only the tool calls executed in this round are considered). Execute using standard tools within the registry and write transcripts to maintain full traceability.</remarks>
         private async Task ClearAgentSelectionsAsync(
             IReadOnlyList<StepExecutionResult> allStepResults, int turn, string userMessage, CancellationToken ct)
         {
@@ -2106,6 +2146,7 @@ namespace SpatialAgent.Runtime
                     ct.ThrowIfCancellationRequested();
 
                     // 工具名/参数知识单点在 RuntimePolicy（审查项 F1）
+                    // English：Toolname/parameter knowledge single point in RuntimePolicy (review item F1)
                     var call = RuntimePolicy.BuildSelectionClearCall(layer);
 
                     _transcriptTool?.WriteToolStart(turn, 0, call.Name, call.Arguments);
@@ -2194,6 +2235,7 @@ namespace SpatialAgent.Runtime
 
             // Restore structured domain state so checkpoint recovery
             // has the same project/map context that was saved.
+            // 中文：恢复结构化域状态，使检查点恢复拥有保存的项目/地图上下文。
             if (!string.IsNullOrWhiteSpace(state.ProjectName))
                 _session.Domain.Project.Name = state.ProjectName;
             if (!string.IsNullOrWhiteSpace(state.ProjectPath))
@@ -2212,6 +2254,7 @@ namespace SpatialAgent.Runtime
         /// 原实现仅在 max-round 合成路径赋值，导致 Path D 预测机制在主成功路径
         /// （正常结束、AwaitingApproval、SafetyBlocked 等）基本不生效。
         /// </summary>
+        /// <remarks>English：Chain of Operation Prediction (F1 fix, 2026-07-20): Extract tool names from all execution steps in this round for use by PredictNextTools in the next round. It must be called on all exit paths—not limited to when the maximum round is reached. The original implementation only assigns values to max-round synthesis paths, resulting in the Path D prediction mechanism being basically ineffective on the main success path (such as normal completion, Awaiting Approval, SafetyBlocked, etc.).</remarks>
         private void RecordTurnToolCalls(List<StepExecutionResult> allStepResults)
         {
             _lastTurnToolCalls = allStepResults
@@ -2768,6 +2811,7 @@ namespace SpatialAgent.Runtime
         }
 
         /// <summary>Move every active log stream as one lifecycle operation.</summary>
+        /// <remarks>中文：将所有活跃日志流作为一个生命周期操作进行移动。</remarks>
         public void MigrateLogging(string logDir)
         {
             _transcriptLifecycle?.MigrateTo(logDir);
@@ -3043,6 +3087,7 @@ namespace SpatialAgent.Runtime
         }
 
         // ── 审批恢复辅助方法（ADR 0051）──
+        // English：Approval Recovery Assistance Method (ADR 0051)
 
         private static void SyncPlanStatuses(AgentPlan plan, IReadOnlyList<StepExecutionResult> steps)
         {
@@ -3183,6 +3228,7 @@ namespace SpatialAgent.Runtime
         /// deliberately invoked before approval/blocked/complete branching so
         /// completed work cannot disappear from session, audit or checkpoints.
         /// </summary>
+        /// <remarks>中文：每条调度器返回路径都使用统一的结算边界。该边界特意在批准/阻塞/完成分支之前调用，确保已完成工作不会从会话、审计或检查点中消失。</remarks>
         private void SettleStepResults(
             AgentPlan plan,
             IReadOnlyList<StepExecutionResult> incoming,

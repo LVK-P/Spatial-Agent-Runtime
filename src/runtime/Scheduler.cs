@@ -16,6 +16,7 @@ namespace SpatialAgent.Runtime
     /// - Per-step timeout control (ToolExecutionTimeoutPolicy)
     /// - CancellationToken propagation to IToolExecutor
     /// </summary>
+    /// <remarks>中文：调度员——读取计划，顺序派遣工具。复杂性存在于它调用的模块中，而非这里。P0 加固（2026-07-18）：- 预执行参数验证（ParameterValidator）- 每步超时控制（ToolExecutionTimeoutPolicy）- 取消令牌向 IToolExecutor 传播</remarks>
     public class Scheduler : IScheduler
     {
         private readonly ToolRegistry _tools;
@@ -25,11 +26,13 @@ namespace SpatialAgent.Runtime
         private IWorkspaceService? _workspace;
 
         // ── P0 hardening: pre-execution validation ──
+        // 中文：P0 硬化：执行前验证
         private ParameterValidator? _paramValidator;
         private ToolExecutionTimeoutPolicy? _timeoutPolicy;
         private TimeSpan _progressHeartbeatInterval = TimeSpan.FromSeconds(5);
 
         // ── Data influence quantity gate (ADR 0051) ──
+        // 中文：数据影响量门（ADR 0051）
         private IDataInfluenceEstimator? _influenceEstimator;
         private IInvocationEffectResolver _effectResolver = new DefaultInvocationEffectResolver();
         private IInvocationSafetyKernel _safetyKernel = new DeterministicSafetyKernel();
@@ -38,6 +41,7 @@ namespace SpatialAgent.Runtime
 
         /// <summary>Approval resumption flag — when true, AwaitingApproval plan steps
         /// are treated as Pending and quantity gate re-check is skipped (ADR 0051).</summary>
+        /// <remarks>中文：审批恢复标志——当正确时，等待审批计划步骤被视为待处理，且跳过数量门重新检查（ADR 0051）。</remarks>
         public bool IsApprovalResumption { get; set; }
 
         /// <summary>
@@ -46,16 +50,19 @@ namespace SpatialAgent.Runtime
         /// descriptive reason. Tool-name granularity is transitional —
         /// future phases should refine to BlockedCallSignature (tool+layer+field).
         /// </summary>
+        /// <remarks>中文：C阶段：本回合工具名称被硬卡住（用户拒绝批准）。执行前检查过;被阻挡的步骤会得到Status=Blocked，并有描述性原因。工具名称的细度性是过渡性的——未来阶段应细化为BlockedCallSignature（工具+图层+字段）。</remarks>
         public IReadOnlySet<string>? BlockedToolNames { get; set; }
         public IReadOnlySet<string>? BlockedCallSignatures { get; set; }
         public IReadOnlySet<string>? ApprovedTicketIds { get; set; }
         /// <summary>Batch Destructive approval: step IDs covered by the approved ticket.</summary>
+        /// <remarks>中文：批次破坏性审批：批准工单涵盖的步骤编号。</remarks>
         public IReadOnlySet<int>? ApprovedStepIds { get; set; }
         /// <summary>
         /// Successfully settled semantic actions in this goal transaction.
         /// A replan may change step and provider call ids but must not execute
         /// the same action twice.
         /// </summary>
+        /// <remarks>中文：在该目标事务中已成功完成的语义动作。重新规划可以更改步骤和提供方调用 ID，但不得重复执行同一动作。</remarks>
         public IReadOnlySet<string>? SatisfiedActionIds { get; set; }
 
         private bool IsStepApproved(PlanStep step, AgentPlan plan)
@@ -128,9 +135,11 @@ namespace SpatialAgent.Runtime
         }
 
         /// <summary>Current conversation turn — set by AgentRuntime before each turn.</summary>
+        /// <remarks>中文：当前对话回合——由AgentRuntime在每回合前设置。</remarks>
         public int CurrentTurn { get; set; }
 
         /// <summary>Current user-granted permission for this session.</summary>
+        /// <remarks>中文：本次会话当前用户授权。</remarks>
         public AgentPermissionLevel CurrentPermissionLevel { get; set; } = AgentPermissionLevel.RequestApproval;
 
         private readonly HashSet<string> _blockedCallSignaturesThisRun = new(StringComparer.Ordinal);
@@ -144,25 +153,31 @@ namespace SpatialAgent.Runtime
         }
 
         /// <summary>Set safety gate after construction.</summary>
+        /// <remarks>中文：施工后设置安全门。</remarks>
         public void SetSafety(ISafetyGate safety) => _safety = safety;
 
         /// <summary>Set workspace service after construction.</summary>
+        /// <remarks>中文：施工后设置工作空间服务。</remarks>
         public void SetWorkspace(IWorkspaceService? workspace) => _workspace = workspace;
 
         /// <summary>Set pre-execution parameter validator (P0-2).</summary>
+        /// <remarks>中文：设置预执行参数验证器（P0-2）。</remarks>
         public void SetParameterValidator(ParameterValidator? validator) => _paramValidator = validator;
 
         /// <summary>Set per-tool timeout policy (P0-3).</summary>
+        /// <remarks>中文：设置每个工具的超时策略（P0-3）。</remarks>
         public void SetTimeoutPolicy(ToolExecutionTimeoutPolicy? policy) => _timeoutPolicy = policy;
 
         /// <summary>
         /// Controls elapsed-time heartbeats while a tool adapter is awaiting
         /// its host. Public for deterministic tests and host tuning.
         /// </summary>
+        /// <remarks>中文：在工具适配器等待主机时控制经过时间的心跳。公开用于确定性测试和主机调优。</remarks>
         public void SetProgressHeartbeatInterval(TimeSpan interval) =>
             _progressHeartbeatInterval = interval;
 
         /// <summary>Set data influence estimator for quantity-sensitive safety gate (ADR 0051).</summary>
+        /// <remarks>中文：设置数量敏感安全门（ADR 0051）的数据影响估计器。</remarks>
         public void SetDataInfluenceEstimator(IDataInfluenceEstimator? estimator) => _influenceEstimator = estimator;
         public void SetEffectResolver(IInvocationEffectResolver resolver) =>
             _effectResolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
@@ -173,13 +188,16 @@ namespace SpatialAgent.Runtime
             _hostStateGuard = guard;
 
         /// <summary>Invalidate influence estimator cache at turn start (ADR 0051).</summary>
+        /// <remarks>中文：在回合开始时失效影响估计缓存（ADR 0051）。</remarks>
         public void InvalidateInfluenceCache() => _influenceEstimator?.InvalidateCache();
 
         /// <summary>Set validators after construction (for late binding scenarios).</summary>
+        /// <remarks>中文：在构建后设置验证者（针对晚期绑定场景）。</remarks>
         public void SetValidators(List<IValidationRule> validators)
         {
             _validators = validators;
             // Propagate current turn to all validators
+            // 中文：将当前的回合传播给所有验证者
             foreach (var v in validators)
                 v.CurrentTurn = CurrentTurn;
         }
@@ -242,6 +260,7 @@ namespace SpatialAgent.Runtime
             // Resolve schema defaults and deterministic corrections before any
             // approval signature or effect assessment is created. The exact
             // invocation approved by the user must be the invocation executed.
+            // 中文：在创建任何批准签名或效果评估之前，先解决模式默认和确定性修正。用户批准的具体调用必须是实际执行的调用。
             foreach (var candidate in plan.Steps.Where(s =>
                          s.ToolCall != null
                          && (s.Status == PlanStepStatus.Pending
@@ -297,6 +316,7 @@ namespace SpatialAgent.Runtime
 
             // ★ 审批恢复：跳过已完成/失败的步骤（避免重复执行）。
             // AwaitingApproval 步骤在恢复时被视为 Pending（用户已批准）。
+            // English：Approval Recovery: Skips completed/failed steps (avoiding repeated execution). The AwaitingApproval step is considered Pending upon recovery.
             var pendingSteps = plan.Steps
                 .Where(s => (s.Status == PlanStepStatus.Pending ||
                              (IsApprovalResumption
@@ -310,6 +330,7 @@ namespace SpatialAgent.Runtime
             // 显式批准——预扫描不应重新评估它们。仅对新 Pending 步骤做安全评估。
             // 这拆除了"批准一个 Destructive → session 临时 FullAccess → 放行所有 Destructive"
             // 的会话级提权链路。每个 Destructive 步骤独立暂停。
+            // English：ADR 0055 (2026-07-21): When approval is restored, the AwaitingApproval step has been explicitly approved by the user—pre-scans should not be re-evaluated. Only the safety assessment of the new Pending steps is performed. This removes the session-level privilege escalation chain that "approves a Destructive → session to → release all Destructives" for temporary FullAccess release. Each Destructive step is paused independently.
             var resumedStepIds = IsApprovalResumption
                 ? plan.Steps.Where(s => s.Status == PlanStepStatus.AwaitingApproval
                                         && s.PendingApproval != null
@@ -323,6 +344,7 @@ namespace SpatialAgent.Runtime
                 {
                     // ★ 已在当前 Scheduler 实例中因备份失败等原因被阻止的调用签名，
                     // pre-scan 不再为其触发审批——阻止 LLM 反复提交同一危险操作。
+                    // English：For call signatures blocked in the current Scheduler instance due to backup failures or other reasons, pre-scan no longer triggers approval—preventing the LLM from repeatedly committing the same dangerous operation.
                     string canon = _tools.ResolveName(s.ToolCall!.Name) ?? s.ToolCall.Name;
                     string sig = ApprovalProtocol.ComputeCallSignature(canon, s.ToolCall.Arguments);
                     return !_blockedCallSignaturesThisRun.Contains(sig)
@@ -335,6 +357,7 @@ namespace SpatialAgent.Runtime
                     var effect = _effectResolver.Resolve(descriptor, s.ToolCall, _domainSnapshot);
                     // Preserve the compiler/domain-pack static profile while
                     // refreshing invocation scope from the final normalized args.
+                    // 中文：保留编译器/域包的静态配置文件，同时刷新最终归一化 arg 中的调用范围。
                     if (s.Effect?.Profile != null)
                         effect.Profile = s.Effect.Profile;
                     s.Effect = effect;
@@ -359,6 +382,7 @@ namespace SpatialAgent.Runtime
 
             // ★ 批量收集计划中所有 Destructive 步骤，合并为一个审批请求。
             // 用户一次确认全部放行——不再因逐个暂停 + LLM 重规划导致 5+4+3+2+1 的重复审批。
+            // English：Batch collect all Destructive steps in the plan and merge them into a single approval request. Users confirm all releases in one go—no more repeated approvals of 5+4+3+2+1 due to individual pauses + LLM replanning.
             var destructiveAssessments = assessments
                 .Where(x => x.Decision.Kind == SafetyDecisionKind.RequireApproval)
                 .ToList();
@@ -602,6 +626,7 @@ namespace SpatialAgent.Runtime
                 }
 
                 // ── Safety: classify risk ──
+                // 中文：安全：风险分类
                 var riskLevel = _safety?.Classify(toolName) ?? ToolRiskLevel.Modify;
                 var descriptor = _tools.GetDescriptor(canonicalToolName);
                 var governance = descriptor is IToolGovernanceDescriptor governanceDescriptor
@@ -610,6 +635,7 @@ namespace SpatialAgent.Runtime
 
                 // ── ★ Phase B3: ResolveArgs — merge LLM raw args with tool DefaultParameters ──
                 // Source labels distinguish LLM-provided values from tool defaults for auditability.
+                // 中文：B3阶段：ResolveArgs — 将LLM原始Args与工具合并。DefaultParameters的来源标签用于区分LLM提供的值与工具默认值，以便可审计。
                 var argSources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 var resolvedArgs = new Dictionary<string, object?>(step.ToolCall.Arguments, StringComparer.OrdinalIgnoreCase);
                 foreach (var key in step.ToolCall.Arguments.Keys)
@@ -634,6 +660,7 @@ namespace SpatialAgent.Runtime
                 // User rejected this tool earlier in the turn → block at Scheduler level.
                 // This is a HARD block: the tool won't execute regardless of permission level.
                 // Tool-name granularity is transitional (see ADR 0055 §9.2).
+                // 中文：C阶段：BlockedTools 硬拦截 用户在调度器层面的阻挡→回合早期拒绝了该工具。这是一个硬性阻断：无论权限等级如何，工具都无法执行。工具名称的粒度是过渡性（参见ADR 0055 §9.2）。
                 if (BlockedToolNames?.Contains(canonicalToolName) == true)
                 {
                     stepResult.Status = StepResultStatus.Blocked;
@@ -693,6 +720,7 @@ namespace SpatialAgent.Runtime
                 // shortName 回退解析到了 "management_Erase"（真实的 Destructive 工具）。
                 // SafetyGate 用原始名称分类 → 未知 → Destructive（修复后），但这里需要
                 // 确认解析后的名称不会导致风险升级。
+                // English：P0-3 Enhancement (2026-07-20): Risk comparison before and after tool name analysis. Scenario: The LLM calls "conversion_Erase" (fabricated), and ToolNameResolver parses "management_Erase" (the real Destructive tool) through shortName rollback. SafetyGate classifies by original names→ Unknown → Destructive (after fix), but here it is necessary to confirm that the resolved names do not cause risk escalation.
                 if (!canonicalToolName.Equals(toolName, StringComparison.OrdinalIgnoreCase)
                     && !canonicalToolName.EndsWith(toolName, StringComparison.OrdinalIgnoreCase))
                 {
@@ -720,6 +748,7 @@ namespace SpatialAgent.Runtime
                 // 若校验纠正了参数（如 field_name 大小写/alias），数量门必须消费
                 // 修正后的参数——否则审批提示中的 layer/field 可能不等于最终执行参数，
                 // 造成"批准依据"与"执行事实"脱节。
+                // English：P0-2: Pre-execution parameter validation ADR 0055 (2026-07-21): Parameter validation runs **before the quantity gate**. If the validation corrects parameters (such as field_name case/alias), the quantity gate must consume the corrected parameters—otherwise, the layer/field in the approval prompt may not be the final execution parameter, causing a disconnect between the "approval basis" and the "execution fact."
                 if (_paramValidator != null)
                 {
                     var validation = _paramValidator.Validate(new ToolCall
@@ -760,6 +789,7 @@ namespace SpatialAgent.Runtime
                     if (validation.Action == ValidationAction.Corrected)
                     {
                         // Apply corrected args — subsequent quantity gate sees corrected values
+                        // 中文：应用修正 args ——后续的数量门看到修正值
                         step.ToolCall.Arguments = validation.CorrectedArgs;
                         stepResult.InputParameters = new Dictionary<string, object?>(validation.CorrectedArgs);
                         foreach (var correction in validation.Corrections)
@@ -788,6 +818,7 @@ namespace SpatialAgent.Runtime
                 // 跳过数量门二次检查——安全门+数量门是 AND 关系，审批是暂停继续而非重试。
                 // ★ ADR 0055：参数校验已在前置运行——此处的 step.ToolCall.Arguments
                 // 是 CorrectedArgs（如有纠正），评估对象 = 执行对象。
+                // English：Quantity-sensitive safety gate (ADR 0051) approval restoration (2026-07-21): Step status is AwaitingApproval → User has approved, skipped the second check of the quantity gate — safety gate + quantity gate is an AND relationship, approval is paused to continue, not retested. ADR 0055: Parameter validation is running pre-running—step here. ToolCall.Arguments is a CorrectedArgs (if corrected), Evaluation Object = Execution Object.
                 bool wasApproved = step.Status == PlanStepStatus.AwaitingApproval
                     && IsStepApproved(step, plan);
 
@@ -799,6 +830,7 @@ namespace SpatialAgent.Runtime
                     // ★ 设计原则（2026-07-24）：RequestApproval 模式下，数量门无法评估 Modify 影响
                     // → 交由用户审批（AwaitingApproval），不硬阻止（Blocked），不静默放行。
                     // _influenceEstimator 未注入与 EstimateAsync 返回 IsReliable=false 走同一条审批路径。
+                    // English：Design Principles (2026-07-24): In the RequestApproval mode, the quantity gate cannot assess the impact of Modify→ is submitted to user approval (AwaitingApproval), not blocked by force, and not released silently. _influenceEstimator Not injected, but follows the same approval path as EstimateAsync returns IsReliable=false.
                     if (_influenceEstimator == null)
                     {
                         AgentDiagnostics.Warn("Scheduler.QuantityGate",
@@ -895,6 +927,7 @@ namespace SpatialAgent.Runtime
                     // ★ fail-closed（ADR 0051，2026-07-21）：评估不可靠 → 要求审批。
                     // 安全机制不能依赖不稳定来源——describe 失败/缓存缺失/解析异常时，
                     // 不得静默放行。默认假设最坏情况。
+                    // English：fail-closed (ADR 0051, 2026-07-21): Unreliable assessment → Approval required. Security mechanisms cannot rely on sources of instability—when described, cache is missing, or parsed exceptions, silent release is not allowed. The default assumption is the worst-case scenario.
                     bool requiresApproval = !estimate.IsReliable
                         || estimate.EffectiveCount > RuntimePolicy.DataInfluenceThreshold;
 
@@ -1012,10 +1045,11 @@ namespace SpatialAgent.Runtime
                             settleUnreported: false,
                             "batch is waiting for data-influence approval");
                     }
-                    } // else: _influenceEstimator != null → quantity gate evaluation
+                    } // 否则 _influenceEstimator != null，进入数量门控评估。 / Otherwise evaluate the quantity gate.
                 }
 
                 // ── Execute ──
+                // 中文：执行
                 if (_hostStateGuard != null
                     && plan.DataRevision != null
                     && MutatesHost(step))
@@ -1029,6 +1063,7 @@ namespace SpatialAgent.Runtime
                     {
                         // Adopt the live baseline so subsequent steps see the
                         // plan's own writes as expected host state.
+                        // 中文：采用实时基线，以便后续步骤将计划自身写入视为预期的宿主状态。
                         plan.DataRevision = freshness.Current;
                         plan.ProjectRevision = freshness.Current.Fingerprint;
                     }
@@ -1042,6 +1077,7 @@ namespace SpatialAgent.Runtime
                         results.Add(stepResult);
                         // External / mixed / unreliable: stop the batch; do not
                         // treat this as a user rejection at settlement.
+                        // 中文：外部/混合/不可靠：停止批量;不要把这当作结算时的用户拒绝。
                         return FinalizeBatch(
                             batchSteps,
                             results,
@@ -1055,6 +1091,7 @@ namespace SpatialAgent.Runtime
                 // backup GP may refresh project/catalog state or touch FileGDB
                 // storage metadata. Such Runtime-owned infrastructure effects
                 // must never be mistaken for a user edit made after planning.
+                // 中文：上述乐观并发预检点是最终的只读边界。备份是刻意在它之后，因为备份GP可能会刷新项目/目录状态或触碰FileGDB存储元数据。此类运行时拥有的基础设施效应绝不能误认为是用户在规划后进行的编辑。
                 if (riskLevel == ToolRiskLevel.Destructive)
                 {
                     bool backupReady = await PrepareDestructiveBackupAsync(
@@ -1087,6 +1124,7 @@ namespace SpatialAgent.Runtime
                         // committed a write, a content-only SelfCommitted diff
                         // is causally inside the mutation budget. Project/map/
                         // layer/selection changes remain external and block.
+                        // 中文：备份可能触及多个数据集共享的 FileGDB 存储元数据。事务提交写入后，只有内容层面的 SelfCommitted 差异在变更预算的因果范围内；项目、地图、图层和选择变化仍属于外部变化并会阻止继续。
                         bool safeInfrastructureRevision =
                             afterInfrastructure.Decision ==
                                 HostRevisionDecision.Current
@@ -1163,6 +1201,7 @@ namespace SpatialAgent.Runtime
                 int attemptCount = 0;
 
                 // ── P0-3: Per-step timeout control ──
+                // 中文：P0-3：每步超时控制
                 var stepTimeout = _timeoutPolicy?.ForRiskLevel(riskLevel) ?? TimeSpan.FromMinutes(5);
                 using var stepCts = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
                 stepCts.CancelAfter(stepTimeout);
@@ -1193,6 +1232,7 @@ namespace SpatialAgent.Runtime
                             // The linked token is now passed into the ArcGIS GP
                             // call itself. A timeout requests host cancellation;
                             // do not claim that only local waiting was stopped.
+                            // 中文：关联的取消令牌现已传入 ArcGIS GP 调用本身。超时时会请求宿主取消；不要声称只停止了本地等待。
                             result = new ToolResult
                             {
                                 ToolName = toolName,
@@ -1200,7 +1240,7 @@ namespace SpatialAgent.Runtime
                                 Error = $"工具执行超时（{stepTimeout.TotalSeconds:F0}s），" +
                                         "已向宿主发送取消请求。请确认 ArcGIS 地理处理状态后再重试。"
                             };
-                            break; // Don't retry after timeout
+                            break; // 超时后不重试。 / Do not retry after a timeout.
                         }
                     }
                 }
@@ -1210,6 +1250,7 @@ namespace SpatialAgent.Runtime
                 }
                 sw.Stop();
                 // Merge auto-corrections from parameter validation
+                // 中文：合并参数验证中的自动更正
                 if (stepResult.ToolResult!.AutofixApplied.Count > 0)
                 {
                     foreach (var c in stepResult.ToolResult.AutofixApplied)
@@ -1220,6 +1261,7 @@ namespace SpatialAgent.Runtime
                 stepResult.ElapsedMs = sw.ElapsedMilliseconds;
 
                 // ── Observe ──
+                // 中文：观察
                 var obs = ObservationFactory.Create(toolName, step.ToolCall.Arguments, result, sw.Elapsed);
                 if (obs is Observation concrete)
                 {
@@ -1231,6 +1273,7 @@ namespace SpatialAgent.Runtime
                 stepResult.Observation = obs;
 
                 // ── Validate ──
+                // 中文：验证
                 if (result.Success && _validators?.Count > 0)
                 {
                     _eventBus?.Publish(new AgentEvent
@@ -1295,6 +1338,7 @@ namespace SpatialAgent.Runtime
                 }
 
                 // ── Determine step status ──
+                // 中文：确定阶级状态
                 bool hasFailedValidation = stepResult.Validations.Any(v => v.Verdict == ValidationVerdict.FAIL);
                 stepResult.Status = result.Success && !hasFailedValidation
                     ? StepResultStatus.Completed
@@ -1343,6 +1387,7 @@ namespace SpatialAgent.Runtime
                     // The agent's own write is now the expected baseline for
                     // the next step. External changes after this capture are
                     // rejected by the next optimistic-concurrency check.
+                    // 中文：代理自身的写入现在是下一步的预期基线。捕获后对外部变化被下一次乐观并发检查拒绝。
                     plan.DataRevision =
                         await _hostStateGuard.CaptureAsync(cancellation);
                     plan.ProjectRevision = plan.DataRevision.Fingerprint;
@@ -1454,6 +1499,7 @@ namespace SpatialAgent.Runtime
                 // This is part of the transaction, not best effort. The next
                 // baseline must never be captured while a cleanup operation is
                 // still queued in ArcGIS Pro.
+                // 中文：这是交易的一部分，不是尽力而为。在清理操作仍在ArcGIS Pro排队期间，下一个基线绝不能被捕获。
                 await _workspace.RemoveFromMapAsync(backupPath, cancellation);
             }
 
@@ -1627,6 +1673,7 @@ namespace SpatialAgent.Runtime
                     return freshness;
 
                 // One recapture before treating probe noise as terminal.
+                // 中文：在将探针噪声视为终端前进行一次重捕获。
                 plan.DataRevision =
                     await _hostStateGuard.CaptureAsync(cancellation);
                 plan.ProjectRevision = plan.DataRevision.Fingerprint;

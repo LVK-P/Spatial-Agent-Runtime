@@ -123,6 +123,7 @@ namespace SpatialAgent.Runtime
         }
 
         // ★ Phase C4：记录裁剪信息的重载
+        // English：Phase C4: Recording the overload of clipping information
         private static void AddIfNotEmpty(
             List<ContextPacket> packets,
             Dictionary<string, BudgetCutInfo> cuts,

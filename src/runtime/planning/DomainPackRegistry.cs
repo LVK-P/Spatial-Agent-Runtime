@@ -7,6 +7,7 @@ namespace SpatialAgent.Runtime.Planning
     /// Lazy, priority-ordered registry for vertical GIS behavior. A pack contains
     /// metadata and recipes only; it cannot execute ArcGIS operations.
     /// </summary>
+    /// <remarks>中文：懒惰的、优先排序的垂直GIS行为注册表。一个包只包含元数据和配方;它无法执行ArcGIS操作。</remarks>
     public sealed class DomainPackRegistry
     {
         public const string RuntimeApiVersion = "3.1";

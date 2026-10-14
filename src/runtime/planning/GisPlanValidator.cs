@@ -16,12 +16,14 @@ using SpatialAgent.Runtime.Contracts;
 //
 // 来源：跨实现架构审查后的计划验证边界。
 // ================================================================
+// English：================================================================ GisPlanValidator.cs — GIS Domain Planning Checker: Validates GIS-specific constraints before the LLM-generated AgentPlan is executed: (1) Fields dependent on CalculateField must be AddField (2) Output path collision detection (output by multiple steps with the same name) (3) (Future) Detect cross-coordinate operations before Project (4) (Future) Automatically supplement MakeFeatureLayer before Select Pure Logic, zero ArcGIS dependency — can be tested directly in Runtime.Tests. Source: Across the Implementation Architecture Review Plan Validation Boundary. ================================================================
 namespace SpatialAgent.Runtime.Planning
 {
     /// <summary>
     /// Validates AgentPlans against GIS domain constraints.
     /// Detection-only phase — reports issues, does not yet auto-correct.
     /// </summary>
+    /// <remarks>中文：验证代理计划是否符合GIS域约束。仅检测阶段——报告问题，尚未自动更正。</remarks>
     public class GisPlanValidator : IPlanValidator
     {
         private readonly IReadOnlyToolGateway? _tools;
@@ -36,6 +38,7 @@ namespace SpatialAgent.Runtime.Planning
             var result = new PlanValidationResult { IsValid = true };
 
             // Track state across steps
+            // 中文：跨步跟踪状态
             var fieldAdds = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
             var outputs = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var stepIds = new HashSet<int>();
@@ -59,6 +62,7 @@ namespace SpatialAgent.Runtime.Planning
                 string toolName = step.ToolCall.Name;
 
                 // ── Rule 1: CalculateField field must be pre-added ──
+                // 中文：规则1：计算字段必须预先添加
                 if (toolName.Contains("CalculateField"))
                 {
                     var layer = GetArg(step, "in_table");
@@ -89,9 +93,11 @@ namespace SpatialAgent.Runtime.Planning
                     }
                     // Note: not erroring if field isn't in fieldAdds —
                     // the field might already exist in the layer schema.
+                    // 中文：注意：如果字段不在 fieldAdd 中，我不会出错——该字段可能已经存在于图层模式中。
                 }
 
                 // Track field additions
+                // 中文：赛道场地扩建
                 if (toolName.Contains("AddField"))
                 {
                     var layer = GetArg(step, "in_table");
@@ -108,6 +114,7 @@ namespace SpatialAgent.Runtime.Planning
                 }
 
                 // ── Rule 2: Output path collision detection ──
+                // 中文：规则2：输出路径碰撞检测
                 foreach (var key in ResolveOutputParameters(step))
                 {
                     var path = step.ToolCall.Arguments[key]?.ToString();

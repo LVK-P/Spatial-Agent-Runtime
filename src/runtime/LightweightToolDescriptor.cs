@@ -12,6 +12,7 @@ namespace SpatialAgent.Runtime
     /// full parameter detail so the model can construct correct calls without
     /// needing a second lookup step.
     /// </summary>
+    /// <remarks>中文：封装任意 IToolDescriptor，并把参数描述、枚举值和标题缩减为仅含 name、type、required 的模式。用于二级（上下文 Top-N）工具，使模型能看到工具参数，而无需承担占据每轮大量令牌的完整描述。一级（常驻 + 技能声明）工具不封装，保留完整参数细节，使模型无需二次查找即可构造正确调用。</remarks>
     internal sealed class LightweightToolDescriptor : IToolDescriptor
     {
         private readonly IToolDescriptor _inner;
@@ -19,7 +20,7 @@ namespace SpatialAgent.Runtime
         public LightweightToolDescriptor(IToolDescriptor inner) => _inner = inner;
 
         public string Name => _inner.Name;
-        public string Description => _inner.Description;   // summary (首句), no change needed
+        public string Description => _inner.Description;   // 摘要（首句），无需更改。 / Summary (first sentence); no change needed.
         public string Category => _inner.Category;
         public ToolAnnotation Annotation => _inner.Annotation;
         public IReadOnlyList<string> RequiredParameters => _inner.RequiredParameters;
@@ -31,6 +32,7 @@ namespace SpatialAgent.Runtime
         /// Per-parameter descriptions, enums, titles, and default values are
         /// dropped — they are the dominant cost in tool-list token load.
         /// </summary>
+        /// <remarks>中文：简化参数：仅限名称 + 类型 + 必要标志。按参数描述、枚举、标题和默认值被剔除——它们是工具列表令牌负载的主要成本。</remarks>
         public IReadOnlyDictionary<string, ParameterProperty> Parameters
         {
             get
@@ -42,6 +44,7 @@ namespace SpatialAgent.Runtime
                     {
                         Type = kv.Value.Type,
                         // Description, Enum, DefaultValue intentionally null/empty
+                        // 中文：描述、枚举、默认值故意为空/空
                     };
                 }
                 return stripped;

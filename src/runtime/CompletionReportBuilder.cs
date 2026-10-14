@@ -18,6 +18,7 @@ namespace SpatialAgent.Runtime
     /// the execution timeline and are not used as a substitute for intent
     /// completion.
     /// </summary>
+    /// <remarks>中文：将已解决的目标与执行和验证证据进行调和。面向用户的结果是优先的;工具步骤仍可在执行时间轴中保留，且不作为意图完成的替代。</remarks>
     public sealed class GoalCompletionReport
     {
         public string Goal { get; init; } = "";
@@ -61,6 +62,7 @@ namespace SpatialAgent.Runtime
             // New plans carry an explicit purpose. Older checkpoints and
             // direct callers do not, so retain the legacy effect-based split
             // only for Unspecified records during the v11 -> v12 migration.
+            // 中文：新计划有明确的目的。旧的检查点和直接调用器则不支持，因此在v11->v12迁移期间，仅保留未指定记录的基于遗留效应的分割。
             var operational = steps.Where(step =>
                 step.Purpose == PlanStepPurpose.Business
                 || (step.Purpose == PlanStepPurpose.Unspecified
@@ -406,6 +408,7 @@ namespace SpatialAgent.Runtime
     /// Composes deterministic goal state with a model-authored clarification.
     /// The model text is supplemental and can never replace or upgrade Outcome.
     /// </summary>
+    /// <remarks>中文：结合确定性目标状态与模型作者的说明。模型文本是补充性的，永远无法替代或升级Outcome。</remarks>
     public static class CompletionResponseArbitrator
     {
         public static string Compose(

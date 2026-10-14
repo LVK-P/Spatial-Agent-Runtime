@@ -10,6 +10,7 @@ namespace SpatialAgent.Runtime
     /// <summary>
     /// Collects project, map, knowledge, skills and memory context for a turn.
     /// </summary>
+    /// <remarks>中文：收集项目、地图、知识、技能和记忆上下文，持续一回合。</remarks>
     public class ContextManager : IHostStateGuard
     {
         private readonly IProjectReader _projectReader;
@@ -31,9 +32,11 @@ namespace SpatialAgent.Runtime
         private string _lastLiveFingerprint = "";
 
         /// <summary>Full context refresh interval in message count.</summary>
+        /// <remarks>中文：消息数量的完整刷新间隔。</remarks>
         public int FullContextRefreshInterval { get; set; } = 3;
 
         /// <summary>Keywords that force a full refresh.</summary>
+        /// <remarks>中文：关键词会强制全面刷新。</remarks>
         public static readonly string[] GisKeywords = {
             "图层", "字段", "数据", "要素", "项目", "地图",
             "坐标系", "属性表", "选择", "符号"
@@ -58,6 +61,7 @@ namespace SpatialAgent.Runtime
         /// After any tool modifies the project/map state, the next context gather
         /// will force a full refresh instead of relying on stale cached data.
         /// </summary>
+        /// <remarks>中文：订阅工具执行事件以实现自动缓存失效。任何工具修改项目/地图状态后，下一次上下文采集会强制完全刷新，而不是依赖陈旧的缓存数据。</remarks>
         public void SetEventBus(IEventBus? bus)
         {
             _eventSubscription?.Dispose();
@@ -70,6 +74,7 @@ namespace SpatialAgent.Runtime
                     string tool = e.Metadata?.GetValueOrDefault("tool", "") ?? "";
 
                     // Destructive（Delete/Truncate）→ 全量刷新：图层可能消失或 Schema 变更
+                    // English：Destructive(Delete/Truncate) → Full refresh: layers may disappear or schema changes
                     if (risk == "Destructive")
                     {
                         InvalidateCache();
@@ -92,6 +97,7 @@ namespace SpatialAgent.Runtime
         /// <summary>
         /// Collect a full turn context.
         /// </summary>
+        /// <remarks>中文：收集完整的回合背景。</remarks>
         public async Task<AgentContext> GatherAsync(string userMessage)
         {
             _msgCountSinceLastFullContext = 0;
@@ -101,12 +107,14 @@ namespace SpatialAgent.Runtime
         /// <summary>
         /// Collect a light turn context.
         /// </summary>
+        /// <remarks>中文：收集一轮轻量上下文。</remarks>
         public async Task<AgentContext> GatherLightAsync(string userMessage)
         {
             // ★ 2026-07-23：每轮强制全量刷新图层信息。
             // 工具执行（Project/Buffer/Clip 等）可能创建新图层或修改已有图层，
             // 指纹/VAV 省掉的 200ms 刷新成本远小于 LLM 看不到新图层导致的计算遗漏。
             // 不做 interval/关键词/fingerprint 判断——每轮都刷新。
+            // English：2026-07-23: Each round of mandatory full layer information refresh. Tool execution (Project/Buffer/Clip, etc.) may create new layers or modify existing ones; the 200ms refresh cost saved by fingerprint/VAV is much lower than the computational omission caused by the LLM not seeing the new layer. No interval/keyword/fingerprint checks—refresh every round.
             return await GatherInternalAsync(userMessage, fullRefresh: true);
         }
 
@@ -116,6 +124,7 @@ namespace SpatialAgent.Runtime
         /// and is used only to invalidate an approval whose target state changed
         /// while execution was paused.
         /// </summary>
+        /// <remarks>中文：捕捉当前项目、地图、图层/模式/计数和选择状态的哈希值。快照故意排除原始用户数据，仅用于使目标状态在暂停执行期间发生变化的批准无效。</remarks>
         public async Task<DataRevisionSnapshot> CaptureDataRevisionAsync(
             CancellationToken cancellation = default)
         {
@@ -213,6 +222,7 @@ namespace SpatialAgent.Runtime
             CancellationToken cancellation = default)
         {
             // Approval/wait paths remain strict: no mutation budget is assumed.
+            // 中文：批准/等待路径仍保持严格，不假定存在变更预算。
             return await ValidateForExecutionAsync(
                 expected,
                 expectedMutations: null,
@@ -258,6 +268,7 @@ namespace SpatialAgent.Runtime
         /// 成本约 200ms，用于判断宿主状态是否发生了实质性变化。
         /// 探针失败 → 返回 Guid 随机值（强制 full refresh——保守策略）。
         /// </summary>
+        /// <remarks>English：VAV (ADR 0049): Contextual fingerprinting based on the host real-time API—no longer relies on old caches for self-comparison. A lightweight method called IMapReader + IProjectReader (non-full layer enumeration) costs about 200ms and is used to determine whether the host state has undergone a substantial change. Probe failure → returns a GUID random value (forced full refresh—conservative policy).</remarks>
         private async Task<string> ComputeLiveFingerprintAsync()
         {
             try
@@ -267,6 +278,7 @@ namespace SpatialAgent.Runtime
                 // 成本 ≪ GetAllLayerSummariesAsync()，但能检测 Project/Buffer 等
                 // 工具创建新图层后宿主状态变化——此前仅靠地图名+项目路径做指纹，
                 // 新图层创建后指纹不变，导致后续 turn 跳过全量刷新、LLM 看不到新图层。
+                // English：Lightweight Probe: Map Name + Coordinate System + Project Path + List of Layer Names. ListLayersAsync() only returns layer name and type (excluding field details), costs ≪ GetAllLayerSummariesAsync(), but can detect host state changes after Project/Buffer tools create new layers—previously, fingerprinting was done only by map name + project path, but fingerprinting remains unchanged after new layer creation, causing subsequent turns to skip full refresh and LLMs not to see new layers.
                 var mapTask = _mapReader.GetMapInfoAsync();
                 var projTask = _projectReader.GetContextForAIAsync();
                 var layersTask = _mapReader.ListLayersAsync();
@@ -282,6 +294,7 @@ namespace SpatialAgent.Runtime
             catch
             {
                 // 探针失败 → 保守：返回随机值，强制后续 full refresh
+                // English：Probe failure → Conservative: Returns a random value and forces a full refresh for subsequent events
                 AgentDiagnostics.Warn("ContextManager.ComputeLiveFingerprint",
                     "Live host probe failed — forcing conservative full context refresh.");
                 return Guid.NewGuid().ToString("N")[..16];
@@ -289,6 +302,7 @@ namespace SpatialAgent.Runtime
         }
 
         /// <summary>已废弃（P1-A 删除使用点，VAV 用 ComputeLiveFingerprintAsync 替代）。保留以兼容旧测试。</summary>
+        /// <remarks>English：Deprecated (P1-A deletes usage points, VAV replaced with ComputeLiveFingerprintAsync). Reserved to be compatible with older tests.</remarks>
         private string ComputeContextFingerprint()
         {
             string input = (_lastProjectContext ?? "") + "||" + (_lastMapContext ?? "");
@@ -336,6 +350,7 @@ namespace SpatialAgent.Runtime
 
             // Extract structured fields from the ProjectInfo text blob
             // (format: "项目：{name}\n家目录：{path}\n默认数据库名：{name}\n默认数据库路径：{path}")
+            // 中文：从ProjectInfo文本块中提取结构化字段（格式：“项目：{name}\n家目录：{path}\n默认数据库名：{name}\n默认数据库路径：{path}”）
             foreach (var line in _lastProjectContext.Split('\n'))
             {
                 var trimmed = line.Trim();
@@ -354,6 +369,7 @@ namespace SpatialAgent.Runtime
             }
 
             // Fallback: GdbPath from path line if not found by name
+            // 中文：备份：如果找不到路径线，则用GdbPath查找
             if (string.IsNullOrWhiteSpace(ctx.GdbPath) && !string.IsNullOrWhiteSpace(ctx.ProjectPath))
                 ctx.GdbPath = _lastProjectContext.Split('\n')
                     .FirstOrDefault(l => l.Contains("默认数据库路径：") || l.Contains("DefaultGeodatabase:"))
@@ -395,6 +411,7 @@ namespace SpatialAgent.Runtime
             }).ToList();
 
             // Extract structured map name from the first line of MapInfo
+            // 中文：从MapInfo的第一行提取结构化地图名称
             if (string.IsNullOrWhiteSpace(ctx.MapName) && !string.IsNullOrWhiteSpace(_lastMapContext))
             {
                 var firstLine = _lastMapContext.Split('\n').FirstOrDefault()?.Trim() ?? "";
@@ -414,6 +431,7 @@ namespace SpatialAgent.Runtime
             }
 
             // ── P0-4: Spatial reference context collection ──
+            // 中文：P0-4：空间参考上下文收集
             try
             {
                 ctx.SpatialRef = await _mapReader.GetSpatialRefContextAsync();
@@ -487,6 +505,7 @@ namespace SpatialAgent.Runtime
             // ★ 技能→工具暴露联动：技能命中即并入其声明的所需工具。
             // 拓扑链等低频工具从不进 top50，技能教了流程模型却调不到——
             // 技能声明是硬需求，绕过 index 评分直接暴露。
+            // English：Skill → Tool Exposure Linkage: Skill hits are merged into the required tools for their declaration. Low-frequency tools like topologies never make it into the top 50, skills teach process models but can't be tuned — skill declarations are hard requirements, bypassing index scores and exposing them directly.
             var skillTools = ctx.MatchedSkills
                 .SelectMany(s => s.RequiredTools)
                 .Where(t => !string.IsNullOrWhiteSpace(t))
@@ -501,6 +520,7 @@ namespace SpatialAgent.Runtime
             }
 
             // Update context fingerprint after full refresh so dedup works next turn
+            // 中文：在完全刷新后更新上下文指纹，让下回合去指纹生效
             if (fullRefresh)
             {
                 _lastContextHash = ComputeContextFingerprint();
@@ -545,9 +565,10 @@ namespace SpatialAgent.Runtime
         /// 产出型工具触发上下文刷新以发现新图层/新表；字段型工具不触发。
         /// 判定基于工具名关键词匹配——保守设计：宁可多刷新，不可漏新图层。
         /// </summary>
+        /// <remarks>English：Determine whether the tool is "generating a new dataset" (rather than just modifying the fields of existing data). Output-type tools trigger context refresh to discover new layers/tables; Field-type tools do not trigger. Determination is based on tool name keyword matching—conservative design: better to refresh more than to miss new layers.</remarks>
         private static bool CreatesNewOutput(string toolName)
         {
-            if (string.IsNullOrWhiteSpace(toolName)) return true;  // 未知 → 保守刷新
+            if (string.IsNullOrWhiteSpace(toolName)) return true;  // 未知时保守刷新。 / Refresh conservatively when unknown.
             string n = toolName.ToLowerInvariant();
             return n.Contains("clip") || n.Contains("buffer") || n.Contains("intersect")
                 || n.Contains("erase") || n.Contains("dissolve") || n.Contains("merge")
@@ -555,7 +576,7 @@ namespace SpatialAgent.Runtime
                 || n.Contains("export") || n.Contains("create") || n.Contains("grid")
                 || n.Contains("near") || n.Contains("split") || n.Contains("append")
                 || n.Contains("calculate_area") || n.Contains("calculate_length")
-                || n.Contains("map_field_values");  // cc_map_field_values 可能创建中间表
+                || n.Contains("map_field_values");  // cc_map_field_values 可能创建中间表。 / cc_map_field_values may create an intermediate table.
         }
 
         private static HashSet<string> ExtractGeometryTypes(string? mapInfo)

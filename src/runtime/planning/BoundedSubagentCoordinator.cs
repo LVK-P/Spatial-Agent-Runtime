@@ -8,6 +8,7 @@ namespace SpatialAgent.Runtime.Planning
     /// limits. Specialists receive snapshots and plans, never ToolRegistry or an
     /// ArcGIS executor, so they cannot mutate the project or bypass approval.
     /// </summary>
+    /// <remarks>中文：在明确的并发和超时限制内运行仅分析专家。专家只收到快照和图纸，从未收到ToolRegistry或ArcGIS执行器，因此他们无法变更项目或绕过审批。</remarks>
     public sealed class BoundedSubagentCoordinator : ISubagentCoordinator
     {
         private readonly IReadOnlyDictionary<SubagentRole, IReadOnlySubagent> _agents;
@@ -64,6 +65,7 @@ namespace SpatialAgent.Runtime.Planning
             // Reviewers receive detached data. Even a future third-party
             // reviewer that mutates its DTO cannot change the executable plan
             // or live DomainContext held by AgentRuntime.
+            // 中文：评审者获得独立数据副本。即使未来接入第三方评审器，修改其 DTO 也无法改变 AgentRuntime 持有的可执行计划或实时 DomainContext。
             AgentPlan? plan = task.Plan == null
                 ? null
                 : JsonConvert.DeserializeObject<AgentPlan>(

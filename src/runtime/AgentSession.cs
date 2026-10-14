@@ -5,6 +5,7 @@ namespace SpatialAgent.Runtime
     /// <summary>
     /// Default session implementation — partitioned namespace, not god object.
     /// </summary>
+    /// <remarks>中文：默认会话实现——分区命名空间，而非 god 对象。</remarks>
     public class AgentSession : IAgentSession
     {
         private readonly object _sync = new();
