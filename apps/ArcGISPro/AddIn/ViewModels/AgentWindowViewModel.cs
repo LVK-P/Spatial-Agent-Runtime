@@ -1300,10 +1300,13 @@ namespace ArcGISProAIAgent.ViewModels
         private void HandleAgentResponse(AgentResponse resp, string requestText)
         {
             // 本轮 Token（单轮展示，时间戳取当前时刻）。
+            // Tokens for this turn only, displayed with the current timestamp.
             string? tokenInfo = BuildPerTurnTokenInfo();
 
             // ★ 审批中不展示 assistant 消息气泡——审批卡片 + 执行链内 trace 已传达全部信息。
             // LLM 在审批触发后生成的指引文本不应出现在聊天区。
+            // ★ Do not show an assistant message bubble while approval is pending—the approval card and execution trace
+            // already convey all information. Guidance generated after the approval trigger must stay out of chat.
             if (!resp.RequiresApproval)
             {
                 if (!string.IsNullOrWhiteSpace(resp.UserReply))
@@ -1322,9 +1325,11 @@ namespace ArcGISProAIAgent.ViewModels
             UpdateTaskOutcomeFromResponse(resp);
             RefreshBackupSize();
 
-            // 鈽?Incremental memory persistence: save after every response so work
+            // ★ Incremental memory persistence: save after every response so work
             // survives Pro crashes mid-session (complements checkpoint, which only
             // saves message/plan state, not cross-session memory).
+            // ★ 增量记忆持久化：每次响应后保存，使工作在 Pro 会话中途崩溃时仍可恢复；
+            // 它补充了只保存消息/计划状态而不保存跨会话记忆的检查点机制。
             SaveMemorySnapshot();
         }
 
@@ -1362,11 +1367,12 @@ namespace ArcGISProAIAgent.ViewModels
 
         private void SubscribeTraceEvents()
         {
-            // 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲
-            // Phase 1 Operational Streaming：完整事件到时间线的映射。
-            // 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲
+            // ================================================================
+            // 阶段 1 操作流式传输：完整事件到时间线的映射。
+            // Phase 1 operational streaming: complete event-to-timeline mapping.
+            // ================================================================
 
-            // ── Turn lifecycle ──
+            // ── 轮次生命周期 / Turn lifecycle ──
             _eventBus.Subscribe("turn.start", e => OnUi(() =>
             {
                 _activeTurn = e.Turn ?? _activeTurn;
@@ -1375,7 +1381,7 @@ namespace ArcGISProAIAgent.ViewModels
                 RefreshDashboardMetrics();
             }));
 
-            // ── LLM ──
+            // ── 大语言模型 / LLM ──
             _eventBus.Subscribe("llm.calling", e => OnUi(() =>
             {
                 int turn = e.Turn ?? _activeTurn;
@@ -1419,7 +1425,7 @@ namespace ArcGISProAIAgent.ViewModels
                 }
             }));
 
-            // ── Tool lifecycle ──
+            // ── 工具生命周期 / Tool lifecycle ──
             _eventBus.Subscribe("tool.started", e => OnUi(() =>
             {
                 var item = EnsureTraceItem(e);
@@ -1553,7 +1559,7 @@ namespace ArcGISProAIAgent.ViewModels
                 }
             }));
 
-            // ── Safety ──
+            // ── 安全 / Safety ──
             _eventBus.Subscribe("safety.blocked", e => OnUi(() =>
             {
                 var item = EnsureTraceItem(e);
@@ -1643,7 +1649,7 @@ namespace ArcGISProAIAgent.ViewModels
                 AddSystem($"工具名解析导致风险升级：{origTool} -> {resolvedTool}，风险级别升级至 {upgradedRisk}");
             }));
 
-            // ── Verification ──
+            // ── 核验 / Verification ──
             _eventBus.Subscribe("verification.passed", e => OnUi(() =>
             {
                 var item = EnsureTraceItem(e);
@@ -1663,7 +1669,7 @@ namespace ArcGISProAIAgent.ViewModels
                 UpdateTraceGroup(item.Turn);
             }));
 
-            // ── Validation ──
+            // ── 验证 / Validation ──
             _eventBus.Subscribe("validation.failed", e => OnUi(() =>
             {
                 var item = EnsureTraceItem(e);
@@ -1683,7 +1689,7 @@ namespace ArcGISProAIAgent.ViewModels
                 UpdateTraceGroup(item.Turn);
             }));
 
-            // ── Workspace ──
+            // ── 工作区 / Workspace ──
             _eventBus.Subscribe("workspace.backup_created", e => OnUi(() =>
             {
                 var item = EnsureTraceItem(e);
@@ -1692,7 +1698,7 @@ namespace ArcGISProAIAgent.ViewModels
                 RefreshBackupSize();
             }));
 
-            // ── Checkpoint ──
+            // ── 检查点 / Checkpoint ──
             _eventBus.Subscribe("checkpoint.restored", e => OnUi(() =>
             {
                 int turn = e.Turn ?? 0;
@@ -1700,12 +1706,15 @@ namespace ArcGISProAIAgent.ViewModels
                 AddSystem($"已恢复会话状态（Turn {turn}，状态：{status}）");
             }));
 
-            // ── Diagnostics ──
+            // ── 诊断 / Diagnostics ──
             _eventBus.Subscribe("diagnostics.info", e =>
             {
                 // 诊断信息仅写 Debug 和 transcript，不出现在聊天区。
                 // AgentDiagnostics.Info 的调用点已在 Scheduler/TranscriptWriter 中
                 // 通过独立事件落实审计，不需要在对话气泡中重复展示。
+                // Diagnostic information is written only to Debug and the transcript, not to chat.
+                // AgentDiagnostics.Info call sites already emit independent audit events in Scheduler/TranscriptWriter,
+                // so the conversation bubble does not need to repeat them.
                 var msg = e.Metadata?.GetValueOrDefault("message", "") ?? "";
                 if (!string.IsNullOrWhiteSpace(msg))
                     Debug.WriteLine($"[Agent] {msg}");
@@ -1722,9 +1731,12 @@ namespace ArcGISProAIAgent.ViewModels
             }));
         }
 
-        // ── Phase 1 辅助方法 ──
+        // ── 阶段 1 辅助方法 / Phase 1 helper methods ──
 
-        /// <summary>将审批身份写入 trace item，供恢复/拒绝时精确定位。</summary>
+        /// <summary>
+        /// 将审批身份写入 trace item，供恢复/拒绝时精确定位。
+        /// Writes approval identity into the trace item for precise lookup during resume or rejection.
+        /// </summary>
         private static void StampApprovalIdentity(ToolTraceItem item, AgentEvent e)
         {
             item.ApprovalTicketId = e.Metadata?.GetValueOrDefault("ticket_id", "") ?? "";
