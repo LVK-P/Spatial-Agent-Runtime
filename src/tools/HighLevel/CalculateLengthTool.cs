@@ -13,6 +13,7 @@ using SpatialAgent.Core;
 // Auto-creates the target field if missing, calculates geodesic or
 // projected length with unit conversion, and verifies the result.
 // ================================================================
+// 中文：================================================================ CalculateLengthTool.cs — 单次调用的线长合成工具。如果缺少目标场，自动创建目标场，计算测地线或投影长度并进行单位换算，并验证结果。================================================================
 namespace SpatialAgent.Tools.Core.HighLevel
 {
     public class CalculateLengthTool : ITool, IToolSafetyDescriptor,
@@ -84,6 +85,7 @@ namespace SpatialAgent.Tools.Core.HighLevel
         {
             Type = "verify_field_populated",
             // field_name 省略时实际写入 DXCD——让验证器知道默认字段
+            // English：field_name Actually write DXCD when omitted—let the validator know the default field
             Params = "field_default=DXCD",
             FixHint = "检查字段存在且计算后有值"
         };
@@ -115,6 +117,7 @@ namespace SpatialAgent.Tools.Core.HighLevel
                 }
 
                 // Step 1: Check existing fields via MapReader (handles threading internally)
+                // 中文：步骤1：通过MapReader检查现有字段（内部处理线程）
                 var fields = new List<string>();
                 try
                 {
@@ -132,6 +135,7 @@ namespace SpatialAgent.Tools.Core.HighLevel
                 catch (Exception ex) { AgentDiagnostics.Warn(nameof(CalculateLengthTool), "DescribeLayer failed, assuming field doesn't exist", ex); }
 
                 // Step 2: Create field if not exists (GPToolRunner handles threading)
+                // 中文：步骤2：如果不存在，创建字段（GPToolRunner 负责线程处理）
                 if (!fields.Any(f => f.Equals(fieldName, StringComparison.OrdinalIgnoreCase)))
                 {
                     string addResult = await _runner.ExecuteAsync("management.AddField",
@@ -146,6 +150,7 @@ namespace SpatialAgent.Tools.Core.HighLevel
                 }
 
                 // Step 3: Build expression and calculate (GPToolRunner handles threading)
+                // 中文：步骤3：构建表达式并计算（GPToolRunner 负责线程处理）
                 double unitFactor = unit switch
                 {
                     "米" => 1,
@@ -183,6 +188,7 @@ namespace SpatialAgent.Tools.Core.HighLevel
                     r.Error = calcParsed?.summary?.ToString() ?? calcParsed?.error?.ToString() ?? "计算失败";
 
                 // Step 4: Verify via MapReader
+                // 中文：步骤4：通过MapReader进行验证
                 if (success)
                 {
                     try

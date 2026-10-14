@@ -30,6 +30,7 @@ namespace SpatialAgent.Tools.Core
         /// 删除了 IsIncrementTool() 关键词启发式——它曾使 27 个 Modify 工具的 Annotation
         /// 错标为 Increment（如 management_AddField 被 "addfield" 关键词误判）。
         /// </summary>
+        /// <remarks>English：Security Gate Consistency (2026-07-24): Annotation is derived directly from ToolDefinition.RiskLevel. Dynamic tool risks originate from local manifests and can be covered by local audit directories. Removed the IsIncrementTool() keyword heuristic—it had caused 27 Modify tools to mislabel Annotations as Increment (for example, management_AddField was misjudged by the "addfield" keyword).</remarks>
         public ToolAnnotation Annotation =>
             ToolRiskMapper.ToAnnotation(_def.RiskLevel ?? ToolRiskLevel.Modify);
         public IReadOnlyDictionary<string, ParameterProperty> Parameters => _def.Parameters.Properties;
@@ -55,6 +56,7 @@ namespace SpatialAgent.Tools.Core
         /// Used by Scheduler.ResolveArgs to fill parameters the LLM omitted.
         /// Only declared for high-priority tools with known safe defaults.
         /// </summary>
+        /// <remarks>中文：工具模式声明的默认参数值。Scheduler.ResolveArgs 用于填充 LLM 遗漏的参数。仅为具有已知安全默认的高优先级工具声明。</remarks>
         public IReadOnlyDictionary<string, string>? DefaultParameters => GetDefaultParameters();
 
         private IReadOnlyDictionary<string, string>? GetDefaultParameters()
@@ -69,6 +71,7 @@ namespace SpatialAgent.Tools.Core
                     StringComparer.OrdinalIgnoreCase);
 
             // cc_calculate_area: default field_name="TQMJ", unit="平方米", digit="2"
+            // 中文：cc_calculate_area： 默认 field_name=“TQMJ”，unit=“平方米”，数字=“2”
             if (n.Contains("calculate_area"))
             {
                 defaults["field_name"] = "TQMJ";
@@ -77,6 +80,7 @@ namespace SpatialAgent.Tools.Core
             }
 
             // cc_calculate_length: default field_name="DXCD", unit="米", digit="2"
+            // 中文：cc_calculate_length：默认field_name=“DXCD”，单元=“米”，数字=“2”
             if (n.Contains("calculate_length"))
             {
                 defaults["field_name"] = "DXCD";
@@ -86,6 +90,7 @@ namespace SpatialAgent.Tools.Core
 
             // cc_map_field_values: no defaults (mapping_source must be LLM-provided)
             // Other tools: no defaults declared
+            // 中文：cc_map_field_values：无默认设置（mapping_source必须由LLM提供） 其他工具：无声明默认设置
             return defaults.Count == 0 ? null : defaults;
         }
 
@@ -124,6 +129,7 @@ namespace SpatialAgent.Tools.Core
         { _def = def; _registry = registry; _workspace = workspace; }
 
         /// <summary>Phase-2 retrofit: workspace becomes available after project init.</summary>
+        /// <remarks>中文：第二阶段改造：项目启动后工作区开放。</remarks>
         public void AttachWorkspace(IWorkspaceService workspace) => _workspace = workspace;
 
         public async System.Threading.Tasks.Task<ToolResult> ExecuteAsync(ToolCall call, CancellationToken ct = default)
@@ -133,13 +139,16 @@ namespace SpatialAgent.Tools.Core
             {
                 // ★ Prefer ToolDefinition.ParameterOrder (explicit order from manifest)
                 // Falls back to GPToolContract lookup for legacy tools
+                // 中文：Prefer ToolDefinition.ParameterOrder（显式命令来自manifest） 退回到GPToolContract查找遗留工具
                 var posArgs = ConvertToPositionalArgs(Name, call.Arguments);
 
                 // ★ Resolve output paths: if output is a bare name, use in_memory/
+                // 中文：解析输出路径：如果输出是裸名称，使用 in_memory/
                 var contract = GPToolContract.Get(Name);
                 NormalizePrimaryOutputPath(posArgs, contract);
 
                 // ★ Use ExecutionName if set (dynamic tools), otherwise convert from schema name
+                // 中文：如果设置了 ExecutionName（动态工具），否则从 schema name 转换
                 string gpName = _def.ExecutionName ?? GPToolContract.ToDotName(Name);
                 string raw = await _runner.ExecuteAsync(gpName, posArgs, ct);
                 var parsed = JsonConvert.DeserializeObject<dynamic>(raw);
@@ -155,9 +164,11 @@ namespace SpatialAgent.Tools.Core
         }
 
         /// <summary>Convert named args to positional using explicit ParameterOrder or GPToolContract fallback.</summary>
+        /// <remarks>中文：使用显式ParameterOrder或GPToolContract的备用将命名arg转换为位置变量。</remarks>
         private List<string> ConvertToPositionalArgs(string toolName, Dictionary<string, object?> namedArgs)
         {
             // 1. Use ToolDefinition.ParameterOrder (explicit, from manifest)
+            // 中文：1. 使用 ToolDefinition.ParameterOrder（显式，来自 manifest）
             if (_def.ParameterOrder != null && _def.ParameterOrder.Count > 0)
             {
                 var pos = new List<string>();
@@ -170,6 +181,7 @@ namespace SpatialAgent.Tools.Core
             }
 
             // 2. Fallback: ToolSchemaRegistry/GPToolContract lookup
+            // 中文：2. 备用：ToolSchemaRegistry/GPToolContract 查询
             return _registry.ConvertToPositionalArgs(toolName, namedArgs);
         }
 
@@ -241,12 +253,14 @@ namespace SpatialAgent.Tools.Core
                 return outputVal;
 
             // Already a qualified path — leave as-is.
+            // 中文：这已经是一条合格的路径——保持现状。
             if (outputVal.Contains('\\') || outputVal.Contains('/')
                 || outputVal.Contains(".gdb", StringComparison.OrdinalIgnoreCase)
                 || outputVal.StartsWith("in_memory"))
                 return outputVal;
 
             // Route through workspace if available.
+            // 中文：如果有，就通过工作区路由。
             if (_workspace != null)
                 return _workspace.ResolveOutputPath(outputVal, _def.Name);
 

@@ -7,6 +7,7 @@ namespace SpatialAgent.Tools.Core
     /// <summary>
     /// Get current map info (name, CRS, extent).
     /// </summary>
+    /// <remarks>中文：获取当前地图信息（姓名、CRS、范围）。</remarks>
     public class GetMapInfoTool : ITool
     {
         private readonly MapReader _reader = new();
@@ -33,6 +34,7 @@ namespace SpatialAgent.Tools.Core
     /// <summary>
     /// List all layers in the current map.
     /// </summary>
+    /// <remarks>中文：列出当前地图中的所有图层。</remarks>
     public class ListLayersTool : ITool
     {
         private readonly MapReader _reader = new();
@@ -59,6 +61,7 @@ namespace SpatialAgent.Tools.Core
     /// <summary>
     /// Describe a specific layer's fields, geometry type, feature count.
     /// </summary>
+    /// <remarks>中文：描述特定图层的字段、几何类型、特征数量。</remarks>
     public class DescribeLayerTool : ITool
     {
         private readonly MapReader _reader = new();
@@ -91,6 +94,7 @@ namespace SpatialAgent.Tools.Core
     /// <summary>
     /// Get current feature selection.
     /// </summary>
+    /// <remarks>中文：获取当前的功能选择。</remarks>
     public class GetSelectionTool : ITool
     {
         private readonly MapReader _reader = new();
@@ -119,6 +123,7 @@ namespace SpatialAgent.Tools.Core
     /// 仅限 ≤10 行且 ≤3 字段的小样本核对——属性表读取遵循"合并同类项"，
     /// 类别性问题走 Statistics/唯一值统计，不逐行看表。
     /// </summary>
+    /// <remarks>English：Feit Sample Line Reading Tool (cc_read_rows). Conservative call strategy (user decision on 2026-07-19): Fewshot checks for ≤10 rows and ≤3 fields—attribute table reading follows "merging similar items," categorical questions are handled by Statistics/unique value statistics, not by line viewing.</remarks>
     public class ReadRowsTool : ITool
     {
         public const int MaxRows = 10;
@@ -148,6 +153,7 @@ namespace SpatialAgent.Tools.Core
         public IReadOnlyList<string> RequiredParameters => new[] { "layer_name", "fields" };
 
         /// <summary>参数门槛校验（纯逻辑，可单测）。返回 null 即通过。</summary>
+        /// <remarks>English：Parameter threshold verification (pure logic, can be tested independently). Return null to pass.</remarks>
         public static string? ValidateRequest(string layerName, string fieldsRaw, out List<string> fields)
         {
             fields = (fieldsRaw ?? "")

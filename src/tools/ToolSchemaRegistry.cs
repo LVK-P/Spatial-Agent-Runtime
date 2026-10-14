@@ -248,6 +248,7 @@ namespace SpatialAgent.Tools.Core
             RiskLevel = ToolRiskLevel.Modify,
             // 值级验证：字段存在≠计算成功——表达式逐行返回 None 时 GP 照样报成功，
             // 只有抽样字段值才能抓住"整列被写空"（2026-07-18 现场事故）
+            // English：Value-level verification: Field exists ≠ calculation successful—when an expression returns None line by line, GP still reports success as usual; only the sampled field value can catch "entire column is empty" (2026-07-18 On-site Incident)
             Verification = new VerificationRule { Type = "verify_field_populated", FixHint = "检查字段存在且计算后有值；若全空说明表达式返回了空值" },
             Parameters = new ToolParameters
             {

@@ -8,6 +8,7 @@ namespace SpatialAgent.Tools.Core
     /// failure as JSON instead of throwing; that payload must not become a
     /// successful tool observation.
     /// </summary>
+    /// <remarks>中文：规范化ArcGIS读卡机信封。一些主机API将逻辑失败报告为JSON，而非抛出;该有效载荷绝不能成为成功的工具观测。</remarks>
     public static class JsonToolResultFactory
     {
         public static ToolResult FromJson(string toolName, string json)
@@ -34,6 +35,7 @@ namespace SpatialAgent.Tools.Core
                     // Reader adapters may legitimately return plain text.
                     // Transport success remains success when no error
                     // envelope can be identified.
+                    // 中文：阅读器适配器可以合法返回纯文本。当无法识别出错误包络时，传输成功依然是成功。
                 }
             }
 
