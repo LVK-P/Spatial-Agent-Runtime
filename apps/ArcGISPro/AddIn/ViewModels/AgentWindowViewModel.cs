@@ -369,6 +369,7 @@ namespace ArcGISProAIAgent.ViewModels
 
         // ================================================================
         // 阶段 2：获取项目路径后的项目初始化。
+        // Phase 2: initialize the project after resolving its path.
         // ================================================================
         private async Task InitializeProjectContextAsync()
         {
@@ -380,12 +381,18 @@ namespace ArcGISProAIAgent.ViewModels
                 // Pro 退出后会删除临时目录，agent 在上面创建的任何 workspace/logs
                 // 都会丢失且无法排查问题。判定依据：project.URI 为空 = 未保存。
                 // 这是语义级 API 判断，不是路径硬编码。
+                // ★ Unsaved project (Pro temporary directory) → block immediately and write nothing to disk.
+                // Pro deletes the temporary directory on exit, so any workspace/logs created there would be lost
+                // and unavailable for diagnosis. The semantic API check is project.URI being empty, not a hard-coded path.
                 if (projCtx.IsAvailable && !projCtx.IsSaved)
                 {
                     Debug.WriteLine($"[ViewModel] Unsaved project detected — IsAvailable={projCtx.IsAvailable}, IsSaved={projCtx.IsSaved}, TempFolder={projCtx.TempFolder}");
                     // ★ MessageBox 和 CloseRequested 必须在同一 UI 调度帧内顺序执行。
                     // OnUi 在非 UI 线程上走 BeginInvoke（异步），如果 CloseRequested 放在
                     // OnUi 外面，窗口可能在 MessageBox 显示前就被关闭。
+                    // ★ MessageBox and CloseRequested must run in order within the same UI dispatch frame.
+                    // OnUi uses BeginInvoke asynchronously off the UI thread; placing CloseRequested outside OnUi
+                    // could close the window before the MessageBox appears.
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         MessageBox.Show(
@@ -412,13 +419,14 @@ namespace ArcGISProAIAgent.ViewModels
                 if (!string.IsNullOrEmpty(_projFolder))
                 {
                     // 将所有阶段 1 日志作为一个生命周期迁移到项目目录。
+                    // Migrate all phase-1 logs to the project directory as one lifecycle.
                     string projectLogDir = Path.Combine(_projFolder, "agent_logs");
                     _transcript.ProjectRoot = _projFolder;
                     _transcript.HomeFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                     _runtime.MigrateLogging(projectLogDir);
                     _healthMonitor.Reset();
 
-                    // WorkspaceTool
+                    // 工作区工具 / WorkspaceTool
                     int wkid = 0;
                     try
                     {
@@ -440,6 +448,9 @@ namespace ArcGISProAIAgent.ViewModels
                     // InitializeAsync 已创建 agentworkspace.gdb。
                     // 把 Workspace 回填到构造期已注册的工具，避免裸名输出落入
                     // 项目默认 GDB。
+                    // InitializeAsync has created agentworkspace.gdb.
+                    // Backfill the Workspace into tools registered during construction so bare output names
+                    // do not fall into the project's default GDB.
                     int routedTools = _tools.AttachWorkspace(_workspace);
                     Debug.WriteLine($"[ViewModel] Workspace routed into {routedTools} tools");
 
@@ -450,12 +461,14 @@ namespace ArcGISProAIAgent.ViewModels
                         _checkpointStore,
                         _memoryStore);
 
-                    // Session index for history browser
+                    // Session index for history browser.
+                    // 用于历史浏览器的会话索引。
                     _sessionIndex = new SessionIndex(_projFolder);
                     _sessionIndex.Load();
                     RefreshSessionList();
 
                     // AuditLogger 延迟到阶段 2 创建，因为它需要项目目录。
+                    // Create AuditLogger in phase 2 because it requires the project directory.
                     _audit = new AuditLogger(_projFolder);
                     _audit.SetLoggingHealthMonitor(_healthMonitor);
                     _healthMonitor.BindStats(auditEntryCount: () => _audit.EntryCount);
@@ -469,12 +482,16 @@ namespace ArcGISProAIAgent.ViewModels
                     // reading the project summary. This is a read-only,
                     // process-wide single-flight probe; a real GP call joins
                     // it rather than racing another engine initialization.
+                    // 在用户阅读项目摘要时启动 ArcGIS GP 冷初始化。这是进程级、只读的
+                    // 单次并发探测；真实 GP 调用会加入该任务，而不是与另一次引擎初始化竞争。
                     _ = WarmUpGeoprocessingAsync(_hostLifetimeCts.Token);
                 }
                 else
                 {
                     // ★ F1：工程文件尚未保存，没有目录就无法创建 agent 工作区。
                     // 此时不降级——workspace/日志/会话/审计全部依赖于项目目录。
+                    // ★ F1: an unsaved project has no directory in which to create the agent workspace.
+                    // Do not degrade here—workspace, logs, sessions, and audit data all depend on the project directory.
                     SetProjectSummary(
                         "项目未保存",
                         "请先保存 ArcGIS Pro 项目。未保存状态下不会创建工作区、日志或审计目录。");
@@ -483,6 +500,8 @@ namespace ArcGISProAIAgent.ViewModels
 
                 // RAG index deferred rebuild: if embedding API wasn't ready at construction time,
                 // the index build may have silently failed. Retry now that LLM is confirmed working.
+                // RAG 索引延迟重建：若构造时嵌入 API 尚未就绪，索引构建可能静默失败；
+                // 现已确认 LLM 可用，因此再次尝试。
                 _ = RebuildRagIndexIfNeededAsync();
             }
             catch (Exception ex)
@@ -530,6 +549,7 @@ namespace ArcGISProAIAgent.ViewModels
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
             {
                 // Host shutdown owns cancellation; no user-facing warning.
+                // 取消由宿主关闭流程负责，不显示面向用户的警告。
             }
             catch (Exception ex)
             {
@@ -547,11 +567,11 @@ namespace ArcGISProAIAgent.ViewModels
         }
 
         // ================================================================
-        // 工具注册
+        // 工具注册 / Tool registration
         // ================================================================
         private void RegisterAllTools()
         {
-            // Core read-only tools
+            // 核心只读工具 / Core read-only tools
             _tools.Register(new GetMapInfoTool());
             _tools.Register(new ListLayersTool());
             _tools.Register(new DescribeLayerTool());
@@ -559,31 +579,34 @@ namespace ArcGISProAIAgent.ViewModels
             _tools.Register(new GetProjectInfoTool());
             _tools.Register(new ReadRowsTool());   // 小样本读行，受行数与字段数硬门槛约束。
 
-            // Core schema GP tools (for contracts/verification)
+            // 核心模式 GP 工具（用于契约/验证）/ Core schema GP tools (for contracts/verification)
             var schemaReg = new ToolSchemaRegistry();
             schemaReg.RegisterAllDefaults();
             foreach (var s in schemaReg.GetAllSchemas())
                 _tools.Register(new SchemaGPToolAdapter(s.Name, s, schemaReg));
 
-            // High-level workflow tools
+            // 高级工作流工具 / High-level workflow tools
             _tools.Register(new CalculateAreaTool());
             _tools.Register(new CalculateLengthTool());
 
             // 行业标准对照查询，为用地用海/三调转换提供权威映射。
+            // Industry-standard lookup that provides authoritative mappings for land/sea use and third-survey conversion.
             _tools.Register(new LandCodeLookupTool());
 
             // 字段映射赋值：唯一值 → 查表 → code block 保值写入。
+            // Field-mapping assignment: unique values → lookup → value-preserving code-block write.
             _tools.Register(new MapFieldValuesTool());
 
             // Optional runtime registration from metadata generated locally by
             // a user with a licensed ArcGIS Pro installation.
+            // 可选：根据持有 ArcGIS Pro 许可的用户在本地生成的元数据注册运行时工具。
             string manifestPath = ResourcePaths.Resolve("tools_manifest.json");
             int loaded = DynamicToolLoader.LoadAndRegister(manifestPath, _tools, _workspace);
             Debug.WriteLine($"[ViewModel] DynamicToolLoader: {loaded} tools registered from manifest");
         }
 
         // ================================================================
-        // UI 绑定属性
+        // UI 绑定属性 / UI binding properties
         // ================================================================
         public ObservableCollection<TimelineItem> TimelineItems { get => _timelineItems; set => Set(ref _timelineItems, value); }
         public bool HasTimelineItems => TimelineItems.Count > 0;
@@ -613,12 +636,18 @@ namespace ArcGISProAIAgent.ViewModels
         public string CurrentFocus { get => _currentFocus; set => Set(ref _currentFocus, value); }
         public string TaskStageBrush { get => _taskStageBrush; set => Set(ref _taskStageBrush, value); }
         public bool IsTimelinePanelExpanded { get => _isTimelinePanelExpanded; set => Set(ref _isTimelinePanelExpanded, value); }
-        /// <summary>所有时间线项（消息+计划+轨迹），按时间顺序排列。系统消息不出现在聊天区。</summary>
+        /// <summary>
+        /// 所有时间线项（消息+计划+轨迹），按时间顺序排列。系统消息不出现在聊天区。
+        /// All timeline items (messages, plans, and traces) in chronological order; system messages are excluded from chat.
+        /// </summary>
         public IReadOnlyList<TimelineItem> ExecutionTimelineItems =>
             TimelineItems.Where(item => item.Chat?.Role != "system").ToList();
         public bool HasExecutionTimelineItems => ExecutionTimelineItems.Count > 0;
 
-        /// <summary>会话累计 Token；每次 CmdSendMessage 完成后刷新。</summary>
+        /// <summary>
+        /// 会话累计 Token；每次 CmdSendMessage 完成后刷新。
+        /// Cumulative session tokens, refreshed after each CmdSendMessage completion.
+        /// </summary>
         public TokenUsage SessionTokens => _runtime.Session.TokenUsage;
         public ObservableCollection<string> PendingTools { get; } = new();
         public bool HasPendingApproval
@@ -634,7 +663,7 @@ namespace ArcGISProAIAgent.ViewModels
             string model = _selectedModel.Replace("DeepSeek ", "").Replace("V4 ", "V4-");
             string permission = $"权限：{_selectedPermissionLevel}";
 
-            // 累计 Token
+            // 累计 Token / Accumulate tokens
             string tokenInfo = "";
             if (_runtime.Session.TokenUsage.TotalTokens > 0)
             {
@@ -645,11 +674,15 @@ namespace ArcGISProAIAgent.ViewModels
                 ? $"等待授权：{PendingApprovalText} | {permission}{tokenInfo}"
                 : $"{model} | 思考：{_selectedThinking} | {permission}{tokenInfo}";
             // 通知 UI Token 已变化。
+            // Notify the UI that token counts changed.
             PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(SessionTokens)));
             RefreshDashboardMetrics();
         }
 
-        /// <summary>组装本轮 token 信息，格式示例：2026/07/19 19:05:31 token: 1.2K in / 0.4K out</summary>
+        /// <summary>
+        /// 组装本轮 token 信息，格式示例：2026/07/19 19:05:31 token: 1.2K in / 0.4K out。
+        /// Builds the current turn's token summary, for example: 2026/07/19 19:05:31 token: 1.2K in / 0.4K out.
+        /// </summary>
         private string? BuildPerTurnTokenInfo()
         {
             var lt = _runtime.LastTurnTokens;
